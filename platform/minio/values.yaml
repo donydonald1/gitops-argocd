@@ -441,7 +441,7 @@ minio:
     # MINIO_IDENTITY_OPENID_SCOPES: 'openid,profile,email,groups'
     MINIO_AUDIT_QUEUE_DIR: "/opt/minio/audit/events"
     MINIO_AUDIT_QUEUE_DIR_MAX_SIZE: "10000"
-    MINIO_PROMETHEUS_JOB_ID: minio
+    # MINIO_PROMETHEUS_JOB_ID: minio
     MINIO_PROMETHEUS_URL: "http://kb-stack-prometheus.monitoring.svc:9090"
     # MINIO_IDENTITY_OPENID_REDIRECT_URI: 'https://minio.ops.techsecom.io/oauth_callback'
     # MINIO_IDENTITY_OPENID_REDIRECT_URI_DYNAMIC: 'off'
