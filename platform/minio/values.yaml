@@ -442,7 +442,7 @@ minio:
     MINIO_AUDIT_QUEUE_DIR: "/opt/minio/audit/events"
     MINIO_AUDIT_QUEUE_DIR_MAX_SIZE: "10000"
     # MINIO_PROMETHEUS_JOB_ID: minio
-    MINIO_PROMETHEUS_URL: "http://kb-stack-prometheus.monitoring.svc:9090"
+    MINIO_PROMETHEUS_URL: "http://kps-prometheus.monitoring.svc.cluster.local:9090"
     # MINIO_IDENTITY_OPENID_REDIRECT_URI: 'https://minio.ops.techsecom.io/oauth_callback'
     # MINIO_IDENTITY_OPENID_REDIRECT_URI_DYNAMIC: 'off'
     # MINIO_IDENTITY_OPENID_DISPLAY_NAME: 'Techsecom-OIDC'
@@ -465,7 +465,7 @@ minio:
     serviceMonitor:
       enabled: true
       additionalLabels:
-        cluster: ops-dev-dc-bm-rke2
+        cluster: ops-dc-tx-rke2-mgmt-prod
       includeNode: true
       public: true
       annotations: {}

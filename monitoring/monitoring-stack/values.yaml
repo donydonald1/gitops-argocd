@@ -41,7 +41,7 @@ kube-prometheus-stack:
       type: statefulset
       storageClassName: nfs-csi
       accessModes: [ "ReadWriteMany" ]
-      size: 5Gi
+      size: 10Gi
 
     service:
       type: NodePort
@@ -230,8 +230,8 @@ kube-prometheus-stack:
     enabled: false
   # kubeRbacProxy:
   #   enabled: false
-  # kubeAggregatedApiServer:
-  #   enabled: false
+  kubeAggregatedApiServer:
+    enabled: false
   prometheus:
     thanosService:
       enabled: true # exposes gRPC (10901) / HTTP (10902) for the sidecar
@@ -247,7 +247,7 @@ kube-prometheus-stack:
       evaluation_interval: 15s
     prometheusSpec:
       externalLabels:
-        cluster: "ops-dev-dc-bm-rke2"
+        cluster: "ops-dc-tx-rke2-mgmt-prod"
       thanos:
         image: "quay.io/thanos/thanos:v0.39.2"
         version: "v0.39.2"
@@ -262,7 +262,7 @@ kube-prometheus-stack:
       podMonitorSelectorNilUsesHelmValues: true
       enableRemoteWriteReceiver: true
       enableAdminAPI: true
-      replicas: 1
+      replicas: 3
       # walCompression: true
       # allow operator to pick up ScrapeConfig CRDs from anywhere
       scrapeConfigSelector: {}
@@ -272,8 +272,8 @@ kube-prometheus-stack:
         # requests:
         #   cpu: 1000m
         limits:
-          memory: 4Gi
-          cpu: 800m
+          memory: 6Gi
+          cpu: 2000m
 
       storageSpec:
         volumeClaimTemplate:
@@ -281,7 +281,7 @@ kube-prometheus-stack:
             storageClassName: nfs-csi
             resources:
               requests:
-                storage: 60Gi
+                storage: 100Gi
       ingress:
         enabled: true
         pathType: Prefix
