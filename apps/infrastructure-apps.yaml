@@ -45,7 +45,7 @@ spec:
       source:
         repoURL: https://github.com/donydonald1/gitops-argocd.git
         targetRevision: HEAD
-        path: "gitops/infrastructure/{{ .name }}"
+        path: "infrastructure/{{ .name }}"
         # plugin:
         #   name: avp-directory-include
         # env:

@@ -1,0 +1,9 @@
+name: kured
+apiVersion: v2
+version: 1.0.0
+
+appVersion: "5.10.0"
+dependencies:
+- name: kured
+  version: 5.10.0
+  repository: https://kubereboot.github.io/charts

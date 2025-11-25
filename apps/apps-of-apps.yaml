@@ -23,7 +23,7 @@ spec:
       source:
         repoURL: https://github.com/donydonald1/gitops-argocd.git
         targetRevision: HEAD
-        path: "gitops/apps-of-apps/{{ .name }}"
+        path: "apps/{{ .name }}"
       destination:
         name: in-cluster
         namespace: '{{ default .name (dig "namespace" "" .) }}'

@@ -1,0 +1,5 @@
+reloader:
+  reloader:
+    autoReloadAll: true
+    # isArgoRollouts: false
+    ignoreSecrets: true

@@ -1,0 +1,7 @@
+name: change-detection
+apiVersion: v2
+version: 1.0.0
+dependencies:
+- name: changedetection-io
+  version: 1.61.0
+  repository: https://zekker6.github.io/helm-charts
