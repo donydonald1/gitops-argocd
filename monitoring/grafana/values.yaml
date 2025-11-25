@@ -20,7 +20,7 @@ grafana:
     GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS: natel-discrete-panel,pr0ps-trackmap-panel,panodata-map-panel,grafana-lokiexplore-app
     GF_SECURITY_ALLOW_EMBEDDING: true
     # GF_SECURITY_DISABLE_INITIAL_ADMIN_CREATION: true
-    GF_SERVER_ROOT_URL: https://grafana.prod.techsecom.io
+    GF_SERVER_ROOT_URL: https://grafana.ops.techsecom.io
     GF_SECURITY_COOKIE_SAMESITE: grafana
     TZ: America/Chicago
     GF_DATABASE_TYPE: postgres
@@ -44,7 +44,7 @@ grafana:
 
   grafana.ini:
     server:
-      root_url: https://grafana.prod.techsecom.io
+      root_url: https://grafana.ops.techsecom.io
     analytics:
       check_for_updates: false
       check_for_plugin_updates: true
@@ -120,10 +120,10 @@ grafana:
       cert-manager.io/duration: "2160h"
       cert-manager.io/renew-before: "720h"
 
-    hosts: [ grafana.prod.techsecom.io ]
+    hosts: [ grafana.ops.techsecom.io ]
     tls:
     - hosts:
-      - grafana.prod.techsecom.io
+      - grafana.ops.techsecom.io
       secretName: grafana-cert-tls
   sidecar:
     dashboards:

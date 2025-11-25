@@ -69,7 +69,7 @@ wikijs:
         cert-manager.io/duration: "2160h"
         cert-manager.io/renew-before: "720h"
       hosts:
-      - host: &host-main "wiki.prod.techsecom.io"
+      - host: &host-main "wiki.ops.techsecom.io"
         paths:
         - path: /
           pathType: Prefix

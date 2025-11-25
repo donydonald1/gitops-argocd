@@ -20,13 +20,13 @@ change-detection:
         cert-manager.io/duration: "2160h"
         cert-manager.io/renew-before: "720h"
       hosts:
-      - host: change.prod.techsecom.io
+      - host: change.ops.techsecom.io
         paths:
         - path: /
           pathType: Prefix
       tls:
       - hosts:
-        - change.prod.techsecom.io
+        - change.ops.techsecom.io
         secretName: change-cert-tls
   persistence:
     data:

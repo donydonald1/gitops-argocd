@@ -267,7 +267,7 @@ global:
     https: true
     hostSuffix: null
     gitlab:
-      name: gitlab.prod.techsecom.io
+      name: gitlab.ops.techsecom.io
       https: true
     kas:
       name: kas.gitlab.techsecom.io

@@ -39,7 +39,7 @@ kube-prometheus-stack:
       enabled: true
     prometheusSpec:
       serviceMonitorSelector: {}
-      externalUrl: https://prometheus.prod.techsecom.io
+      externalUrl: https://prometheus.ops.techsecom.io
       # serviceMonitorSelectorNilUsesHelmValues: false
       # podMonitorSelectorNilUsesHelmValues: false
       # probeSelectorNilUsesHelmValues: false
@@ -92,10 +92,10 @@ kube-prometheus-stack:
         cert-manager.io/duration: "2160h"
         cert-manager.io/renew-before: "720h"
 
-      hosts: [ prometheus.prod.techsecom.io ]
+      hosts: [ prometheus.ops.techsecom.io ]
       tls:
       - hosts:
-        - prometheus.prod.techsecom.io
+        - prometheus.ops.techsecom.io
         secretName: prom-server-cert-tls
 
     server:

@@ -113,11 +113,11 @@
 #         cert-manager.io/duration: "2160h"
 #         cert-manager.io/renew-before: "720h"
 #       hosts:
-#       - host: "loki.prod.techsecom.io"
+#       - host: "loki.ops.techsecom.io"
 #       tls:
 #       - secretName: loki-gateway-tls
 #         hosts:
-#         - "loki.prod.techsecom.io"
+#         - "loki.ops.techsecom.io"
 
 #   write:
 #     replicas: 3
@@ -190,11 +190,11 @@
 #       - /loki/api/v1/delete
 
 #     hosts:
-#     - loki.prod.techsecom.io
+#     - loki.ops.techsecom.io
 #     tls:
 #     - secretName: loki-distributed-tls
 #       hosts:
-#       - loki.prod.techsecom.io
+#       - loki.ops.techsecom.io
 
 #   #    - hosts:
 #   #       - loki.example.com

@@ -18,7 +18,7 @@ longhorn:
   ingress:
     enabled: true
     ingressClassName: nginx
-    host: longhorn.prod.techsecom.io
+    host: longhorn.ops.techsecom.io
 
     tls: enabled
     tlsSecret: longhorn.local-tls

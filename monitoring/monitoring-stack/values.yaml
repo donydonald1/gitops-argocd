@@ -16,7 +16,7 @@ kube-prometheus-stack:
     enabled: true
 
     env:
-      GF_SERVER_ROOT_URL: https://grafana.prod.techsecom.io
+      GF_SERVER_ROOT_URL: https://grafana.ops.techsecom.io
       GF_SECURITY_COOKIE_SAMESITE: grafana
       TZ: America/Chicago
       GF_DATABASE_TYPE: postgres
@@ -49,7 +49,7 @@ kube-prometheus-stack:
       nodePort: 32000
     grafana.ini:
       server:
-        root_url: https://grafana.prod.techsecom.io
+        root_url: https://grafana.ops.techsecom.io
         # analytics:
         # check_for_updates: false
         # check_for_plugin_updates: true
@@ -126,10 +126,10 @@ kube-prometheus-stack:
         cert-manager.io/duration: "2160h"
         cert-manager.io/renew-before: "720h"
 
-      hosts: [ grafana.prod.techsecom.io ]
+      hosts: [ grafana.ops.techsecom.io ]
       tls:
       - hosts:
-        - grafana.prod.techsecom.io
+        - grafana.ops.techsecom.io
         secretName: grafana-cert-tls
     # Ensure Grafana loads provisioning files
     sidecar:
@@ -294,10 +294,10 @@ kube-prometheus-stack:
           cert-manager.io/duration: "2160h"
           cert-manager.io/renew-before: "720h"
 
-        hosts: [ prometheus.prod.techsecom.io ]
+        hosts: [ prometheus.ops.techsecom.io ]
         tls:
         - hosts:
-          - prometheus.prod.techsecom.io
+          - prometheus.ops.techsecom.io
           secretName: prom-server-cert-tls
       additionalScrapeConfigs:
       - job_name: prometheus
@@ -526,7 +526,7 @@ thanos:
       sidecarsNamespace: monitoring
     ingress:
       enabled: true
-      hostname: thanos.prod.techsecom.io
+      hostname: thanos.ops.techsecom.io
       annotations:
         gethomepage.dev/enabled: 'true'
         gethomepage.dev/group: Monitoring
@@ -556,7 +556,7 @@ thanos:
         cert-manager.io/renew-before: "720h"
         # nginx.ingress.kubernetes.io/auth-url: "http://oauth2-proxy.kube-system.svc.cluster.local:80/oauth2/auth"
         # nginx.ingress.kubernetes.io/auth-signin: "https://auth.rsr.net/oauth2/start"
-      hostname: thanos-bucketweb.prod.techsecom.io
+      hostname: thanos-bucketweb.ops.techsecom.io
       tls: true
   compactor:
     enabled: true
@@ -575,7 +575,7 @@ thanos:
         cert-manager.io/renew-before: "720h"
         # nginx.ingress.kubernetes.io/auth-url: "http://oauth2-proxy.kube-system.svc.cluster.local:80/oauth2/auth"
         # nginx.ingress.kubernetes.io/auth-signin: "https://auth.rsr.net/oauth2/start"
-      hostname: thanos-compactor.prod.techsecom.io
+      hostname: thanos-compactor.ops.techsecom.io
       tls: true
     persistence:
       enabled: true
@@ -594,7 +594,7 @@ thanos:
         cert-manager.io/renew-before: "720h"
         # nginx.ingress.kubernetes.io/auth-url: "http://oauth2-proxy.kube-system.svc.cluster.local:80/oauth2/auth"
         # nginx.ingress.kubernetes.io/auth-signin: "https://auth.rsr.net/oauth2/start"
-      hostname: thanos-storegateway.prod.techsecom.io
+      hostname: thanos-storegateway.ops.techsecom.io
       tls: true
     persistence:
       enabled: true
@@ -748,11 +748,11 @@ loki:
         cert-manager.io/duration: "2160h"
         cert-manager.io/renew-before: "720h"
       hosts:
-      - host: "loki.prod.techsecom.io"
+      - host: "loki.ops.techsecom.io"
       tls:
       - secretName: loki-gateway-tls
         hosts:
-        - "loki.prod.techsecom.io"
+        - "loki.ops.techsecom.io"
 
   write:
     replicas: 3
@@ -825,11 +825,11 @@ loki:
       - /loki/api/v1/delete
 
     hosts:
-    - loki.prod.techsecom.io
+    - loki.ops.techsecom.io
     tls:
     - secretName: loki-distributed-tls
       hosts:
-      - loki.prod.techsecom.io
+      - loki.ops.techsecom.io
 
   #    - hosts:
   #       - loki.example.com

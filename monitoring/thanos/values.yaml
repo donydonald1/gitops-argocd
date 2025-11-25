@@ -14,7 +14,7 @@ thanos:
       sidecarsNamespace: monitoring
     ingress:
       enabled: true
-      hostname: thanos.prod.techsecom.io
+      hostname: thanos.ops.techsecom.io
       annotations:
         gethomepage.dev/enabled: 'true'
         gethomepage.dev/group: Monitoring
@@ -44,7 +44,7 @@ thanos:
         cert-manager.io/renew-before: "720h"
         # nginx.ingress.kubernetes.io/auth-url: "http://oauth2-proxy.kube-system.svc.cluster.local:80/oauth2/auth"
         # nginx.ingress.kubernetes.io/auth-signin: "https://auth.rsr.net/oauth2/start"
-      hostname: thanos-bucketweb.prod.techsecom.io
+      hostname: thanos-bucketweb.ops.techsecom.io
       tls: true
   compactor:
     enabled: true
@@ -63,7 +63,7 @@ thanos:
         cert-manager.io/renew-before: "720h"
         # nginx.ingress.kubernetes.io/auth-url: "http://oauth2-proxy.kube-system.svc.cluster.local:80/oauth2/auth"
         # nginx.ingress.kubernetes.io/auth-signin: "https://auth.rsr.net/oauth2/start"
-      hostname: thanos-compactor.prod.techsecom.io
+      hostname: thanos-compactor.ops.techsecom.io
       tls: true
     persistence:
       enabled: true
@@ -82,7 +82,7 @@ thanos:
         cert-manager.io/renew-before: "720h"
         # nginx.ingress.kubernetes.io/auth-url: "http://oauth2-proxy.kube-system.svc.cluster.local:80/oauth2/auth"
         # nginx.ingress.kubernetes.io/auth-signin: "https://auth.rsr.net/oauth2/start"
-      hostname: thanos-storegateway.prod.techsecom.io
+      hostname: thanos-storegateway.ops.techsecom.io
       tls: true
     persistence:
       enabled: true

@@ -73,7 +73,7 @@ trivy:
   enabled: true
   gitHubToken: ""
 fullnameOverride: harbor
-externalURL: https://harbor.prod.techsecom.io
+externalURL: https://harbor.ops.techsecom.io
 ipFamily:
   # ipv6Enabled set to true if ipv6 is enabled in cluster, currently it affected the nginx related component
   ipv6:
@@ -98,8 +98,8 @@ expose:
       gethomepage.dev/icon: harbor
       gethomepage.dev/name: Harbor
       gethomepage.dev/widget.type: harbor
-      gethomepage.dev/widget.url: harbor.prod.techsecom.io
-      gethomepage.dev/href: "https://harbor.prod.techsecom.io"
+      gethomepage.dev/widget.url: harbor.ops.techsecom.io
+      gethomepage.dev/href: "https://harbor.ops.techsecom.io"
       gethomepage.dev/app: harbor-ingress
       ingress.kubernetes.io/ssl-redirect: "true"
       cert-manager.io/cluster-issuer: letsencrypt-prod
@@ -114,8 +114,8 @@ expose:
       # external-dns.alpha.kubernetes.io/target: "rke2-manager.techsecom.io"
       # external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
     hosts:
-      core: harbor.prod.techsecom.io
-      notary: notary.prod.techsecom.io
+      core: harbor.ops.techsecom.io
+      notary: notary.ops.techsecom.io
 proxy:
   httpProxy:
   httpsProxy:
