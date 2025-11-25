@@ -70,7 +70,7 @@ it-tools:
       retain: true
       storageClass: "nfs-csi"
       accessMode: ReadWriteMany
-      size: 1Gi
+      size: 4Gi
 
   ingress:
     # -- Enable and configure ingress settings for the chart under this key.
@@ -84,12 +84,12 @@ it-tools:
         gethomepage.dev/description: Various tools for IT
         gethomepage.dev/group: Services
         gethomepage.dev/icon: it-tools-light.png
-        gethomepage.dev/href: https://tools.prod.techsecom.io
-        gethomepage.dev/siteMonitor: https://tools.prod.techsecom.io
+        gethomepage.dev/href: https://tools.ops.techsecom.io
+        gethomepage.dev/siteMonitor: https://tools.ops.techsecom.io
         external-dns.alpha.kubernetes.io/enabled: "true"
         cert-manager.io/cluster-issuer: letsencrypt-prod
       hosts:
-      - host: tools.prod.techsecom.io
+      - host: tools.ops.techsecom.io
         paths:
         - path: /
           pathType: Prefix
@@ -99,4 +99,4 @@ it-tools:
       tls:
       - secretName: it-tools-tls
         hosts:
-        - tools.prod.techsecom.io
+        - tools.ops.techsecom.io

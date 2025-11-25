@@ -16,7 +16,7 @@ minio:
     storageClass: nfs-csi
     # volumeName: minio-pv
     accessMode: ReadWriteMany
-    size: 800Gi
+    size: 1000Gi
     # subPath: ""
   securityContext:
     enabled: true
@@ -41,7 +41,7 @@ minio:
       nginx.ingress.kubernetes.io/configuration-snippet: |
         chunked_transfer_encoding off;
     hosts:
-    - &host s3.prod.techsecom.io
+    - &host s3.ops.techsecom.io
     tls:
     - hosts:
       - *host
@@ -56,7 +56,7 @@ minio:
       nginx.ingress.kubernetes.io/configuration-snippet: |
         chunked_transfer_encoding off;
     hosts:
-    - &hostMC minio.prod.techsecom.io
+    - &hostMC minio.ops.techsecom.io
     tls:
     - hosts:
       - *hostMC
@@ -64,7 +64,7 @@ minio:
 
   resources:
     requests:
-      memory: 2Gi
+      memory: 6Gi
 
   users:
   - accessKey: velero
