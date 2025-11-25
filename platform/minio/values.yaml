@@ -1,0 +1,481 @@
+minio:
+  mode: distributed
+
+  drivesPerNode: 1
+  # Number of MinIO containers running
+  replicas: 3
+  pools: 1
+
+  existingSecret: minio-users
+
+  additionalAnnotations:
+    reloader.stakater.com/auto: "true"
+  persistence:
+    enabled: true
+    annotations: {}
+    storageClass: nfs-csi
+    # volumeName: minio-pv
+    accessMode: ReadWriteMany
+    size: 800Gi
+    # subPath: ""
+  securityContext:
+    enabled: true
+    runAsUser: 0
+    runAsGroup: 0
+    fsGroup: 0
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      external-dns.alpha.kubernetes.io/enabled: "true"
+      nginx.ingress.kubernetes.io/proxy-send-timeout: "3601"
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "3601"
+      # fix timeouts uploading big files disabling proxy buffering
+      nginx.ingress.kubernetes.io/proxy-buffering: "off"
+      nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
+      nginx.ingress.kubernetes.io/proxy-body-size: "0"
+      # https://min.io/docs/minio/linux/integrations/setup-nginx-proxy-with-minio.html
+      nginx.ingress.kubernetes.io/server-snippet: |
+        ignore_invalid_headers off;
+      nginx.ingress.kubernetes.io/configuration-snippet: |
+        chunked_transfer_encoding off;
+    hosts:
+    - &host s3.prod.techsecom.io
+    tls:
+    - hosts:
+      - *host
+      secretName: s3-tls-certificate
+
+  consoleIngress:
+    enabled: true
+    ingressClassName: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      external-dns.alpha.kubernetes.io/enabled: "true"
+      nginx.ingress.kubernetes.io/configuration-snippet: |
+        chunked_transfer_encoding off;
+    hosts:
+    - &hostMC minio.prod.techsecom.io
+    tls:
+    - hosts:
+      - *hostMC
+      secretName: mc-s3-tls-certificate
+
+  resources:
+    requests:
+      memory: 2Gi
+
+  users:
+  - accessKey: velero
+    existingSecret: minio-users
+    existingSecretKey: veleroPassword
+    policy: readwrite
+
+  - accessKey: postgres-user
+    existingSecret: minio-users
+    existingSecretKey: postgres_password
+    policy: readwrite
+
+  - accessKey: gitlab-ci
+    existingSecret: minio-users
+    existingSecretKey: gitlab-ciPassword
+    policy: readwrite
+
+  - accessKey: gitlab-registry
+    existingSecret: minio-users
+    existingSecretKey: gitlab-registryPassword
+    policy: readwrite
+
+  - accessKey: harbor
+    existingSecret: minio-users
+    existingSecretKey: harborPassword
+    policy: readwrite
+
+  - accessKey: terraform-state
+    existingSecret: minio-users
+    existingSecretKey: terraform-statePassword
+    policy: readwrite
+
+  - accessKey: gitlab-objectstore
+    existingSecret: minio-users
+    existingSecretKey: gitlab-objectstorePassword
+    policy: readwrite
+
+  - accessKey: rke2-management-clusters
+    existingSecret: minio-users
+    existingSecretKey: rke2-management-clustersPassword
+    policy: readwrite
+
+  - accessKey: rke2-downstream-clusters
+    existingSecret: minio-users
+    existingSecretKey: rke2-downstream-clustersPassword
+    policy: readwrite
+  ## Username, password and policy to be assigned to the user
+  ## Default policies are [readonly|readwrite|writeonly|consoleAdmin|diagnostics]
+  ## Add new policies as explained here https://min.io/docs/minio/kubernetes/upstream/administration/identity-access-management.html#access-management
+  ## NOTE: this will fail if LDAP is enabled in your MinIO deployment
+  ## make sure to disable this if you are using LDAP.
+  #- accessKey: console
+  #  secretKey: console123
+  #  policy: consoleAdmin
+  # Or you can refer to specific secret
+  #- accessKey: externalSecret
+  #  existingSecret: my-secret
+  #  existingSecretKey: password
+  #  policy: readonly
+
+  buckets:
+  - name: velero
+    # Policy to be set on the
+    # bucket [none|download|upload|public]
+    policy: none
+    # Purge if bucket exists already
+    purge: false
+    versioning: true
+    objectlocking: false
+
+  - name: longhorn
+    # Policy to be set on the
+    # bucket [none|download|upload|public]
+    policy: none
+    # Purge if bucket exists already
+    purge: false
+    versioning: true
+    objectlocking: false
+
+  - name: postgres
+    # Policy to be set on the
+    # bucket [none|download|upload|public]
+    policy: none
+    # Purge if bucket exists already
+    purge: false
+    versioning: true
+    objectlocking: false
+  #   # Name of the bucket
+  - name: thanos
+    # Policy to be set on the
+    # bucket [none|download|upload|public]
+    policy: none
+    # Purge if bucket exists already
+    purge: false
+    versioning: true
+    objectlocking: false
+
+  - name: loki-stack
+    # Policy to be set on the
+    # bucket [none|download|upload|public]
+    policy: none
+    # Purge if bucket exists already
+    purge: false
+    versioning: true
+    objectlocking: false
+
+  - name: loki-chunks
+    # Policy to be set on the
+    # bucket [none|download|upload|public]
+    policy: none
+    # Purge if bucket exists already
+    purge: false
+    versioning: true
+    objectlocking: false
+
+  - name: loki-admin
+    # Policy to be set on the
+    # bucket [none|download|upload|public]
+    policy: none
+    # Purge if bucket exists already
+    purge: false
+    versioning: true
+    objectlocking: false
+
+  - name: gitlab-uploads-storage
+    # Policy to be set on the
+    # bucket [none|download|upload|public]
+    policy: none
+    # Purge if bucket exists already
+    purge: false
+    versioning: true
+    objectlocking: false
+
+  - name: gitlab-artifacts-storage
+    # Policy to be set on the
+    # bucket [none|download|upload|public]
+    policy: none
+    # Purge if bucket exists already
+    purge: false
+    versioning: true
+    objectlocking: false
+
+  - name: gitlab-lfs-storage
+    # Policy to be set on the
+    # bucket [none|download|upload|public]
+    policy: none
+    # Purge if bucket exists already
+    purge: false
+    versioning: true
+    objectlocking: false
+
+  - name: gitlab-uploads-storage
+    # Policy to be set on the
+    # bucket [none|download|upload|public]
+    policy: none
+    # Purge if bucket exists already
+    purge: false
+    versioning: true
+    objectlocking: false
+
+  - name: gitlab-packages-storage
+    # Policy to be set on the
+    # bucket [none|download|upload|public]
+    policy: none
+    # Purge if bucket exists already
+    purge: false
+    versioning: true
+    objectlocking: false
+
+  - name: gitlab-registry-storage
+    # Policy to be set on the
+    # bucket [none|download|upload|public]
+    policy: none
+    # Purge if bucket exists already
+    purge: false
+    versioning: true
+    objectlocking: false
+
+  - name: gitlab-backup-storage
+    # Policy to be set on the
+    # bucket [none|download|upload|public]
+    policy: none
+    # Purge if bucket exists already
+    purge: false
+    versioning: true
+    objectlocking: false
+
+  - name: gitlab-tmp-storage
+    # Policy to be set on the
+    # bucket [none|download|upload|public]
+    policy: none
+    # Purge if bucket exists already
+    purge: false
+    versioning: true
+    objectlocking: false
+
+  # - name: gitlab-registry-storage
+  #   # Policy to be set on the
+  #   # bucket [none|download|upload|public]
+  #   policy: none
+  #   # Purge if bucket exists already
+  #   purge: false
+  #   versioning: true
+  #   objectlocking: false
+
+  - name: gitlab-runner-cache
+    # Policy to be set on the
+    # bucket [none|download|upload|public]
+    policy: none
+    # Purge if bucket exists already
+    purge: false
+    versioning: true
+    objectlocking: false
+
+  - name: loki-ruler
+    # Policy to be set on the
+    # bucket [none|download|upload|public]
+    policy: none
+    # Purge if bucket exists already
+    purge: false
+    versioning: true
+    objectlocking: false
+
+  - name: gitlab-ci
+    # Policy to be set on the
+    # bucket [none|download|upload|public]
+    policy: none
+    # Purge if bucket exists already
+    purge: false
+    versioning: true
+    objectlocking: false
+
+  - name: gitlab-registry
+    policy: none
+    purge: false
+    versioning: true
+    # set objectlocking for
+    # bucket [true|false] NOTE: versioning is enabled by default if you use locking
+    objectlocking: false
+
+  - name: gitlab-artifacts
+    policy: none
+    purge: false
+    versioning: true
+    # set objectlocking for
+    # bucket [true|false] NOTE: versioning is enabled by default if you use locking
+    objectlocking: false
+
+  - name: git-lfs
+    policy: none
+    purge: false
+    versioning: true
+    # set objectlocking for
+    # bucket [true|false] NOTE: versioning is enabled by default if you use locking
+    objectlocking: false
+
+  - name: gitlab-packages
+    policy: none
+    purge: false
+    versioning: true
+    # set objectlocking for
+    # bucket [true|false] NOTE: versioning is enabled by default if you use locking
+    objectlocking: false
+
+  - name: gitlab-uploads
+    policy: none
+    purge: false
+    versioning: true
+    # set objectlocking for
+    # bucket [true|false] NOTE: versioning is enabled by default if you use locking
+    objectlocking: false
+
+  - name: gitlab-mr-diffs
+    policy: none
+    purge: false
+    versioning: true
+    # set objectlocking for
+    # bucket [true|false] NOTE: versioning is enabled by default if you use locking
+    objectlocking: false
+
+  - name: gitlab-terraform-state
+    policy: none
+    purge: false
+    versioning: true
+    # set objectlocking for
+    # bucket [true|false] NOTE: versioning is enabled by default if you use locking
+    objectlocking: false
+
+  - name: gitlab-ci-secure-files
+    policy: none
+    purge: false
+    versioning: true
+    # set objectlocking for
+    # bucket [true|false] NOTE: versioning is enabled by default if you use locking
+    objectlocking: false
+
+  - name: gitlab-dependency-proxy
+    policy: none
+    purge: false
+    versioning: true
+    # set objectlocking for
+    # bucket [true|false] NOTE: versioning is enabled by default if you use locking
+    objectlocking: false
+
+  - name: gitlab-pages
+    policy: none
+    purge: false
+    versioning: true
+    # set objectlocking for
+    # bucket [true|false] NOTE: versioning is enabled by default if you use locking
+    objectlocking: false
+
+  - name: gitlab-mr-diffs
+    policy: none
+    purge: false
+    versioning: true
+    # set objectlocking for
+    # bucket [true|false] NOTE: versioning is enabled by default if you use locking
+    objectlocking: false
+
+  - name: harbor
+    policy: none
+    purge: false
+    versioning: true
+    # set objectlocking for
+    # bucket [true|false] NOTE: versioning is enabled by default if you use locking
+    objectlocking: false
+
+  - name: terraform-state
+    policy: none
+    purge: false
+    versioning: true
+    # set objectlocking for
+    # bucket [true|false] NOTE: versioning is enabled by default if you use locking
+    objectlocking: false
+
+  - name: gitlab-objectstore
+    policy: none
+    purge: false
+    versioning: true
+    objectlocking: false
+
+  - name: gitlab-backups
+    policy: none
+    purge: false
+    versioning: true
+    objectlocking: false
+
+  - name: rke2-management-clusters
+    policy: none
+    purge: false
+    versioning: true
+    objectlocking: false
+
+  - name: rke2-downstream-clusters
+    policy: none
+    purge: false
+    versioning: true
+    objectlocking: false
+
+  - name: kubeblocks-backups
+    policy: none
+    purge: false
+    versioning: true
+    objectlocking: false
+
+  - name: tempo-traces
+    policy: none
+    purge: false
+    versioning: true
+    objectlocking: false
+  environment:
+    MINIO_IDENTITY_OPENID_ROLE_POLICY: consoleAdmin
+    # MINIO_IDENTITY_OPENID_SCOPES: 'openid,profile,email,groups'
+    MINIO_AUDIT_QUEUE_DIR: "/opt/minio/audit/events"
+    MINIO_AUDIT_QUEUE_DIR_MAX_SIZE: "10000"
+    # MINIO_IDENTITY_OPENID_REDIRECT_URI: 'https://minio.prod.techsecom.io/oauth_callback'
+    # MINIO_IDENTITY_OPENID_REDIRECT_URI_DYNAMIC: 'off'
+    # MINIO_IDENTITY_OPENID_DISPLAY_NAME: 'Techsecom-OIDC'
+    # MINIO_IDENTITY_OPENID_CLAIM_NAME: 'groups'
+    # MINIO_IDENTITY_OPENID_CLAIM_USERINFO: 'on'
+    ## OpenID Identity Management
+    ## The following section documents environment variables for enabling external identity management using an OpenID Connect (OIDC)-compatible provider.
+    ## See https://min.io/docs/minio/linux/operations/external-iam/configure-openid-external-identity-management.html for a tutorial on using these variables.
+  oidc:
+    enabled: true
+    configUrl: https://techsecoms.ui.com/gw/idp/api/v1/public/oauth/516737b6-8288-49ac-be5f-c0941167e9b6/.well-known/openid-configuration
+    existingClientSecretName: minio-oidc
+    existingClientIdKey: clientId
+    existingClientSecretKey: clientSecret
+    scopes: openid,profile,email
+    redirectUri: https://minio.prod.techsecom.io/oauth_callback
+    displayName: Techsecom-OIDC
+
+  metrics:
+    serviceMonitor:
+      enabled: true
+      additionalLabels:
+        cluster: ops-dev-dc-bm-rke2
+      includeNode: true
+      public: true
+      annotations: {}
+      # for node metrics
+      relabelConfigs: {}
+      # for cluster metrics
+      relabelConfigsCluster: {}
+        # metricRelabelings:
+        #   - regex: (server|pod)
+        #     action: labeldrop
+      namespace: ~
+      # Scrape interval, for example `interval: 30s`
+      interval: ~
+      # Scrape timeout, for example `scrapeTimeout: 10s`
+      scrapeTimeout: ~

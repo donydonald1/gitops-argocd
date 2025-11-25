@@ -1,0 +1,160 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  namespace: {{ .Release.Namespace }}   
+  name: {{ include "cnpg-cluster.fullname" . }}
+  {{- with .Values.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  labels:
+  {{- include "cnpg-cluster.labels" . | nindent 4 }}
+  {{- with .Values.additionalLabels }}
+    {{ toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  # https://github.com/cloudnative-pg/postgres-containers/pkgs/container/postgresql
+  imageName: {{ .Values.imageName }}
+
+  instances: {{ .Values.instances }}
+
+  {{- if not (empty .Values.affinity) }}
+  affinity: {{ .Values.affinity | toYaml | nindent 4 }}
+  {{- end }}
+
+  # https://cloudnative-pg.io/documentation/current/resource_management/
+  resources: {{ .Values.resources | toYaml | nindent 4 }}
+  # env:
+  #   - name: AWS_REQUEST_CHECKSUM_CALCULATION
+  #     value: when_required
+  #   - name: AWS_RESPONSE_CHECKSUM_VALIDATION
+  #     value: when_required
+  #   - name: AWS_REGION
+  #     value: auto            
+  #   - name: AWS_EC2_METADATA_DISABLED
+  #     value: "true"
+  #   - name: AWS_S3_FORCE_PATH_STYLE
+  #     value: "true"  
+  monitoring:
+    enablePodMonitor: {{ and .Values.monitoring.enabled .Values.monitoring.podMonitor.enabled }}
+    disableDefaultQueries: {{ .Values.monitoring.disableDefaultQueries }}
+    {{- if not (empty .Values.monitoring.customQueries) }}
+    customQueriesConfigMap:
+      - name: {{ include "cnpg-cluster.fullname" . }}-monitoring
+        key: custom-queries
+    {{- end }}
+    {{- if not (empty .Values.monitoring.customQueriesSecret) }}
+    {{- with .Values.monitoring.customQueriesSecret }}
+    customQueriesSecret:
+      {{- toYaml . | nindent 6 }}
+    {{ end }}
+    {{- end }}
+    {{- if not (empty .Values.monitoring.podMonitor.relabelings) }}
+    {{- with .Values.monitoring.podMonitor.relabelings }}
+    podMonitorRelabelings:
+      {{- toYaml . | nindent 6 }}
+    {{ end }}
+    {{- end }}
+    {{- if not (empty .Values.monitoring.podMonitor.metricRelabelings) }}
+    {{- with .Values.monitoring.podMonitor.metricRelabelings }}
+    podMonitorMetricRelabelings:
+      {{- toYaml . | nindent 6 }}
+    {{ end }}
+    {{- end }}
+  postgresql:
+    parameters:
+      shared_buffers: {{ include "cnpg-cluster.sharedBuffersMB" . }}MB
+      work_mem: {{ include "cnpg-cluster.workMemMB" . }}MB
+      maintenance_work_mem: {{ include "cnpg-cluster.maintenanceWorkMemMB" . }}MB
+      effective_cache_size: {{ include "cnpg-cluster.effectiveCacheSizeMB" . }}MB
+
+      # Connection settings
+      max_connections: {{ include "cnpg-cluster.maxConnections" . | quote }}
+
+      # Query planner - optimized for SSD storage
+      random_page_cost: {{ include "cnpg-cluster.randomPageCost" . | quote }}
+      effective_io_concurrency: {{ include "cnpg-cluster.effectiveIOConcurrency" . | quote }}
+
+      # WAL settings for better write performance
+      wal_buffers: "16MB"
+      min_wal_size: "1GB"
+      max_wal_size: "4GB"
+
+      # Checkpoint tuning
+      checkpoint_completion_target: "0.9"
+
+      # Logging for PostgREST query analysis
+      log_min_duration_statement: "1000"  # Log slow queries > 1s
+      log_line_prefix: "%m [%p] %q%u@%d "
+
+      # Statistics for query optimization
+      default_statistics_target: "100"
+
+      # Parallel query settings (if sufficient CPU)
+      max_parallel_workers_per_gather: "2"
+      max_parallel_workers: "4"
+
+    {{ if (gt (.Values.instances | int) 1) }}
+    # Synchronous replication for data durability
+    synchronous:
+      dataDurability: required
+      method: any
+      number: 1
+    {{- end }}
+
+  # https://cloudnative-pg.io/documentation/current/storage/
+  storage:
+    storageClass: {{ .Values.storageClass }}
+    size: {{ .Values.storageSize }}
+
+  {{ if eq .Values.recovery.mode "fresh" -}}
+  # https://cloudnative-pg.io/documentation/current/bootstrap/#bootstrap-an-empty-cluster-initdb
+  bootstrap:
+    initdb:
+      database: app
+      encoding: UTF8
+      localeCType: C
+      localeCollate: C
+      owner: app
+      secret:
+        name: {{ .Values.SuperuserSecret | default (printf "%s-superuser-secret" (include "cnpg-cluster.fullname" .)) }}
+  {{- end }}
+
+  {{- if or (eq .Values.recovery.mode "production") (eq .Values.recovery.mode "recovery") }}
+  # https://cloudnative-pg.io/documentation/current/recovery/#pitr-from-an-object-store
+  bootstrap:
+    recovery:
+      source: recovery-object-store
+      {{- if not (empty .Values.recovery.target) }}
+      recoveryTarget: {{ .Values.recovery.target | toYaml | nindent 8 }}
+      {{- end }}
+  {{- end }}
+  enableSuperuserAccess: true
+  superuserSecret:
+    name: {{ .Values.SuperuserSecret | default (printf "%s-superuser-secret" (include "cnpg-cluster.fullname" .)) }}
+  # https://cloudnative-pg.io/plugin-barman-cloud/docs/usage/#restoring-a-cluster
+  externalClusters:
+    # Recovery Object Store (pull, read-only)
+    - name: recovery-object-store
+      plugin:
+        name: barman-cloud.cloudnative-pg.io
+        enabled: true
+        isWALArchiver: false
+        parameters:
+          barmanObjectName: {{ include "cnpg-cluster.fullname" . }}-object-store
+          serverName: {{ .Values.recovery.timeline.reader | default .Values.recovery.timeline.writer | default (include "cnpg-cluster.now" .) | quote }}
+
+  {{- if .Values.backup.enabled }}
+  # https://cloudnative-pg.io/plugin-barman-cloud/docs/usage/#configuring-wal-archiving
+  plugins:
+    # Backup Object Store (push, read-write)
+    - name: barman-cloud.cloudnative-pg.io
+      enabled: true
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: {{ include "cnpg-cluster.fullname" . }}-object-store
+        serverName: {{ .Values.recovery.timeline.writer | default (include "cnpg-cluster.now" .) | quote }}
+  {{- end }}
+
+  managed:
+    roles: {{ toYaml (.Values.managedRoles | default list) | nindent 6 }}

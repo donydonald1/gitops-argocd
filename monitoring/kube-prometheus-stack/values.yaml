@@ -1,0 +1,316 @@
+kube-prometheus-stack:
+  cleanPrometheusOperatorObjectNames: true
+  customRules:
+    KubePersistentVolumeFillingUp:
+      #      for: 1h
+      severity: "warning"
+  grafana:
+    enabled: false
+    # forceDeployDatasources: true
+    additionalDataSources:
+    - name: Loki
+      type: loki
+      url: http://loki.logging:3100
+
+  prometheusOperator:
+    admissionWebhooks:
+      enabled: true
+
+      annotations:
+        argocd.argoproj.io/hook: PreSync
+        argocd.argoproj.io/hook-delete-policy: HookSucceeded
+
+      patch:
+        annotations:
+          argocd.argoproj.io/hook: PreSync
+          argocd.argoproj.io/hook-delete-policy: HookSucceeded
+
+      mutatingWebhookConfiguration:
+        annotations:
+          argocd.argoproj.io/hook: PreSync
+
+      validatingWebhookConfiguration:
+        annotations:
+          argocd.argoproj.io/hook: PreSync
+  prometheus:
+    thanosService:
+      enabled: true
+    thanosServiceMonitor:
+      enabled: true
+    prometheusSpec:
+      serviceMonitorSelector: {}
+      externalUrl: https://prometheus.prod.techsecom.io
+      # serviceMonitorSelectorNilUsesHelmValues: false
+      # podMonitorSelectorNilUsesHelmValues: false
+      # probeSelectorNilUsesHelmValues: false
+      # ruleSelectorNilUsesHelmValues: false
+      enableRemoteWriteReceiver: true
+      enableAdminAPI: true
+      walCompression: true
+      replicaExternalLabelName: "replica"
+      replicas: 2
+      thanos:
+        baseImage: quay.io/thanos/thanos
+        version: v0.39.2
+      enableFeatures:
+      - auto-gomemlimit
+      - memory-snapshot-on-shutdown
+      - new-service-discovery-manager
+      retention: 14d
+      retentionSize: 15GB
+      externalLabels:
+        cluster: prod
+      resources:
+        # requests:
+        #   cpu: 1000m
+        limits:
+          memory: 2500Mi
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            storageClassName: nfs-csi
+            resources:
+              requests:
+                storage: 60Gi
+      # remoteWrite:
+      # - url: "http://thanos-receive:19291/api/v1/receive"
+      #   name: thanos-receiver
+      #   # enableHttp2: true
+      # additionalRulesForClusterRole:
+      # - apiGroups: [ "" ]
+      #   resources: [ "services/k6-operator-controller-manager-metrics-service" ]
+      #   verbs: [ "get", "list", "watch" ]
+    ingress:
+      enabled: true
+      pathType: Prefix
+      ingressClassName: nginx
+      annotations:
+        kubernetes.io/ingress.class: "nginx"
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+        cert-manager.io/revision-history-limit: "3"
+        external-dns.alpha.kubernetes.io/enabled: "true"
+        cert-manager.io/duration: "2160h"
+        cert-manager.io/renew-before: "720h"
+
+      hosts: [ prometheus.prod.techsecom.io ]
+      tls:
+      - hosts:
+        - prometheus.prod.techsecom.io
+        secretName: prom-server-cert-tls
+
+    server:
+      additionalScrapeConfigs:
+      - job_name: opencost
+        honor_labels: true
+        scrape_interval: 1m
+        scrape_timeout: 10s
+        metrics_path: /metrics
+        scheme: http
+        dns_sd_configs:
+        - names:
+          - opencost.opencost
+          type: "A"
+          port: 9003
+      - job_name: 'kubernetes-pods'
+        kubernetes_sd_configs:
+        - role: pod
+        relabel_configs:
+        - source_labels: [ __meta_kubernetes_pod_annotation_prometheus_io_scrape ]
+          action: keep
+          regex: true
+        - source_labels: [ __meta_kubernetes_pod_annotation_prometheus_io_path ]
+          action: replace
+          target_label: __metrics_path__
+          regex: (.+)
+        - source_labels: [ __address__, __meta_kubernetes_pod_annotation_prometheus_io_port ]
+          action: replace
+          regex: ([^:]+)(?::\d+)?;(\d+)
+          replacement: $1:$2
+          target_label: __address__
+        - action: labelmap
+          regex: __meta_kubernetes_pod_label_(.+)
+        - source_labels: [ __meta_kubernetes_namespace ]
+          action: replace
+          target_label: kubernetes_namespace
+        - source_labels: [ __meta_kubernetes_pod_name ]
+          action: replace
+          target_label: kubernetes_pod_name
+      retention: 30d
+  alertmanager:
+    enabled: true
+    config:
+      global:
+        resolve_timeout: 5m
+      route:
+        group_by: [ 'alertname', 'job' ]
+        group_wait: 45s
+        group_interval: 10m
+        repeat_interval: 12h
+        receiver: "msteams"
+        routes:
+        - receiver: "null" # quote
+          matchers:
+          - alertname =~ "Watchdog"
+        - receiver: "null" # quote
+          matchers:
+          - alertname =~ "InfoInhibitor"
+        - receiver: "msteams"
+          match:
+            severity: critical
+          continue: true
+        - receiver: "msteams"
+      inhibit_rules:
+      - source_matchers:
+        - severity = "critical"
+        target_matchers:
+        - severity = "warning"
+        equal: [ "alertname", "namespace" ]
+      - target_match_re:
+          alertname: '.+Overcommit'
+        source_match:
+          alertname: 'Watchdog'
+        equal: [ 'prometheus' ]
+      receivers:
+      - name: "null"
+      - name: "msteams"
+        msteams_configs:
+        - send_resolved: true
+          webhook_url: <path:secret/data/msteams#webhook-url>
+          title: |-
+            🚨 [{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] 
+            (Cluster: {{ .CommonLabels.cluster }})
+
+            **📢 Alert Notification - Techsecoms Monitoring**
+
+            {{ if eq .Status "firing" }}🔥 **Action Required Immediately!** 🔥{{ else }}✅ **Issue Resolved** ✅{{ end }}
+
+          text: |-
+            **🔔 Alert Details:**
+            {{ range $index, $alert := .Alerts -}}{{ if $index }}---{{ end }}
+            {{ if $alert.Labels.alertname }}
+            **🆘 Alert Name**: {{ $alert.Labels.alertname }}
+            {{ end }}
+
+            **🛑 Labels:**
+            {{ if $alert.Labels.severity }}
+            - **Severity**: {{ $alert.Labels.severity }}
+            {{ end }}
+            {{ if $alert.Labels.instance }}
+            - **Instance**: {{ $alert.Labels.instance }}
+            {{ end }}
+            {{ if $alert.Labels.namespace }}
+            - **Namespace**: {{ $alert.Labels.namespace }}
+            {{ end }}
+            {{ if $alert.Labels.pod }}
+            - **Pod**: {{ $alert.Labels.pod }}
+            {{ end }}
+
+            **📄 Annotations:**
+            {{ if $alert.Annotations.description }}
+            - **Description**: {{ $alert.Annotations.description }}
+            {{ end }}
+            {{ if $alert.Annotations.summary }}
+            - **Summary**: {{ $alert.Annotations.summary }}
+            {{ end }}
+
+            {{ if $alert.GeneratorURL }}
+            🔗 **Source**: [View in AlertManager]({{ $alert.GeneratorURL }})
+            {{ end }}
+
+            **📌 Additional Notes:**
+            - Ensure the affected service is reviewed immediately.
+            - Escalate to the **on-call team** if required.
+            - Check related metrics and logs for further debugging.
+
+            {{ end }}
+    alertmanagerSpec:
+      replicas: 1
+      # podAntiAffinity: hard
+
+      storage:
+        volumeClaimTemplate:
+          spec:
+            storageClassName: nfs-csi
+            resources:
+              requests:
+                storage: 10Gi
+      tolerations:
+      - key: "arm64"
+        operator: "Exists"
+  kubeProxy:
+    enabled: false
+
+  kubelet:
+    enabled: true
+    serviceMonitor:
+      metricRelabelings:
+      # Drop high cardinality labels
+      - action: labeldrop
+        regex: (uid)
+      - action: labeldrop
+        regex: (id|name)
+      - action: drop
+        sourceLabels: [ "__name__" ]
+        regex: (rest_client_request_duration_seconds_bucket|rest_client_request_duration_seconds_sum|rest_client_request_duration_seconds_count)
+
+  kubeApiServer:
+    enabled: true
+    serviceMonitor:
+      metricRelabelings:
+      # Drop high cardinality labels
+      - action: drop
+        sourceLabels: [ "__name__" ]
+        regex: (apiserver|etcd|rest_client)_request(|_sli|_slo)_duration_seconds_bucket
+      - action: drop
+        sourceLabels: [ "__name__" ]
+        regex: (apiserver_response_sizes_bucket|apiserver_watch_events_sizes_bucket)
+
+  kubeControllerManager:
+    enabled: true
+
+  kubeScheduler:
+    enabled: true
+
+  kube-state-metrics:
+    fullnameOverride: kube-state-metrics
+    metricLabelsAllowlist:
+    - pods=[*]
+    - deployments=[*]
+    - persistentvolumeclaims=[*]
+    prometheus:
+      monitor:
+        enabled: true
+        relabelings:
+        - action: replace
+          regex: (.*)
+          replacement: $1
+          sourceLabels: [ "__meta_kubernetes_pod_node_name" ]
+          targetLabel: kubernetes_node
+  nodeExporter:
+    enabled: true
+
+  prometheus-node-exporter:
+    fullnameOverride: node-exporter
+    prometheus:
+      monitor:
+        enabled: true
+        relabelings:
+        - action: replace
+          regex: (.*)
+          replacement: $1
+          sourceLabels: [ "__meta_kubernetes_pod_node_name" ]
+          targetLabel: kubernetes_node
+
+# Configure components of the External Secrets Operator (ESO).
+eso:
+  # -- Install components of the ESO.
+  enabled: true
+  # -- Defines provider type. One of `aws` or `generic`.
+  type: "vault"
+  # -- Defines Secret Store name.
+  secretStoreName: "vault"
+  # -- Value name in AWS ParameterStore, AWS SecretsManager or other Secret Store.
+  secretName: "secret/grafana"
+
+# oidc:
+#   enabled: false

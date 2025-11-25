@@ -1,0 +1,39 @@
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: {{ include "cnpg-cluster.fullname" . }}-object-store
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  retentionPolicy: 15d
+  instanceSidecarConfiguration:
+    env:
+    - name: AWS_REQUEST_CHECKSUM_CALCULATION
+      value: when_required
+    - name: AWS_RESPONSE_CHECKSUM_VALIDATION
+      value: when_required
+    - name: AWS_REGION
+      value: auto            
+    - name: AWS_EC2_METADATA_DISABLED
+      value: "true"
+    - name: AWS_S3_FORCE_PATH_STYLE
+      value: "true"  
+    # optional extras:
+    # retentionPolicyIntervalSeconds: 1800
+    # resources:
+    #   requests:
+    #     memory: "64Mi"
+    #     cpu: "250m"
+  configuration:
+    endpointURL: {{ .Values.objectStore.endpoint }}
+    destinationPath: "s3://{{ .Values.objectStore.bucketName }}/{{ .Release.Name }}/{{ include "cnpg-cluster.fullname" . }}-backups"
+    s3Credentials:
+      accessKeyId:
+        name: {{ .Values.objectStore.s3CredentialsSecretName }}
+        key: {{ .Values.objectStore.s3AccessKeyIdSecretKey }}
+      secretAccessKey:
+        name: {{ .Values.objectStore.s3CredentialsSecretName }}
+        key: {{ .Values.objectStore.s3SecretAccessKeySecretKey }}
+    wal:
+      maxParallel: 8
+      compression: gzip

@@ -1,0 +1,446 @@
+loki-stack:
+  loki:
+    auth_enabled: false
+
+    commonConfig:
+      path_prefix: /var/loki
+      replication_factor: 3
+
+    limitsConfig:
+      retention_period: 720h # 30 days
+      allow_structured_metadata: true
+      split_queries_by_interval: 15m
+      reject_old_samples: false
+      reject_old_samples_max_age: 168h
+      enforce_metric_name: false
+      ingestion_rate_mb: 16
+      ingestion_burst_size_mb: 100
+      volume_enabled: true
+
+    compactor:
+      working_directory: /tmp/compactor
+      shared_store: s3
+      compaction_interval: 10m
+      retention_enabled: true
+      retention_delete_delay: 2h
+      retention_delete_worker_count: 50
+    querier:
+      max_concurrent: 2048
+    limits_config:
+      retention_period: 768h
+      split_queries_by_interval: 30m
+    frontend:
+      max_outstanding_per_tenant: 2048
+
+    config:
+      schema_config:
+        configs:
+        - from: "2025-04-01"
+          store: boltdb-shipper
+          object_store: s3
+          schema: v11
+          index:
+            prefix: loki_index_
+            period: 24h
+
+      # rulerConfig:
+      #   alertmanager_url: http://kube-prometheus-stack-alertmanager.monitoring.svc.cluster.local:9093
+      #   ring:
+      #     kvstore:
+      #       store: inmemory
+      #   enable_api: true
+      #   enable_alertmanager_v2: true
+
+      storage_config:
+        aws:
+          bucketnames: loki-stack
+          s3forcepathstyle: true
+          insecure: true
+          endpoint: http://minio.minio.svc.cluster.local:9000
+          secret_access_key: <path:secret/data/minio#postgres_password>
+          access_key_id: <path:secret/data/minio#postgres_user>
+          region: us-east-1
+        boltdb_shipper:
+          shared_store: s3
+          cache_ttl: 24h
+
+      ruler:
+        storage:
+          type: s3
+          s3:
+            bucketnames: loki-stack
+            s3forcepathstyle: true
+            insecure: true
+            endpoint: http://minio.minio.svc.cluster.local:9000
+            secret_access_key: <path:secret/data/minio#postgres_password>
+            access_key_id: <path:secret/data/minio#postgres_user>
+            region: us-east-1
+        alertmanager_url: http://kube-prometheus-stack-alertmanager.monitoring.svc.cluster.local:9093
+        ring:
+          kvstore:
+            store: inmemory
+        enable_api: true
+        enable_alertmanager_v2: true
+
+    serviceAccount:
+      create: true
+      annotations:
+        eks.amazonaws.com/role-arn: arn:aws:iam::682033478562:role/kosmos-observability-sbx-wl-01-s3-role
+
+  promtail:
+    enabled: true
+    config:
+      logLevel: info
+      serverPort: 3101
+      clients:
+      - url: http://{{ .Release.Name }}.{{ .Release.Namespace }}:3100/loki/api/v1/push
+        backoff_config:
+          min_period: 500ms
+          max_period: 5m
+          max_retries: 10
+        batchwait: 1s
+        batchsize: 1048576 # 1MB
+        timeout: 10s
+
+      snippets:
+        pipelineStages:
+        - cri: {}
+        - docker: {}
+        - cri: {}
+        - match:
+            selector: '{app=~".+"} |~ "(error|Error|ERROR)"'
+            stages:
+            - metrics:
+                error_total:
+                  type: Counter
+                  description: "Total number of error logs"
+                  source: log
+                  config:
+                    action: inc
+        # - labelallow:
+        #   - "namespace"
+        #   - "app"
+        #   - "pod"
+        #   - "host"
+        scrapeConfigs: |
+          - job_name: kubernetes-pods
+            kubernetes_sd_configs:
+              - role: pod
+            relabel_configs:
+              # Add node name
+              - action: replace
+                source_labels: [__meta_kubernetes_pod_node_name]
+                target_label: node_name
+              
+              # Add namespace
+              - action: replace
+                source_labels: [__meta_kubernetes_namespace]
+                target_label: namespace
+              
+              # Add pod name
+              - action: replace
+                source_labels: [__meta_kubernetes_pod_name]
+                target_label: pod
+              
+              # Add container name
+              - action: replace
+                source_labels: [__meta_kubernetes_pod_container_name]
+                target_label: container
+              
+              # Add app label if exists
+              - action: replace
+                source_labels: [__meta_kubernetes_pod_label_app]
+                target_label: app
+                
+              # Add service label if exists
+              - action: replace
+                source_labels: [__meta_kubernetes_pod_label_service]
+                target_label: service
+              
+              # Set the correct log path - FIXED
+              - action: replace
+                replacement: /var/log/pods/*$1/*.log
+                separator: /
+                source_labels: [__meta_kubernetes_pod_uid, __meta_kubernetes_pod_container_name]
+                target_label: __path__
+            
+            pipeline_stages:
+              # Handle different log formats
+              - match:
+                  selector: '{stream="stdout"}'
+                  stages:
+                    # Try to parse as JSON first (for structured logs)
+                    - json:
+                        expressions:
+                          log: log
+                          message: message
+                          level: level
+                          timestamp: timestamp
+                          time: time
+                        drop_malformed: true
+                    
+                    # If JSON parsing fails, treat as plain text
+                    - output:
+                        source: log
+              
+              # Handle stderr separately
+              - match:
+                  selector: '{stream="stderr"}'
+                  stages:
+                    - output:
+                        source: message
+              
+              # Extract log level from unstructured logs
+              - regex:
+                  expression: '(?i)(?P<extracted_level>debug|info|warn|warning|error|fatal|trace)'
+                  source: message
+              
+              # Add extracted level as label
+              - labels:
+                  extracted_level:
+              
+              # Parse timestamps if available
+              - match:
+                  selector: '{extracted_level=~".+"}'
+                  stages:
+                    - timestamp:
+                        source: timestamp
+                        format: RFC3339Nano
+                        fallback_formats:
+                          - "2006-01-02 15:04:05"
+                          - "2006-01-02T15:04:05Z"
+                          - "2006-01-02T15:04:05.999999999Z07:00"
+        extraScrapeConfigs: |
+          - job_name: journal
+            journal:
+              path: /var/log/journal
+              max_age: 12h
+              labels:
+                job: systemd-journal
+            relabel_configs:
+              - source_labels: ['__journal__systemd_unit']
+                target_label: 'unit'
+              - source_labels: ['__journal__hostname']
+                target_label: 'hostname'
+              - source_labels: ['__journal__hostname']   # <-- add this
+                target_label: 'host'                     # unify label name
+          - job_name: custom-config
+            pipeline_stages:
+            - docker: {}
+            - json:
+                expressions:
+                  timestamp: timestamp
+                  level: level
+                  thread: thread
+                  class: logger
+                  message: message
+                  context: context
+            - labels:
+                level:
+                class:
+                context:
+                thread:
+            - timestamp:
+                format: RFC3339
+                source: timestamp
+            - output:
+                source: message
+            kubernetes_sd_configs:
+            - role: pod
+            relabel_configs:
+            - source_labels:
+              - __meta_kubernetes_pod_controller_name
+              regex: ([0-9a-z-.]+?)(-[0-9a-f]{8,10})?
+              action: replace
+              target_label: __tmp_controller_name
+            - source_labels:
+              - __meta_kubernetes_pod_label_app_kubernetes_io_name
+              - __meta_kubernetes_pod_label_app
+              - __tmp_controller_name
+              - __meta_kubernetes_pod_name
+              regex: ^;*([^;]+)(;.*)?$
+              action: replace
+              target_label: app
+            - source_labels:
+              - __meta_kubernetes_pod_label_app_kubernetes_io_instance
+              - __meta_kubernetes_pod_label_release
+              regex: ^;*([^;]+)(;.*)?$
+              action: replace
+              target_label: instance
+            - source_labels:
+              - __meta_kubernetes_pod_label_app_kubernetes_io_component
+              - __meta_kubernetes_pod_label_component
+              regex: ^;*([^;]+)(;.*)?$
+              action: replace
+              target_label: component
+            - action: replace
+              source_labels:
+              - __meta_kubernetes_pod_node_name
+              target_label: node_name
+            - action: replace
+              source_labels:
+              - __meta_kubernetes_namespace
+              target_label: namespace
+            - action: replace
+              replacement: $1
+              separator: /
+              source_labels:
+              - namespace
+              - app
+              target_label: job
+            - action: replace
+              source_labels:
+              - __meta_kubernetes_pod_name
+              target_label: pod
+            - action: replace
+              source_labels:
+              - __meta_kubernetes_pod_container_name
+              target_label: container
+            - action: replace
+              replacement: /var/log/pods/*$1/*.log
+              separator: /
+              source_labels:
+              - __meta_kubernetes_pod_uid
+              - __meta_kubernetes_pod_container_name
+              target_label: __path__
+            - action: replace
+              regex: true/(.*)
+              replacement: /var/log/pods/*$1/*.log
+              separator: /
+              source_labels:
+              - __meta_kubernetes_pod_annotationpresent_kubernetes_io_config_hash
+              - __meta_kubernetes_pod_annotation_kubernetes_io_config_hash
+              - __meta_kubernetes_pod_container_name
+              target_label: __path__
+          - job_name: syslog
+            syslog:
+              listen_address: 0.0.0.0:{{ .Values.extraPorts.syslog.containerPort }}
+              label_structured_data: true
+              labels:
+                job: "syslog"
+            relabel_configs:
+              - source_labels: ['__syslog_message_hostname']
+                target_label: 'host'
+              - source_labels: ['__syslog_message_app_name']
+                target_label: 'app'
+
+          - job_name: glueops-nginx-with-host
+            pipeline_stages:
+            - cri: {}
+            - json:
+                expressions:
+                  http_host: http_host
+            - labels:
+                http_host: http_host
+            kubernetes_sd_configs:
+            - role: pod
+            relabel_configs:
+            - source_labels:
+              - __meta_kubernetes_pod_controller_name
+              regex: ([0-9a-z-.]+?)(-[0-9a-f]{8,10})?
+              action: replace
+              target_label: __tmp_controller_name
+            - source_labels:
+              - __meta_kubernetes_pod_label_app_kubernetes_io_name
+              - __meta_kubernetes_pod_label_app
+              - __tmp_controller_name
+              - __meta_kubernetes_pod_name
+              regex: ^;*([^;]+)(;.*)?$
+              action: replace
+              target_label: app
+            - source_labels:
+              - __meta_kubernetes_pod_label_app_kubernetes_io_instance
+              - __meta_kubernetes_pod_label_release
+              regex: ^;*([^;]+)(;.*)?$
+              action: replace
+              target_label: instance
+            - source_labels:
+              - __meta_kubernetes_pod_label_app_kubernetes_io_component
+              - __meta_kubernetes_pod_label_component
+              regex: ^;*([^;]+)(;.*)?$
+              action: replace
+              target_label: component
+            - action: replace
+              source_labels:
+              - __meta_kubernetes_pod_node_name
+              target_label: node_name
+            - action: replace
+              source_labels:
+              - __meta_kubernetes_namespace
+              target_label: namespace
+            - action: replace
+              replacement: $1
+              separator: /
+              source_labels:
+              - namespace
+              - app
+              target_label: job
+            - action: replace
+              source_labels:
+              - __meta_kubernetes_pod_name
+              target_label: pod
+            - action: replace
+              source_labels:
+              - __meta_kubernetes_pod_container_name
+              target_label: container
+            - action: replace
+              replacement: /var/log/pods/*nginx-controller*/*/*.log
+              separator: /
+              source_labels:
+              - __meta_kubernetes_pod_uid
+              - __meta_kubernetes_pod_container_name
+              target_label: __path__
+            - action: replace
+              regex: true/(.*)
+              replacement: /var/log/pods/*nginx-controller*/*/*.log
+              separator: /
+              source_labels:
+              - __meta_kubernetes_pod_annotationpresent_kubernetes_io_config_hash
+              - __meta_kubernetes_pod_annotation_kubernetes_io_config_hash
+              - __meta_kubernetes_pod_container_name
+              target_label: __path__
+            - action: replace
+              target_label: glueops_job_name
+              replacement: nginx-with-host
+            - action: keep
+              source_labels:
+              - __meta_kubernetes_pod_name
+              regex: ".*nginx-controller.*"
+    extraVolumes:
+    - name: journal
+      hostPath:
+        path: /var/log/journal
+    - name: audit-logs
+      hostPath:
+        path: /var/log/audit
+    - name: rancher-audit-logs
+      hostPath:
+        path: /var/log/rancher
+    extraVolumeMounts:
+    - name: journal
+      mountPath: /var/log/journal
+      readOnly: true
+
+    - name: audit-logs
+      mountPath: /var/log/audit
+      readOnly: true
+
+    - name: rancher-audit-logs
+      mountPath: /var/log/rancher
+      readOnly: true
+    serviceMonitor:
+      enabled: true
+    extraPorts:
+      syslog:
+        name: tcp-syslog
+        containerPort: 1514
+        protocol: TCP
+        service:
+          type: ClusterIP
+          port: 1514
+          # loadBalancerIP: 192.168.100.51
+          # externalTrafficPolicy: Local
+          # extraVolumeMounts:
+          # - name: containerd-logs
+          #   mountPath: /var/log/pods
+          #   readOnly: true

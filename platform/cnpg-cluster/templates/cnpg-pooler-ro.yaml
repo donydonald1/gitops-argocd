@@ -1,0 +1,30 @@
+{{- $poolerConn := include "cnpg-cluster.poolerConnections" . | int }}
+{{- if and .Values.pooler.ro.enabled (gt (.Values.pooler.ro.instances | int) 0) (gt $poolerConn 0) }}
+apiVersion: postgresql.cnpg.io/v1
+kind: Pooler
+metadata:
+  name: {{ include "cnpg-cluster.fullname" . }}-pooler-ro
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  cluster:
+    name: {{ include "cnpg-cluster.fullname" . }}
+
+  instances: {{ .Values.pooler.ro.instances }}
+  type: ro
+
+  pgbouncer:
+    poolMode: {{ .Values.pooler.ro.mode }}
+    parameters:
+      max_client_conn: "{{ include "cnpg-cluster.pooler.maxClientConn" . }}"
+      default_pool_size: "{{ include "cnpg-cluster.pooler.defaultPoolSize" . }}"
+      max_db_connections: "{{ include "cnpg-cluster.pooler.maxDbConnections" . }}"
+      server_idle_timeout: "60"
+      server_reset_query: "DISCARD ALL"
+      ignore_startup_parameters: "extra_float_digits"
+  template:
+    spec:
+      containers:
+        - name: pgbouncer
+          resources: {{ .Values.poolerResources | toYaml | nindent 12 }}
+{{- end }}

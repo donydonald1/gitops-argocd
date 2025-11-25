@@ -1,0 +1,139 @@
+imageName: ghcr.io/cloudnative-pg/postgresql:17.6
+
+instances: 3
+computeSizeFactor: 4
+
+affinity: {}
+
+# PostgreSQL pod resources
+resources:
+  requests:
+    memory: 512Mi
+    cpu: 300m
+  limits:
+    memory: 1000Mi
+    cpu: 500m
+
+# Pooler pod resources
+poolerResources:
+  requests:
+    memory: 128Mi
+    cpu: 60m
+  limits:
+    memory: 512Mi
+    cpu: 260m
+annotations:
+  argocd.argoproj.io/sync-wave: "-1"
+  argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+# Connection allocation strategy
+# Total max_connections will be calculated from memory, then distributed:
+connections:
+  # Reserved connections: CNPG replication, monitoring, migrations, psql, pgAdmin, maintenance
+  # Includes superuser access, background workers, and emergency access
+  # Recommended minimum: 10
+  reserved: 10
+  # Pooler connections: For application connections via PgBouncer
+  # Set to 0 to disable pooler, set to "auto" to allocate remaining connections
+  # Cannot be "auto" if direct is also "auto"
+  pooler: auto
+  # Direct connections: Uses internal connection pooling
+  # Set to "auto" to allocate remaining connections after reserved and pooler
+  # Cannot be "auto" if pooler is also "auto"
+  # Automatically calculated as: max_connections - reserved - pooler
+  # direct: auto
+
+storageClass: longhorn
+storageSize: 50Gi
+maxConnections: 2000
+objectStore:
+  endpoint: http://minio.minio.svc.cluster.local:9000
+  bucketName: postgres
+  s3CredentialsSecretName: aws-credentials
+  s3AccessKeyIdSecretKey: accessKeyId
+  s3SecretAccessKeySecretKey: secretAccessKey
+
+backup:
+  enabled: true
+  schedule: ""
+SuperuserSecret: postgres-superuser-secret
+recovery:
+  # ========================================================================
+  # DISASTER RECOVERY MODES
+  # ========================================================================
+  #
+  # Mode 1: "fresh" - Create new cluster with fresh data
+  # Mode 2: "production" - Use recovery bootstrap (prevents fresh cluster creation)
+  # Mode 3: "recovery" - Recover from specific timeline
+  #
+  mode: "fresh" # Options: fresh, production, recovery
+  # https://cloudnative-pg.io/documentation/current/recovery/#recovery-targets
+  target: {}
+  # Timeline configuration
+  timeline:
+    # Source reader timeline (set to writer timeline after successful recovery)
+    # This makes future recoveries easier by avoiding timeline searches
+    reader: ""
+    # Current writer timeline (update this for disaster recovery)
+    # Format: ISO 8601 timestamp (e.g., "2025-09-23T14:59:00+08:00")
+    writer: "2025-10-03T14:59:00+08:00"
+
+monitoring:
+  enabled: true
+  podMonitor:
+    enabled: true
+    # relabelings: []
+
+    # metricRelabelings: []
+  prometheusRule:
+    enabled: true
+    # excludeRules: []
+
+
+managedRoles:
+- name: grafana
+  ensure: present
+  login: true
+  createrole: true
+  bypassrls: true
+  passwordSecret:
+    name: grafana-user-secret
+
+- name: wikijs
+  ensure: present
+  login: true
+  createrole: true
+  bypassrls: true
+  passwordSecret:
+    name: wikijs-user-secret
+
+- name: harbor
+  ensure: present
+  login: true
+  createrole: true
+  bypassrls: true
+  passwordSecret:
+    name: harbor-user-secret
+
+- name: gitlab
+  ensure: present
+  login: true
+  createrole: true
+  bypassrls: true
+  passwordSecret:
+    name: gitlab-user-secret
+
+pooler:
+  maxDbConnections: 2000
+  maxClientConn: 2000
+  rw:
+    enabled: true
+    instances: 1
+    mode: transaction
+    maxDbConnections: 2000
+  ro:
+    enabled: true
+    instances: 1
+    mode: transaction
+    maxDbConnections: 2000
+postgresql:
+  maxConnectionsOverride: 2000
