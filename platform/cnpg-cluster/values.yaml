@@ -1,4 +1,4 @@
-imageName: ghcr.io/cloudnative-pg/postgresql:17.6
+imageName: ghcr.io/cloudnative-pg/postgresql:18.1
 
 instances: 3
 computeSizeFactor: 4
@@ -11,17 +11,17 @@ resources:
     memory: 512Mi
     cpu: 300m
   limits:
-    memory: 1000Mi
-    cpu: 500m
+    memory: 2Gi
+    cpu: 1000m
 
 # Pooler pod resources
 poolerResources:
   requests:
-    memory: 128Mi
-    cpu: 60m
+    memory: 250Mi
+    cpu: 300m
   limits:
-    memory: 512Mi
-    cpu: 260m
+    memory: 800Mi
+    cpu: 500m
 annotations:
   argocd.argoproj.io/sync-wave: "-1"
   argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
@@ -43,7 +43,7 @@ connections:
   # direct: auto
 
 storageClass: longhorn
-storageSize: 50Gi
+storageSize: 300Gi
 maxConnections: 2000
 objectStore:
   endpoint: http://minio.minio.svc.cluster.local:9000
