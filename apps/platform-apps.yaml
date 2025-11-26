@@ -13,9 +13,9 @@ spec:
       - name: harbor-ha
         namespace: harbor
         serverSideApply: true
-      # helm:
-      #   values:
-      #   - values.yaml
+        helm:
+          values:
+          - values.yaml
       # - name: velero
       #   namespace: velero
       #   serverSideApply: true
