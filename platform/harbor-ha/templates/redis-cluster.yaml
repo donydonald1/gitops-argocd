@@ -14,6 +14,10 @@ spec:
         serviceVersion: "8.2.1"
         disableExporter: false
         replicas: 2
+        services:
+        - name: redis-advertised
+          serviceType: NodePort
+          podService: true
         systemAccounts:
         - name: default
           secretRef:
@@ -37,6 +41,10 @@ spec:
                         storage: 20Gi
       - name: redis-sentinel
         replicas: 3
+        services:
+        - name: redis-advertised
+          serviceType: NodePort
+          podService: true
         systemAccounts:
         - name: default
           secretRef:
