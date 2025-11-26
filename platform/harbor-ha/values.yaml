@@ -164,8 +164,8 @@ harbor:
       addr: "redis-replication-redis-redis-advertised-0.harbor.svc.cluster.local:6379"
       # https://github.com/goharbor/harbor-helm/issues/1352
       # existingSecret: "redis-creds"
-      username: <path:secret/data/redis#redis-username>
-      password: <path:secret/data/redis#redis-password>
+      username: "<path:secret/data/redis#redis-username>"
+      password: "<path:secret/data/redis#redis-password>"
 
   cache:
     enabled: true
