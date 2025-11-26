@@ -1,7 +1,7 @@
 apiVersion: v2
-name: harbor
+name: harbor-ha
 description: A Helm chart for Harbor with HA
-version: 1.17.2
+version: 0.0.0
 dependencies:
 - name: harbor
   version: 1.18.0
