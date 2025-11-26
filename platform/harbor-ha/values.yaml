@@ -175,13 +175,13 @@ harbor-ha:
       #   enabled: true
 
       # # Configure components of the External Secrets Operator (ESO).
-  eso:
-    enabled: true
-    type: "vault"
-    secretStoreName: "vault"
-    # -- Value name in AWS ParameterStore, AWS SecretsManager or other Secret Store.
-    secretName: "secret/harbor"
-    # -- Role ARN for the ExternalSecretOperator to assume.
+      # eso:
+      #   enabled: true
+      #   type: "vault"
+      #   secretStoreName: "vault"
+      #   # -- Value name in AWS ParameterStore, AWS SecretsManager or other Secret Store.
+      #   secretName: "secret/harbor"
+      #   # -- Role ARN for the ExternalSecretOperator to assume.
 
-    gcpsm:
-      projectID: "alphabet-123"
+      #   gcpsm:
+      #     projectID: "alphabet-123"
