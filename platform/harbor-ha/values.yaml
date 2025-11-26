@@ -161,8 +161,8 @@ database:
 redis:
   type: external
   external:
-    sentinelMasterSet: "default"
-    addr: "redis-cluster-redis-redis.kb-system.svc.cluster.local:6379,redis-cluster-redis-headless.kb-system.svc.cluster.local:6379,redis-cluster-redis-sentinel-headless.kb-system.svc.cluster.local:6379,redis-cluster-redis-sentinel-redis-sentinel.kb-system.svc.cluster.local:6379"
+    sentinelMasterSet: ""
+    addr: "redis-cluster-redis-redis.harbor.svc.cluster.local:6379,redis-cluster-redis-headless.harbor.svc.cluster.local:6379,redis-cluster-redis-sentinel-headless.harbor.svc.cluster.local:6379,redis-cluster-redis-sentinel-redis-sentinel.harbor.svc.cluster.local:6379"
     # https://github.com/goharbor/harbor-helm/issues/1352
     existingSecret: "redis-creds"
     # Copy here the password value from the "redis-creds" secret
