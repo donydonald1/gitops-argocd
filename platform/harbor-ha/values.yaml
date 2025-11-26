@@ -161,7 +161,7 @@ harbor:
     type: external
     external:
       sentinelMasterSet: ""
-      addr: "redis-replication-redis-headless.harbor.svc.cluster.local:6379,redis-replication-redis-redis.harbor.svc.cluster.local:6379,redis-replication-redis-sentinel-headless.harbor.svc.cluster.local:6379,redis-replication-redis-sentinel-redis-sentinel.harbor.svc.cluster.local:6379"
+      addr: "redis-replication-redis-headless:6379,redis-replication-redis-redis:6379,redis-replication-redis-sentinel-headless:6379,redis-replication-redis-sentinel-redis-sentinel:6379"
       # https://github.com/goharbor/harbor-helm/issues/1352
       # existingSecret: "redis-creds"
       username: <path:secret/data/redis#redis-username>
