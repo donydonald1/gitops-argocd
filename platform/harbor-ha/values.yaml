@@ -165,7 +165,7 @@ harbor:
       # https://github.com/goharbor/harbor-helm/issues/1352
       # existingSecret: "redis-creds"
       username: <path:secret/data/redis#redis-username>
-      password: <path:secret/data/redis#REDIS_PASSWORD>
+      password: <path:secret/data/redis#redis-password>
 
   cache:
     enabled: true
