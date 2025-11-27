@@ -13,6 +13,7 @@ spec:
       - name: harbor-ha
         namespace: harbor
         serverSideApply: true
+        SkipCRDs: true
         helm:
           values:
           - values.yaml
@@ -24,7 +25,7 @@ spec:
       - name: gitlab
         namespace: gitlab
         serverSideApply: true
-        # SkipCRDs: true
+        SkipCRDs: true
         # helm:
         #   values:
         #   - values.yaml
