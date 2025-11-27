@@ -394,6 +394,7 @@ spec:
       #   registry: docker.io
       #   repository: bitnamilegacy/redis-sentinel
       #   tag: 8.2.1-debian-12-r0
+      
     registry:
       enabled: true
       database:
