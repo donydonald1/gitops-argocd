@@ -407,6 +407,9 @@ spec:
         port: 5432
         migrations:
           enabled: false
+      extraEnvFrom:
+      - secretRef:
+          name: registry-s3-config
       storage:
         key: config
         secret: registry-s3-config
