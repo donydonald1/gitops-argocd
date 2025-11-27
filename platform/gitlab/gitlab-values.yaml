@@ -398,7 +398,7 @@ spec:
       enabled: true
       database:
         enabled: true
-        name: gitlab-registry-db
+        name: gitlab-registry
         user: postgres
         password:
           key: password
