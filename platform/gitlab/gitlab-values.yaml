@@ -246,19 +246,19 @@ global:
     labels:
       environment: production
   redis:
-    host: redis-replication-redis-redis-advertised-0.gitlab.svc.cluster.local
+    host: redis-gitlab-redis-redis-advertised-0.gitlab.svc.cluster.local
     port: 6379
     auth:
       enabled: true
       secret: redis-admin-secret
       key: password
     cache:
-      host: redis-replication-redis-redis-advertised-0.gitlab.svc.cluster.local
+      host: redis-gitlab-redis-redis-advertised-0.gitlab.svc.cluster.local
       sentinels:
-      - host: redis-replication-redis-sentinel-headless.gitlab.svc.cluster.local
+      - host: redis-gitlab-redis-sentinel-headless.gitlab.svc.cluster.local
         port: 26379
-      - host: redis-replication-redis-sentinel-redis-sentinel.gitlab.svc.cluster.local
-        port: 26379
+      # - host: redis-replication-redis-sentinel-redis-sentinel.gitlab.svc.cluster.local
+      #   port: 26379
       password:
         enabled: true
         secret: redis-admin-secret
