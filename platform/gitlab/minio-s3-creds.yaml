@@ -71,7 +71,7 @@ spec:
             type: Opaque
             engineVersion: v2
             data:
-                registry: |
+                config: |
                     s3:
                         bucket: gitlab-registry
                         accesskey: "{{ .MINIO_ACCESS_KEY }}"

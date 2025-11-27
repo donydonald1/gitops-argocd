@@ -408,7 +408,7 @@ spec:
         migrations:
           enabled: false
       storage:
-        key: registry
+        key: config
         secret: registry-s3-config
       ingress:
         enabled: true
