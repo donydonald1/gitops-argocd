@@ -82,7 +82,7 @@ spec:
                      pathstyle: true
                      secure: false
                 ACCESSKEY: "{{ .MINIO_ACCESS_KEY }}"
-                SECRET_KEY: "{{ .MINIO_SECRET_KEY }}"
+                SECRETKEY: "{{ .MINIO_SECRET_KEY }}"
     data:
       - secretKey: MINIO_ACCESS_KEY
         remoteRef:
