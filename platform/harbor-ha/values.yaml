@@ -166,6 +166,7 @@ harbor:
       # existingSecret: "redis-creds"
       username: "default"
       password: "Techsecoms-@rke2"
+      # password: "<path:secret/data/grafana#api_url>"
 
   cache:
     enabled: true

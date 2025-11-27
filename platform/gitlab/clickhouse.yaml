@@ -9,7 +9,7 @@ spec:
   terminationPolicy: WipeOut
   componentSpecs:
   - name: ch-keeper
-    serviceVersion: 25.10.3
+    serviceVersion: 25.4.4
     replicas: 1
     disableExporter: false
     services:

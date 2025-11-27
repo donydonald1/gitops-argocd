@@ -16,15 +16,15 @@ spec:
         helm:
           values:
           - values.yaml
-      # - name: velero
-      #   namespace: velero
-      #   serverSideApply: true
-      # - name: sonar
-      #   namespace: sonar
-      - name: gitlab
-        namespace: gitlab
-        serverSideApply: true
-        SkipCRDs: true
+        # - name: velero
+        #   namespace: velero
+        #   serverSideApply: true
+        # - name: sonar
+        #   namespace: sonar
+        # - name: gitlab
+        #   namespace: gitlab
+        #   serverSideApply: true
+        # SkipCRDs: true
         #   #   helm:
         #   #     values:
         #   #     - values.yaml
