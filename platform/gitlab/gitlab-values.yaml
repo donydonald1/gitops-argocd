@@ -409,7 +409,7 @@ spec:
           enabled: false
       storage:
         key: config
-        secret: s3cmd-config
+        secret: registry-s3-config
       ingress:
         enabled: true
         tls:
