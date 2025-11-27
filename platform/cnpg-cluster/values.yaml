@@ -1,4 +1,4 @@
-imageName: ghcr.io/cloudnative-pg/postgresql:18.1
+imageName: ghcr.io/cloudnative-pg/postgresql:17.6
 
 instances: 3
 computeSizeFactor: 4
