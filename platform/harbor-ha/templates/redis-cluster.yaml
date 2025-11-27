@@ -42,7 +42,7 @@ spec:
       - name: redis-sentinel
         replicas: 3
         services:
-        - name: redis-advertised
+        - name: sentinel-advertised
           serviceType: NodePort
           podService: true
         systemAccounts:
