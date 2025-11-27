@@ -419,10 +419,6 @@ spec:
         enabled: true
         secretName: registry-tls-secret
       init:
-        image: {}
-          # repository:
-          # tag:
-          # pullPolicy: IfNotPresent
         resources:
           requests:
             cpu: 50m

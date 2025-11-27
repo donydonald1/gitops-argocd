@@ -73,14 +73,14 @@ spec:
             data:
                 config: |-
                     s3:
-                      bucket: gitlab-registry
-                      accesskey: "{{ .MINIO_ACCESS_KEY }}"
-                      secretkey: "{{ .MINIO_SECRET_KEY }}"
-                      region: "us-east-1"
-                      regionendpoint: "minio.minio.svc.cluster.local:9000"
-                      v4auth: true
-                      pathstyle: true
-                      secure: false
+                       bucket: gitlab-registry
+                       region: "us-east-1"
+                       regionendpoint: "minio.minio.svc.cluster.local:9000"
+                       v4auth: true
+                       pathstyle: true
+                       secure: false
+                accesskey: "{{ .MINIO_ACCESS_KEY }}"
+                secretkey: "{{ .MINIO_SECRET_KEY }}"
     data:
       - secretKey: MINIO_ACCESS_KEY
         remoteRef:
