@@ -362,25 +362,25 @@ prometheus:
   install: false
 redis:
   install: false
-redis:
-  # architecture: replication
-  global:
-    defaultStorageClass: nfs-csi
-    storageClass: nfs-csi
-  replica:
-    kind: StatefulSet
-    persistence:
-      size: 20Gi
-    replicaCount: 3
-  resources:
-    requests:
-      cpu: 100m
-    # sentinel:
-    #   enabled: true
-    # image:
-    #   registry: docker.io
-    #   repository: bitnamilegacy/redis-sentinel
-    #   tag: 8.2.1-debian-12-r0
+  # redis:
+  #   # architecture: replication
+  #   global:
+  #     defaultStorageClass: nfs-csi
+  #     storageClass: nfs-csi
+  #   replica:
+  #     kind: StatefulSet
+  #     persistence:
+  #       size: 20Gi
+  #     replicaCount: 3
+  #   resources:
+  #     requests:
+  #       cpu: 100m
+  # sentinel:
+  #   enabled: true
+  # image:
+  #   registry: docker.io
+  #   repository: bitnamilegacy/redis-sentinel
+  #   tag: 8.2.1-debian-12-r0
 registry:
   enabled: true
   database:
