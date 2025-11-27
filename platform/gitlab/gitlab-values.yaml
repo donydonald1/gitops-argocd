@@ -405,17 +405,9 @@ spec:
           secret: postgres-superuser-secret
         host: cnpg-cluster-rw.cnpg-system.svc.cluster.local
         port: 5432
+        sslmode: disable
         migrations:
-          enabled: false
-      extraEnvFrom:
-        ACCESSKEY:
-          secretKeyRef:
-            name: registry-s3-config 
-            key: ACCESSKEY
-        SECRETKEY:
-          secretKeyRef:
-            name: registry-s3-config
-            key: SECRETKEY
+          enabled: true
       storage:
         key: config
         secret: registry-s3-config
