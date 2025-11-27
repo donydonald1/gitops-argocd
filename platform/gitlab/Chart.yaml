@@ -1,0 +1,8 @@
+apiVersion: v2
+name: gitlab
+description: A Helm chart for Gitlab with HA
+version: 0.0.0
+dependencies:
+- name: gitlab
+  version: 9.6.1
+  repository: https://helm.goharbor.io

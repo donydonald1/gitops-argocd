@@ -21,13 +21,13 @@ spec:
         #   serverSideApply: true
         # - name: sonar
         #   namespace: sonar
-        # - name: gitlab
-        #   namespace: gitlab
-        #   serverSideApply: true
+      - name: gitlab
+        namespace: gitlab
+        serverSideApply: true
         # SkipCRDs: true
-        #   #   helm:
-        #   #     values:
-        #   #     - values.yaml
+        helm:
+          values:
+          - values.yaml
         #   # - name: netbootxyz
         #   #   namespace: netbootxyz
         #   #   serverSideApply: true
