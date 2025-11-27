@@ -396,18 +396,18 @@ spec:
 
     registry:
       enabled: true
-      database:
-        enabled: true
-        name: gitlab-registry
-        user: postgres
-        password:
-          key: password
-          secret: postgres-superuser-secret
-        host: cnpg-cluster-rw.cnpg-system.svc.cluster.local
-        port: 5432
-        sslmode: disable
-        migrations:
-          enabled: true
+      # database:
+      #   enabled: true
+      #   name: gitlab-registry
+      #   user: postgres
+      #   password:
+      #     key: password
+      #     secret: postgres-superuser-secret
+      #   host: cnpg-cluster-rw.cnpg-system.svc.cluster.local
+      #   port: 5432
+      #   sslmode: disable
+      #   migrations:
+      #     enabled: true
       storage:
         key: config
         secret: registry-s3-config
