@@ -408,8 +408,14 @@ spec:
         migrations:
           enabled: false
       extraEnvFrom:
-      - secretRef:
-          name: registry-s3-config
+        REGISTRY_S3_ACCESS_KEY:
+          secretKeyRef:
+            name: registry-s3-config # name of the Secret
+            key: REGISTRY_S3_ACCESS_KEY # key inside the Secret
+        REGISTRY_S3_SECRET_KEY:
+          secretKeyRef:
+            name: registry-s3-config
+            key: REGISTRY_S3_SECRET_KEY
       storage:
         key: config
         secret: registry-s3-config
