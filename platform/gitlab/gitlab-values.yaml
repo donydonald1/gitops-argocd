@@ -273,36 +273,36 @@ spec:
       common:
         labels:
           environment: production
-      redis:
-        host: redis-gitlab-redis-redis-advertised-0.gitlab.svc.cluster.local
-        port: 6379
-        auth:
-          enabled: true
-          secret: redis-admin-secret
-          key: password
-        # cache:
-        #   host: redis-gitlab-redis-redis-advertised-0.gitlab.svc.cluster.local
-        #   sentinels:
-        #   - host: redis-gitlab-redis-sentinel-headless.gitlab.svc.cluster.local
-        #     port: 26379
-        #   # - host: redis-replication-redis-sentinel-redis-sentinel.gitlab.svc.cluster.local
-        #   #   port: 26379
-        #   password:
-        #     enabled: true
-        #     secret: redis-admin-secret
-        #     key: password
-        # sharedState:
-        #   host: shared.redis.example
-        #   port: 9003
-        #   password:
-        #     enabled: true
-        #     secret: shared-secret
-        #     key: shared-password
-        # queues:
-        #   host: queues.redis.example
-        #   port: 9004
-        #   password:
-        #     enabled: true
+      # redis:
+      #   host: redis-gitlab-redis-redis-advertised-0.gitlab.svc.cluster.local
+      #   port: 6379
+      #   auth:
+      #     enabled: true
+      #     secret: redis-admin-secret
+      #     key: password
+      #   cache:
+      #     host: redis-gitlab-redis-redis-advertised-0.gitlab.svc.cluster.local
+      #     sentinels:
+      #     - host: redis-gitlab-redis-sentinel-headless.gitlab.svc.cluster.local
+      #       port: 26379
+      #     # - host: redis-replication-redis-sentinel-redis-sentinel.gitlab.svc.cluster.local
+      #     #   port: 26379
+      #     password:
+      #       enabled: true
+      #       secret: redis-admin-secret
+      #       key: password
+      #   sharedState:
+      #     host: shared.redis.example
+      #     port: 9003
+      #     password:
+      #       enabled: true
+      #       secret: shared-secret
+      #       key: shared-password
+      #   queues:
+      #     host: queues.redis.example
+      #     port: 9004
+      #     password:
+      #       enabled: true
 
       hosts:
         domain: techsecom.io
@@ -332,12 +332,13 @@ spec:
           cert-manager.io/revision-history-limit: "3"
           external-dns.alpha.kubernetes.io/enabled: "true"
           nginx.ingress.kubernetes.io/enable-access-log: "true"
-          # nginx.ingress.kubernetes.io/proxy-body-size: "0"
-          # nginx.ingress.kubernetes.io/proxy-ssl-protocols: TLSv1.3 TLSv1.2
-          # nginx.ingress.kubernetes.io/ssl-passthrough: "false"
-          # nginx.ingress.kubernetes.io/ssl-redirect: "false"
+          nginx.ingress.kubernetes.io/proxy-body-size: "0"
+          nginx.ingress.kubernetes.io/proxy-ssl-protocols: TLSv1.3 TLSv1.2
+          nginx.ingress.kubernetes.io/ssl-redirect: "true"
+          nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
         class: nginx
         configureCertmanager: false
+        apiVersion: "networking.k8s.io/v1"
         enabled: true
         provider: nginx
         # tls:
@@ -372,27 +373,27 @@ spec:
       install: false
     prometheus:
       install: false
+    # redis:
+    #   install: false
     redis:
-      install: false
-      # redis:
-      #   # architecture: replication
-      #   global:
-      #     defaultStorageClass: nfs-csi
-      #     storageClass: nfs-csi
-      #   replica:
-      #     kind: StatefulSet
-      #     persistence:
-      #       size: 20Gi
-      #     replicaCount: 3
-      #   resources:
-      #     requests:
-      #       cpu: 100m
-      # sentinel:
-      #   enabled: true
-      # image:
-      #   registry: docker.io
-      #   repository: bitnamilegacy/redis-sentinel
-      #   tag: 8.2.1-debian-12-r0
+      # architecture: replication
+      global:
+        defaultStorageClass: longhorn
+        storageClass: longhorn
+      replica:
+        kind: StatefulSet
+        persistence:
+          size: 100Gi
+        replicaCount: 3
+      resources:
+        requests:
+          cpu: 500m
+      sentinel:
+        enabled: true
+      image:
+        registry: docker.io
+        repository: bitnamilegacy/redis-sentinel
+        tag: 8.2.1-debian-12-r0
 
     registry:
       enabled: true

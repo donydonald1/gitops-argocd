@@ -1,3 +1,112 @@
+redis:
+  fullnameOverride: redis
+  imageRegistry: docker.io
+  global:
+    storageClass: longhorn
+
+  auth:
+    enabled: true
+    existingSecret: redis-creds
+    existingSecretPasswordKey: REDIS_PASSWORD
+  commonConfiguration: |-
+    maxmemory-policy volatile-lru
+    appendonly yes
+    save 900 1
+    save 300 10
+    save 60 10000
+
+  architecture: replication
+  replica:
+    replicaCount: 3
+    disableCommands:
+    - FLUSHDB
+    persistence:
+      enabled: true
+      storageClass: longhorn
+      size: 60Gi
+    terminationGracePeriodSeconds: 60
+    startupProbe:
+      enabled: true
+      initialDelaySeconds: 60
+      periodSeconds: 20
+      timeoutSeconds: 20
+      successThreshold: 1
+      failureThreshold: 30
+    readinessProbe:
+      enabled: true
+      initialDelaySeconds: 60
+      periodSeconds: 20
+      timeoutSeconds: 20
+      successThreshold: 1
+      failureThreshold: 10
+    livenessProbe:
+      enabled: true
+      initialDelaySeconds: 90
+      periodSeconds: 15
+      timeoutSeconds: 15
+      successThreshold: 1
+      failureThreshold: 10
+
+  sentinel:
+    enabled: true
+    masterSet: mymaster
+    quorum: 2
+    replicas: 3
+    terminationGracePeriodSeconds: 60
+    persistence:
+      enabled: true
+      storageClass: longhorn
+      size: 60Gi
+    startupProbe:
+      enabled: true
+      initialDelaySeconds: 60
+      periodSeconds: 15
+      timeoutSeconds: 15
+      failureThreshold: 20
+    readinessProbe:
+      enabled: true
+      initialDelaySeconds: 60
+      periodSeconds: 10
+      timeoutSeconds: 10
+      failureThreshold: 10
+    livenessProbe:
+      enabled: true
+      initialDelaySeconds: 90
+      periodSeconds: 15
+      timeoutSeconds: 10
+      failureThreshold: 10
+
+  volumePermissions:
+    enabled: true
+
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      additionalLabels:
+        release: prometheus
+    startupProbe:
+      enabled: true
+      initialDelaySeconds: 60
+      periodSeconds: 20
+      timeoutSeconds: 20
+      successThreshold: 1
+      failureThreshold: 10
+    livenessProbe:
+      enabled: true
+      initialDelaySeconds: 90
+      periodSeconds: 10
+      timeoutSeconds: 10
+      successThreshold: 1
+      failureThreshold: 5
+    readinessProbe:
+      enabled: true
+      initialDelaySeconds: 60
+      periodSeconds: 5
+      timeoutSeconds: 5
+      successThreshold: 1
+      failureThreshold: 3
+
 harbor:
   existingSecretAdminPassword: harbor
   existingSecretAdminPasswordKey: HARBOR_ADMIN_PASSWORD
@@ -79,16 +188,10 @@ harbor:
       enabled: false
   expose:
     tls:
-      # we are behind a load balancer, so we don't need to use TLS
       enabled: true
       certSource: secret
-      #   secretName: harbor-tls
       secret:
-        # The name of secret which contains keys named:
-        # "tls.crt" - the certificate
-        # "tls.key" - the private key
         secretName: harbor-tls
-      # the certificate is used to serve the Harbor UI, API, and registry
     ingress:
       className: nginx
       annotations:
@@ -133,8 +236,8 @@ harbor:
     resourcePolicy: "keep"
     persistentVolumeClaim:
       trivy:
-        storageClass: nfs-csi
-        size: 10Gi
+        storageClass: longhorn
+        size: 60Gi
     imageChartStorage:
       type: "s3"
       # https://github.com/goharbor/harbor-helm/issues/1318
@@ -160,11 +263,11 @@ harbor:
   redis:
     type: external
     external:
-      sentinelMasterSet: ""
-      addr: "redis-replication-redis-redis-advertised-0.harbor.svc.cluster.local:6379"
+      sentinelMasterSet: "mymaster"
+      addr: "redis-node-0.redis-headless.harbor.svc.cluster.local:26379,redis-node-1.redis-headless.harbor.svc.cluster.local:26379,redis-node-2.redis-headless.harbor.svc.cluster.local:26379"
       # https://github.com/goharbor/harbor-helm/issues/1352
       # existingSecret: "redis-creds"
-      username: "default"
+      # username: "default"
       password: "Techsecoms-@rke2"
       # password: "<path:secret/data/grafana#api_url>"
 
