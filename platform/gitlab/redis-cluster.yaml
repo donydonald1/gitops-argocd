@@ -33,7 +33,7 @@ spec:
     volumeClaimTemplates:
     - name: data
       spec:
-        storageClassName: nfs-csi
+        storageClassName: longhorn
         accessModes:
         - ReadWriteOnce
         resources:
@@ -60,7 +60,7 @@ spec:
     volumeClaimTemplates:
     - name: data
       spec:
-        storageClassName: nfs-csi
+        storageClassName: longhorn
         accessModes:
         - ReadWriteOnce
         resources:

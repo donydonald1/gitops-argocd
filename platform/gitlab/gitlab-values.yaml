@@ -280,17 +280,17 @@ spec:
           enabled: true
           secret: redis-admin-secret
           key: password
-        cache:
-          host: redis-gitlab-redis-redis-advertised-0.gitlab.svc.cluster.local
-          sentinels:
-          - host: redis-gitlab-redis-sentinel-headless.gitlab.svc.cluster.local
-            port: 26379
-          # - host: redis-replication-redis-sentinel-redis-sentinel.gitlab.svc.cluster.local
-          #   port: 26379
-          password:
-            enabled: true
-            secret: redis-admin-secret
-            key: password
+        # cache:
+        #   host: redis-gitlab-redis-redis-advertised-0.gitlab.svc.cluster.local
+        #   sentinels:
+        #   - host: redis-gitlab-redis-sentinel-headless.gitlab.svc.cluster.local
+        #     port: 26379
+        #   # - host: redis-replication-redis-sentinel-redis-sentinel.gitlab.svc.cluster.local
+        #   #   port: 26379
+        #   password:
+        #     enabled: true
+        #     secret: redis-admin-secret
+        #     key: password
         # sharedState:
         #   host: shared.redis.example
         #   port: 9003
