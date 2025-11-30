@@ -45,7 +45,7 @@ spec:
 
       sidekiq:
         maxReplicas: 10
-        minReplicas: 3
+        minReplicas: 1
         resources:
           requests:
             cpu: 500m
@@ -88,7 +88,7 @@ spec:
         #   tls:
         #     enabled: true
         #     secretName: webservice-metrics-tls-secret
-        minReplicas: 3
+        minReplicas: 1
         resources:
           requests:
             cpu: 500m
