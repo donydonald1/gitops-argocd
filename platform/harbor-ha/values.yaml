@@ -3,7 +3,7 @@ redis:
   global:
     storageClass: longhorn
   image:
-    registry: registry-1.docker.io
+    registry: docker.io
     repository: bitnamilegacy/redis
   auth:
     enabled: true
@@ -50,7 +50,7 @@ redis:
 
   sentinel:
     image:
-      registry: registry-1.docker.io
+      registry: docker.io
       repository: bitnamilegacy/redis-sentinel
     enabled: true
     masterSet: mymaster
