@@ -431,6 +431,12 @@ minio:
     versioning: true
     objectlocking: false
 
+  - name: vault
+    policy: none
+    purge: false
+    versioning: true
+    objectlocking: false
+
   - name: tempo-traces
     policy: none
     purge: false

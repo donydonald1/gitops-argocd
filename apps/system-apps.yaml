@@ -83,9 +83,9 @@ spec:
         namespace: reloader
         serverSideApply: true
 
-      - name: descheduler
-        namespace: descheduler
-        serverSideApply: true
+      # - name: descheduler
+      #   namespace: descheduler
+      #   serverSideApply: true
 
       - name: node-feature-discovery
         namespace: node-feature-discovery
