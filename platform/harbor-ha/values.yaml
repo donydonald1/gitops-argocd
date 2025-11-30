@@ -1,6 +1,5 @@
 redis:
   fullnameOverride: redis
-  imageRegistry: docker.io
   global:
     storageClass: longhorn
   image:
