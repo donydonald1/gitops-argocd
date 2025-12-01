@@ -116,6 +116,7 @@ spec:
       install: false
 
     gitlab-runner:
+      install: false
       certsSecretName: gitlab-wildcard-tls-chain
       revisionHistoryLimit: 10
       service:
@@ -135,7 +136,7 @@ spec:
           secretKeyRef:
             key: secretAccessKey
             name: aws-credentials
-      install: true
+
       log_level: debug
       podAnnotations:
         gitlab.com/prometheus_port: "9252"
