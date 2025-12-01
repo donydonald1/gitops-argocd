@@ -48,6 +48,11 @@ redis:
       successThreshold: 1
       failureThreshold: 10
 
+  kubectl:
+    image:
+      registry: docker.io
+      repository: bitnamilegacy/kubectl
+
   sentinel:
     enabled: true
     image:
@@ -82,6 +87,9 @@ redis:
 
   volumePermissions:
     enabled: true
+    image:
+      registry: docker.io
+      repository: bitnamilegacy/os-shell
 
   metrics:
     enabled: true
