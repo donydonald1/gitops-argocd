@@ -279,7 +279,7 @@ harbor:
     type: external
     external:
       sentinelMasterSet: "mymaster"
-      addr: "redis-node-0.redis-headless.harbor.svc.cluster.local:26379,redis-node-1.redis-headless.harbor.svc.cluster.local:26379,redis-node-2.redis-headless.harbor.svc.cluster.local:26379"
+      addr: "redis-headless.harbor.svc.cluster.local:26379,rediss.harbor.svc.cluster.local:26379"
       # https://github.com/goharbor/harbor-helm/issues/1352
       # existingSecret: "redis-creds"
       # username: "default"
