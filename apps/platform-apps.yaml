@@ -10,18 +10,18 @@ spec:
       elements:
       # - name: keycloak
       #   namespace: security
-      - name: harbor-ha
-        namespace: harbor
-        serverSideApply: true
-        SkipCRDs: true
-        helm:
-          values:
-          - values.yaml
-        # - name: velero
-        #   namespace: velero
-        #   serverSideApply: true
-        # - name: sonar
-        #   namespace: sonar
+      # - name: harbor-ha
+      #   namespace: harbor
+      #   serverSideApply: true
+      #   SkipCRDs: true
+      #   helm:
+      #     values:
+      #     - values.yaml
+      # - name: velero
+      #   namespace: velero
+      #   serverSideApply: true
+      # - name: sonar
+      #   namespace: sonar
       - name: gitlab
         namespace: gitlab
         serverSideApply: true
