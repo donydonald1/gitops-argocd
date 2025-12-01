@@ -13,19 +13,19 @@ spec:
       - name: harbor-ha
         namespace: harbor
         serverSideApply: true
-      #   SkipCRDs: true
-      #   helm:
-      #     values:
-      #     - values.yaml
-      # - name: velero
-      #   namespace: velero
-      #   serverSideApply: true
-      # - name: sonar
-      #   namespace: sonar
-      - name: gitlab
-        namespace: gitlab
-        serverSideApply: true
-        SkipCRDs: true
+        #   SkipCRDs: true
+        #   helm:
+        #     values:
+        #     - values.yaml
+        # - name: velero
+        #   namespace: velero
+        #   serverSideApply: true
+        # - name: sonar
+        #   namespace: sonar
+        # - name: gitlab
+        #   namespace: gitlab
+        #   serverSideApply: true
+        #   SkipCRDs: true
         # helm:
         #   values:
         #   - values.yaml
