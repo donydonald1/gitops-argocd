@@ -9,6 +9,7 @@ redis:
     enabled: true
     existingSecret: redis-creds
     existingSecretPasswordKey: REDIS_PASSWORD
+    sentinel: false
   commonConfiguration: |-
     maxmemory-policy volatile-lru
     appendonly yes
