@@ -417,17 +417,17 @@ spec:
           enabled: true
           secret: redis-creds
           key: REDIS_PASSWORD
-        cache:
-          host: redis-headless.gitlab.svc.cluster.local
-          sentinels:
-          - host: redis-headless.gitlab.svc.cluster.local
-            port: 26379
-          - host: redis.gitlab.svc.cluster.local
-            port: 26379
-          password:
-            enabled: true
-            secret: redis-creds
-            key: REDIS_PASSWORD
+        # cache:
+        #   host: redis-headless.gitlab.svc.cluster.local
+        #   sentinels:
+        #   - host: redis-headless.gitlab.svc.cluster.local
+        #     port: 26379
+        #   - host: redis.gitlab.svc.cluster.local
+        #     port: 26379
+        #   password:
+        #     enabled: true
+        #     secret: redis-creds
+        #     key: REDIS_PASSWORD
         # sharedState:
         #   host: shared.redis.example
         #   port: 9003
