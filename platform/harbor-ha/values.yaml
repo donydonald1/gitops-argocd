@@ -93,6 +93,9 @@ redis:
 
   metrics:
     enabled: true
+    image:
+      registry: docker.io
+      repository: bitnamilegacy/redis-exporter
     serviceMonitor:
       enabled: true
       additionalLabels:
