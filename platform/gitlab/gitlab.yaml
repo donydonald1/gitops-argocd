@@ -128,8 +128,8 @@ spec:
       install: false
 
     gitlab-runner:
-      install: false
-      certsSecretName: gitlab-wildcard-tls-chain
+      install: true
+      # certsSecretName: gitlab-wildcard-tls-chain
       revisionHistoryLimit: 10
       service:
         enabled: true
@@ -198,12 +198,12 @@ spec:
         enabled: false
       webservice:
         workerTimeout: 240
-      shell:
-        tcp:
-          proxyProtocol: true
-      rails:
-        bootsnap:
-          enabled: false
+      # shell:
+      #   tcp:
+      #     proxyProtocol: true
+      # rails:
+      #   bootsnap:
+      #     enabled: false
       registry:
         bucket: gitlab-registry
         notifications:
