@@ -17,8 +17,8 @@ spec:
           size: 300Gi
           storageClass: longhorn
       gitlab-pages:
-        maxReplicas: 5
-        minReplicas: 1
+        maxReplicas: 10
+        minReplicas: 3
         resources:
           requests:
             cpu: 500m
@@ -34,8 +34,8 @@ spec:
             enabled: true
 
       gitlab-shell:
-        maxReplicas: 5
-        minReplicas: 1
+        maxReplicas: 10
+        minReplicas: 3
         sshDaemon: gitlab-sshd
         # service:
         #   type: NodePort
@@ -47,8 +47,8 @@ spec:
             CASignatureAlgorithms +ssh-rsa
 
       sidekiq:
-        maxReplicas: 5
-        minReplicas: 1
+        maxReplicas: 10
+        minReplicas: 3
         resources:
           requests:
             cpu: 500m
@@ -103,7 +103,7 @@ spec:
         #   tls:
         #     enabled: true
         #     secretName: webservice-metrics-tls-secret
-        minReplicas: 1
+        minReplicas: 3
         resources:
           requests:
             cpu: 500m
@@ -129,67 +129,6 @@ spec:
 
     gitlab-runner:
       install: false
-      certsSecretName: gitlab-wildcard-tls-chain
-      runnerToken: "glrt-4ZGQoTYKAuHgLWhK3D-c9286MQp0OjEKdToxCw.01.121n4db9a"
-      revisionHistoryLimit: 10
-      service:
-        enabled: true
-      logLevel: debug
-      logFormat: runner
-      envVars:
-      - name: RUNNER_ENV
-        value: DOCKER_TLS_CERTDIR=/certs
-      - name: AWS_ACCESS_KEY_ID
-        valueFrom:
-          secretKeyRef:
-            key: accessKeyId
-            name: aws-credentials
-      - name: AWS_SECRET_ACCESS_KEY
-        valueFrom:
-          secretKeyRef:
-            key: secretAccessKey
-            name: aws-credentials
-
-      log_level: debug
-      podAnnotations:
-        gitlab.com/prometheus_port: "9252"
-        gitlab.com/prometheus_scrape: "true"
-      rbac:
-        clusterWideAccess: true
-        create: true
-        serviceAccount:
-          create: true
-        serviceAccountName: gitlab-runner
-      runners:
-        config: |
-          [[runners]]
-            name = "gitlab-runner"
-            [runners.kubernetes]
-              privileged = true
-              poll_timeout = 2000
-              node_selector_overwrite_allowed = ".*"
-              namespace = "{{ .Release.Namespace }}"
-              image = "docker:stable"
-
-            [runners.cache]
-              Type = "s3"
-              Path = "gitlab-runner"
-              Shared = true
-              [runners.cache.s3]
-                ServerAddress = "minio.minio.svc.cluster.local:9000"
-                BucketName = "gitlab-runner-cache"
-                BucketLocation = "us-east-1"
-                S3ForcePathStyle = true
-                Insecure = true
-
-          [[runners.kubernetes.volumes.empty_dir]]
-            name = "docker-certs"
-            mount_path = "/certs/client"
-            medium = "Memory"
-        privileged: true
-      securityContext:
-        allowPrivilegeEscalation: true
-        privileged: true
     certmanager-issuer:
       email: donydonald1@icloud.com
     global:

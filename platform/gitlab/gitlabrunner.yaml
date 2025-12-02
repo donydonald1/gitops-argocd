@@ -11,9 +11,9 @@ spec:
   bootstrap: true
   repo: https://charts.gitlab.io/
   valuesContent: |-
-    replicas: 3
+    replicas: 10
 
-    revisionHistoryLimit: 10
+    revisionHistoryLimit: 50
     certsSecretName: gitlab-wildcard-tls-chain
     gitlabUrl: "https://gitlab.ops.techsecom.io"
     envVars:
