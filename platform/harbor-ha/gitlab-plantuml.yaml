@@ -1,0 +1,128 @@
+# Default values for plantuml.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+minReplicas: 2
+maxReplicas: 10
+maxUnavailable: 1
+port: 8080
+annotations: {}
+podLabels: {}
+commonLabels: {}
+
+image:
+  repository: plantuml/plantuml-server
+  # Use sha256 instead of a tag, this is the only option
+  # for using a stable image until there is an
+  # official tag upstream
+  # sha256:
+  tag: latest
+  pullPolicy: IfNotPresent
+
+nginx_sidecar:
+  enabled: true
+  # Defaults to the service port
+  # port: 80
+  # Defaults to the application port, 8080
+  # proxy_port: 8080
+  repository: nginx
+  tag: 1.19
+  server_name: www.example.com
+  # If no location matches, set this to a
+  # URL for redirect
+  redirect:
+    enabled: true
+    url: https://redirect.example.com
+  resources: {}
+  # Note: that rate limits are per-pod
+  rate_limit:
+    enabled: true
+    rate: '10r/s'
+    burst: '20'
+    # State information for about 16,000 IP addresses takes 1 megabyte,
+    # so the zone for png images can store about 160,000 addresses
+    zone_size: '10m'
+    status_code: '429'
+
+  # Limit request methods
+  # By default limit to just GET requests
+  # if you the /uml endpoint is enabled
+  # POST needs to be added to this list
+  limit_except:
+    enabled: true
+    req_methods:
+      - GET
+
+  # Enabled URLs, by default only
+  # /png is enabled for generating
+  # diagrams
+  #
+  # !Important! `png` is
+  # required for the livenss check
+  # and must be included
+  enabled_urls:
+    - png
+    - svg
+    # - uml
+    # - proxy
+
+  # The following headers are added
+  # by PlantUML and will be removed
+  # on the response.
+  # Note: x-powered-by exposes the
+  #       server version
+  hide_headers:
+    - access-control-allow-origin
+    - x-powered-by
+  # Additional headers to add to the
+  # response
+  add_headers:
+    - X-Frame-Options SAMEORIGIN always
+  set_headers:
+    - 'X-Forwarded-Host $host'
+    - 'X-Real-IP $remote_addr'
+    - 'X-Forwarded-For $proxy_add_x_forwarded_for'
+
+nameOverride: ""
+fullnameOverride: ""
+
+deployment:
+  annotations: {}
+
+service:
+  type: NodePort
+  port: 80
+  annotations: {}
+
+ingress:
+  enabled: true
+  tls:
+    - secretName: plantuml-cert
+  google_managed_cert:
+    enabled: false
+    # domain:
+
+networkpolicy:
+  enabled: false
+  egress:
+    enabled: false
+    rules: []
+  ingress:
+    enabled: false
+    rules: []
+  annotations: {}
+
+backendconfig:
+  enabled: false
+
+hpa:
+  enabled: false
+
+resources: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
