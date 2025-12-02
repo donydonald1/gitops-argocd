@@ -18,7 +18,7 @@ spec:
           storageClass: longhorn
       gitlab-pages:
         maxReplicas: 5
-        minReplicas: 2
+        minReplicas: 1
         resources:
           requests:
             cpu: 500m
@@ -34,20 +34,20 @@ spec:
             enabled: true
 
       gitlab-shell:
-        maxReplicas: 10
-        minReplicas: 3
+        maxReplicas: 5
+        minReplicas: 1
         sshDaemon: gitlab-sshd
-        # service:
-        #   type: NodePort
-        #   nodePort: 30022
-        # opensshd:
-        #   supplemental_config: |-
-        #     HostKeyAlgorithms +ssh-rsa,ssh-rsa-cert-v01@openssh.com
-        #     PubkeyAcceptedAlgorithms +ssh-rsa,ssh-rsa-cert-v01@openssh.com
-        #     CASignatureAlgorithms +ssh-rsa
+        service:
+          type: NodePort
+          nodePort: 30022
+        opensshd:
+          supplemental_config: |-
+            HostKeyAlgorithms +ssh-rsa,ssh-rsa-cert-v01@openssh.com
+            PubkeyAcceptedAlgorithms +ssh-rsa,ssh-rsa-cert-v01@openssh.com
+            CASignatureAlgorithms +ssh-rsa
 
       sidekiq:
-        maxReplicas: 10
+        maxReplicas: 5
         minReplicas: 1
         resources:
           requests:
@@ -303,7 +303,7 @@ spec:
         labels:
           environment: production
       redis:
-        host: redis-headless.gitlab.svc.cluster.local
+        host: redis.gitlab.svc.cluster.local
         port: 6379
         database: 6
         auth:
