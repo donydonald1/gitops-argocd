@@ -51,8 +51,8 @@ spec:
         minReplicas: 3
         resources:
           requests:
-            cpu: 500m
-            memory: 1000M
+            cpu: 2
+            memory: 4Gi
         readinessProbe:
           initialDelaySeconds: 60
           periodSeconds: 20
