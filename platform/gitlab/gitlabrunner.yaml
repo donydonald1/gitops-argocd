@@ -11,7 +11,7 @@ spec:
   bootstrap: true
   repo: https://charts.gitlab.io/
   valuesContent: |-
-    replicas: 10
+    replicas: 3
 
     revisionHistoryLimit: 50
     certsSecretName: gitlab-wildcard-tls-chain
@@ -29,7 +29,7 @@ spec:
         secretKeyRef:
           key: secretAccessKey
           name: aws-credentials
-    runnerToken: "glrt-4ZGQoTYKAuHgLWhK3D-c9286MQp0OjEKdToxCw.01.121n4db9a"
+    runnerToken: "glrt-PhNzDI7P2gkmfiCrK8-P7W86MQp0OjEKdToxCw.01.121feuw5p"
 
     unregisterRunners: true
 
