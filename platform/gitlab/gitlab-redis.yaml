@@ -22,12 +22,12 @@ spec:
       existingSecret: redis-creds
       existingSecretPasswordKey: REDIS_PASSWORD
       sentinel: false
-    commonConfiguration: |-
-      maxmemory-policy volatile-lru
-      appendonly yes
-      save 900 1
-      save 300 10
-      save 60 10000
+    # commonConfiguration: |-
+    #   maxmemory-policy volatile-lru
+    #   appendonly yes
+    #   save 900 1
+    #   save 300 10
+    #   save 60 10000
 
     architecture: replication
     replica:
