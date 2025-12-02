@@ -1,0 +1,81 @@
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  namespace: kube-system
+  name: gitlab-runner
+spec:
+  targetNamespace: gitlab
+  createNamespace: true
+  # version: "9.6.1"
+  chart: gitlab-runner
+  bootstrap: true
+  repo: https://charts.gitlab.io/
+  valuesContent: |-
+    replicas: 3
+
+    revisionHistoryLimit: 10
+    certsSecretName: gitlab-wildcard-tls-chain
+    gitlabUrl: gitlab.ops.techsecom.io
+    envVars:
+    - name: RUNNER_ENV
+      value: DOCKER_TLS_CERTDIR=/certs
+    - name: AWS_ACCESS_KEY_ID
+      valueFrom:
+        secretKeyRef:
+          key: accessKeyId
+          name: aws-credentials
+    - name: AWS_SECRET_ACCESS_KEY
+      valueFrom:
+        secretKeyRef:
+          key: secretAccessKey
+          name: aws-credentials
+    runnerToken: "glrt-mWCshmnaf2KmV-kEjdmhSm86MQp0OjEKdToxCw.01.121q20lh4"
+
+    unregisterRunners: true
+
+    logLevel: debug
+
+    logFormat: runner
+
+    rbac:
+      create: true
+
+    serviceAccount:
+      create: true
+
+    metrics:
+      enabled: true
+
+    service:
+      enabled: true
+
+    runners:
+      config: |
+        [[runners]]
+          name = "gitlab-runner"
+          [runners.kubernetes]
+            privileged = true
+            poll_timeout = 2000
+            node_selector_overwrite_allowed = ".*"
+            namespace = "{{ .Release.Namespace }}"
+            image = "docker:dind"
+            # service_account = "default"
+
+          [runners.cache]
+            Type = "s3"
+            Path = "gitlab-runner"
+            Shared = true
+            [runners.cache.s3]
+              ServerAddress = "minio.minio.svc.cluster.local:9000"
+              BucketName = "gitlab-runner-cache"
+              BucketLocation = "us-east-1"
+              S3ForcePathStyle = true
+              Insecure = true
+
+        [[runners.kubernetes.volumes.empty_dir]]
+          name = "docker-certs"
+          mount_path = "/certs/client"
+          medium = "Memory"
+
+      privileged: true
+      serviceAccountName: gitlab-runner
