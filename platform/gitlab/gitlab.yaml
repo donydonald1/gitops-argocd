@@ -106,8 +106,8 @@ spec:
         minReplicas: 3
         resources:
           requests:
-            cpu: 500m
-            memory: 1000M
+            cpu: 2
+            memory: 4Gi
         # tls:
         #   enabled: true
         #   secretName: gitlab-wildcard-tls
