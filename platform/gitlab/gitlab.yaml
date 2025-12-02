@@ -37,9 +37,9 @@ spec:
         maxReplicas: 5
         minReplicas: 1
         sshDaemon: gitlab-sshd
-        service:
-          type: NodePort
-          nodePort: 30022
+        # service:
+        #   type: NodePort
+        #   nodePort: 30022
         opensshd:
           supplemental_config: |-
             HostKeyAlgorithms +ssh-rsa,ssh-rsa-cert-v01@openssh.com
