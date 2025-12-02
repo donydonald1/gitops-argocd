@@ -17,4 +17,4 @@ appVersion: "2024"
 dependencies:
 - name: it-tools
   version: 2.2.0
-  repository: https://charts.plcnk.net
+  repository: https://charts.jeffresc.dev
