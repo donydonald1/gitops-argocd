@@ -128,7 +128,7 @@ spec:
       install: false
 
     gitlab-runner:
-      install: true
+      install: false
       certsSecretName: gitlab-wildcard-tls-chain
       runnerToken: "glrt-4ZGQoTYKAuHgLWhK3D-c9286MQp0OjEKdToxCw.01.121n4db9a"
       revisionHistoryLimit: 10
