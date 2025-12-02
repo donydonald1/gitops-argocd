@@ -53,6 +53,18 @@ spec:
           requests:
             cpu: 500m
             memory: 1000M
+        readinessProbe:
+          initialDelaySeconds: 60
+          periodSeconds: 20
+          timeoutSeconds: 20
+          successThreshold: 1
+          failureThreshold: 10
+        livenessProbe:
+          initialDelaySeconds: 90
+          periodSeconds: 15
+          timeoutSeconds: 15
+          successThreshold: 1
+          failureThreshold: 10
       toolbox:
         extraEnvFrom:
           AWS_ACCESS_KEY_ID:
@@ -189,6 +201,9 @@ spec:
       shell:
         tcp:
           proxyProtocol: true
+      rails:
+        bootsnap:
+          enabled: false
       registry:
         bucket: gitlab-registry
         notifications:
@@ -290,33 +305,11 @@ spec:
       redis:
         host: redis-headless.gitlab.svc.cluster.local
         port: 6379
+        database: 6
         auth:
           enabled: true
           secret: redis-creds
           key: REDIS_PASSWORD
-        # cache:
-        #   host: redis-headless.gitlab.svc.cluster.local
-        #   sentinels:
-        #   - host: redis-headless.gitlab.svc.cluster.local
-        #     port: 26379
-        #   - host: redis.gitlab.svc.cluster.local
-        #     port: 26379
-        #   password:
-        #     enabled: true
-        #     secret: redis-creds
-        #     key: REDIS_PASSWORD
-        # sharedState:
-        #   host: shared.redis.example
-        #   port: 9003
-        #   password:
-        #     enabled: true
-        #     secret: shared-secret
-        #     key: shared-password
-        # queues:
-        #   host: queues.redis.example
-        #   port: 9004
-        #   password:
-        #     enabled: true
 
       hosts:
         domain: techsecom.io
@@ -371,6 +364,8 @@ spec:
           secret: postgres-superuser-secret
           useSecret: true
         port: 5432
+        connectTimeout: 120
+        preparedStatements: true
         username: postgres
       time_zone: America/Chicago
       # workhorse:
