@@ -173,7 +173,7 @@ spec:
           username: gitlab
           password:
             secret: clickhouse-auth
-            key: main_password
+            key: password
           database: gitlab_clickhouse_main_production
           url: 'http://clickhouse.gitlab.svc.cluster.local'
 
