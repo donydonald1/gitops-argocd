@@ -48,7 +48,7 @@ spec:
 
       sidekiq:
         maxReplicas: 10
-        minReplicas: 2
+        minReplicas: 1
         resources:
           requests:
             cpu: 4
