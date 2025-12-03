@@ -45,10 +45,10 @@ spec:
         enabled: true
         createSecret: false
         secretName: "clickhouse-auth"
-      customConfig:
-        max_memory_usage: 10000000000
-        max_concurrent_queries: 100
-        # log_queries_min_type: EXCEPTION_WHILE_PROCESSING
+      # customConfig:
+      #   max_memory_usage: 10000000000
+      #   max_concurrent_queries: 100
+      #   # log_queries_min_type: EXCEPTION_WHILE_PROCESSING
 
       metrics:
 
