@@ -72,9 +72,10 @@ spec:
               object_storage_type: s3
               metadata_type: local
               endpoint: {{ .Values.clickhouse.storageConfiguration.s3Endpoint }}
-              # Use different auth method here - example for access/secret keys:
-              access_key_id: ACCESS_KEY
-              secret_access_key: SECRET_KEY
+              access_key_id:
+                from_env: ACCESS_KEY
+              secret_access_key:
+                from_env: SECRET_KEY
               metadata_path: /var/lib/clickhouse/disks/s3_disk/
             s3_cache:
               type: cache
