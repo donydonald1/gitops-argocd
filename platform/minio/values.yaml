@@ -431,6 +431,12 @@ minio:
     versioning: true
     objectlocking: false
 
+  - name: clickhouse-data
+    policy: none
+    purge: false
+    versioning: true
+    objectlocking: false
+
   - name: vault
     policy: none
     purge: false

@@ -1,0 +1,117 @@
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  namespace: kube-system
+  name: clickhouse
+spec:
+  targetNamespace: gitlab
+  createNamespace: true
+  # version: "9.6.1"
+  chart: clickhouse
+  bootstrap: true
+  repo: https://korax-dev.github.io/clickhouse-k8s
+  valuesContent: |-
+    clickhouse:
+      shards: 1
+      env:
+      - name: ACCESS_KEY
+        valueFrom:
+          secretKeyRef:
+            key: accessKeyId
+            name: aws-credentials
+      - name: SECRET_KEY
+        valueFrom:
+          secretKeyRef:
+            key: secretAccessKey
+            name: aws-credentials
+      replicasPerShard: 3
+      clusterName: default
+      resources:
+        limits:
+          cpu: 1000m
+          memory: 1Gi
+        requests:
+          cpu: 500m
+          memory: 512Mi
+
+      auth:
+        enabled: true
+        createSecret: false
+        secretName: "clickhouse-auth"
+        accessManagement: false
+        skipUserSetup: false
+
+      interserverCredentials:
+        enabled: true
+        createSecret: false
+        secretName: "clickhouse-auth"
+      customConfig:
+        max_memory_usage: 10000000000
+        max_concurrent_queries: 100
+        log_queries_min_type: EXCEPTION_WHILE_PROCESSING
+
+      metrics:
+
+        enabled: true
+
+      persistentVolume:
+        enabled: true
+        storageClass: longhorn
+        size: 20Gi
+
+      defaultStoragePolicy: s3_with_cache
+
+      storageConfiguration:
+        enabled: true
+        s3Endpoint: https://s3.ops.techsecom.io/clickhouse-data/
+
+        configTemplate: |
+          disks:
+            s3_disk:
+              type: object_storage
+              object_storage_type: s3
+              metadata_type: local
+              endpoint: {{ .Values.clickhouse.storageConfiguration.s3Endpoint }}
+              # Use different auth method here - example for access/secret keys:
+              access_key_id: ACCESS_KEY
+              secret_access_key: SECRET_KEY
+              metadata_path: /var/lib/clickhouse/disks/s3_disk/
+            s3_cache:
+              type: cache
+              disk: s3_disk
+              path: /var/lib/clickhouse/disks/s3_cache/
+              max_size: 10Gi
+          policies:
+            s3:
+              volumes:
+                main:
+                  disk: s3_disk
+            s3_with_cache:
+              volumes:
+                main:
+                  disk: s3_cache
+
+    keeper:
+      enabled: true
+      replicas: 3
+
+      auth:
+        enabled: true
+        createSecret: false
+        secretName: "clickhouse-auth"
+
+      metrics:
+        enabled: true
+      persistentVolume:
+        enabled: true
+        storageClass: longhorn
+        size: 6Gi
+      resources:
+        limits:
+          cpu: 500m
+          memory: 512Mi
+        requests:
+          cpu: 250m
+          memory: 256Mi
+
+      env: []
