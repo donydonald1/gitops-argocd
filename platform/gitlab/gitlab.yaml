@@ -48,11 +48,11 @@ spec:
 
       sidekiq:
         maxReplicas: 10
-        minReplicas: 3
+        minReplicas: 2
         resources:
           requests:
-            cpu: 2
-            memory: 4Gi
+            cpu: 4
+            memory: 6Gi
         readinessProbe:
           initialDelaySeconds: 60
           periodSeconds: 20
