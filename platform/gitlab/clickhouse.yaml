@@ -59,10 +59,10 @@ spec:
         storageClass: longhorn
         size: 20Gi
 
-      defaultStoragePolicy: s3_with_cache
+      defaultStoragePolicy: default
 
       storageConfiguration:
-        enabled: true
+        enabled:false
         s3Endpoint: https://s3.ops.techsecom.io/clickhouse-data/
 
         configTemplate: |
