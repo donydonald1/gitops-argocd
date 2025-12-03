@@ -12,6 +12,9 @@ spec:
   repo: https://korax-dev.github.io/clickhouse-k8s
   valuesContent: |-
     clickhouse:
+      customConfig:
+        max_memory_usage: 10000000000
+        max_concurrent_queries: 100
       shards: 1
       env:
       - name: ACCESS_KEY
@@ -35,7 +38,7 @@ spec:
           memory: 512Mi
       database:
         name: gitlab_clickhouse_main_production
-        
+
       auth:
         enabled: true
         createSecret: false
@@ -97,7 +100,13 @@ spec:
     keeper:
       enabled: true
       replicas: 3
-
+      customConfig:
+        keeper_server:
+          raft_settings:
+            min_session_timeout_ms: 10000
+            election_timeout_min: 1000
+          coordination_settings:
+            session_timeout_ms: 30000
       auth:
         enabled: false
         createSecret: false
