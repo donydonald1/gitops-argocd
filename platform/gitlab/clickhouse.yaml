@@ -33,7 +33,9 @@ spec:
         requests:
           cpu: 500m
           memory: 512Mi
-
+      database:
+        name: gitlab_clickhouse_main_production
+        
       auth:
         enabled: true
         createSecret: false

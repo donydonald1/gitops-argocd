@@ -167,6 +167,16 @@ spec:
       # rails:
       #   bootsnap:
       #     enabled: false
+      clickhouse:
+        enabled: true
+        main:
+          username: gitlab
+          password:
+            secret: clickhouse-auth
+            key: main_password
+          database: gitlab_clickhouse_main_production
+          url: 'http://clickhouse.gitlab.svc.cluster.local'
+
       registry:
         bucket: gitlab-registry
         notifications:
