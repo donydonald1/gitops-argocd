@@ -148,7 +148,7 @@ spec:
   bootstrap: true
   repo: https://charts.bitnami.com/bitnami
   valuesContent: |-
-    fullnameOverride: redis
+    fullnameOverride: redis-cache
     image:
       registry: docker.io
       repository: bitnamilegacy/redis
