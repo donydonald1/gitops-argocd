@@ -96,7 +96,7 @@ spec:
       replicas: 3
 
       auth:
-        enabled: true
+        enabled: false
         createSecret: false
         secretName: "clickhouse-auth"
 
