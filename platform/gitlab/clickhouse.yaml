@@ -61,36 +61,36 @@ spec:
 
       defaultStoragePolicy: default
 
-      storageConfiguration:
-        enabled:false
-        s3Endpoint: https://s3.ops.techsecom.io/clickhouse-data/
+      # storageConfiguration:
+      #   enabled:false
+      #   s3Endpoint: https://s3.ops.techsecom.io/clickhouse-data/
 
-        configTemplate: |
-          disks:
-            s3_disk:
-              type: object_storage
-              object_storage_type: s3
-              metadata_type: local
-              endpoint: {{ .Values.clickhouse.storageConfiguration.s3Endpoint }}
-              access_key_id:
-                from_env: ACCESS_KEY
-              secret_access_key:
-                from_env: SECRET_KEY
-              metadata_path: /var/lib/clickhouse/disks/s3_disk/
-            s3_cache:
-              type: cache
-              disk: s3_disk
-              path: /var/lib/clickhouse/disks/s3_cache/
-              max_size: 10Gi
-          policies:
-            s3:
-              volumes:
-                main:
-                  disk: s3_disk
-            s3_with_cache:
-              volumes:
-                main:
-                  disk: s3_cache
+      #   configTemplate: |
+      #     disks:
+      #       s3_disk:
+      #         type: object_storage
+      #         object_storage_type: s3
+      #         metadata_type: local
+      #         endpoint: {{ .Values.clickhouse.storageConfiguration.s3Endpoint }}
+      #         access_key_id:
+      #           from_env: ACCESS_KEY
+      #         secret_access_key:
+      #           from_env: SECRET_KEY
+      #         metadata_path: /var/lib/clickhouse/disks/s3_disk/
+      #       s3_cache:
+      #         type: cache
+      #         disk: s3_disk
+      #         path: /var/lib/clickhouse/disks/s3_cache/
+      #         max_size: 10Gi
+      #     policies:
+      #       s3:
+      #         volumes:
+      #           main:
+      #             disk: s3_disk
+      #       s3_with_cache:
+      #         volumes:
+      #           main:
+      #             disk: s3_cache
 
     keeper:
       enabled: true
