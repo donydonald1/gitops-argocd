@@ -276,22 +276,33 @@ spec:
       common:
         labels:
           environment: production
+
       redis:
-        host: redis.gitlab.svc.cluster.local
+        host: mymaster
         port: 6379
+
+        sentinels:
+        - host: redis.gitlab.svc.cluster.local
+          port: 26379
+
         database: 6
         auth:
           enabled: true
           secret: redis-creds
           key: REDIS_PASSWORD
+
         cache:
-          host: redis-cache.gitlab.svc.cluster.local
+          host: mymaster
           port: 6379
+
+          sentinels:
+          - host: redis-cache.gitlab.svc.cluster.local
+            port: 26379
+
           password:
             enabled: true
             secret: redis-creds
             key: REDIS_PASSWORD
-
       hosts:
         domain: techsecom.io
         https: true
