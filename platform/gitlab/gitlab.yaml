@@ -174,7 +174,7 @@ spec:
           password:
             secret: clickhouse-auth
             key: password
-          database: gitlab
+          database: default
           url: 'http://clickhouse.gitlab.svc.cluster.local:8123'
 
       registry:
