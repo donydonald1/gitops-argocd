@@ -175,7 +175,7 @@ spec:
             secret: clickhouse-auth
             key: password
           # database: gitlab_clickhouse_main_production
-          url: 'http://clickhouse.gitlab.svc.cluster.local'
+          url: 'http://clickhouse.gitlab.svc.cluster.local:8123'
 
       registry:
         bucket: gitlab-registry
