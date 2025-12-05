@@ -321,7 +321,7 @@ spec:
           protocol: https
         registry:
           name: gitlab.registry.techsecom.io
-          protocol: https
+          # protocol: https
         smartcard:
           name: smartcard.gitlab.techsecom.io
         # ssh: ssh.gitlab.techsecom.io
@@ -416,10 +416,10 @@ spec:
       storage:
         key: config
         secret: registry-s3-config
-      # ingress:
-      #   enabled: true
-      #   tls:
-      #     secretName: registry-tls-secret
+      ingress:
+        enabled: true
+        tls:
+          secretName: registry-tls-secret
       # tls:
       #   enabled: true
       #   secretName: registry-tls-secret
