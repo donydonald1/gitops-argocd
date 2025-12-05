@@ -167,15 +167,7 @@ spec:
       # rails:
       #   bootsnap:
       #     enabled: false
-      clickhouse:
-        enabled: false
-        main:
-          username: gitlab
-          password:
-            secret: clickhouse-auth
-            key: password
-          database: gitlab_clickhouse_main_production
-          url: 'http://clickhouse.gitlab.svc.cluster.local:8123'
+
 
 
       registry:
@@ -343,9 +335,9 @@ spec:
         # tls:
         #   enabled: true
         #   secretName: gitlab-wildcard-tls
-      initialRootPassword:
-        key: password
-        secret: gitlab-initial-root-password
+      # initialRootPassword:
+      #   key: password
+      #   secret: gitlab-initial-root-password
       minio:
         enabled: false
       psql:
