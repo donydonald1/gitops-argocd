@@ -36,12 +36,12 @@ spec:
       #   #   values:
       #   #   - values.yaml
 
-      # - name: cnpg-cluster
-      #   namespace: cnpg-system
-      #   helm:
-      #     values:
-      #     - values.yaml
-      #   serverSideApply: true
+      - name: cnpg-cluster
+        namespace: cnpg-system
+        helm:
+          values:
+          - values.yaml
+        serverSideApply: true
 
       - name: wikijs
         namespace: wikijs
