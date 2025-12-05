@@ -125,7 +125,7 @@ spec:
       indexStorage: 128Gi
 
     openbao:
-      install: true
+      install: false
       ingress:
         enabled: true
         className: nginx
@@ -155,6 +155,15 @@ spec:
     certmanager-issuer:
       email: donydonald1@icloud.com
     global:
+      cell:
+        enabled: true
+        id: 1
+        database:
+          skipSequenceAlteration: false
+        topologyServiceClient:
+          address: "topology-service.gitlab.example.com:443"
+          tls:
+            enabled: true
       monitoring:
         enabled: true
       openbao:
