@@ -17,8 +17,8 @@ spec:
     certsSecretName: gitlab-wildcard-tls-chain
     gitlabUrl: "https://gitlab.ops.techsecom.io"
     envVars:
-    - name: RUNNER_ENV
-      value: DOCKER_TLS_CERTDIR=/certs
+    - name: DOCKER_TLS_CERTDIR
+      value: /certs
     - name: AWS_ACCESS_KEY_ID
       valueFrom:
         secretKeyRef:
@@ -51,7 +51,7 @@ spec:
 
     runners:
       helpers:
-        image: "registry.gitlab.com/gitlab-org/gitlab-runner/gitlab-runner-helper:arm64-v18.6.1"
+        image: "registry.gitlab.com/gitlab-org/gitlab-runner/gitlab-runner-helper:v18.6.1"
       config: |
         [[runners]]
           name = "gitlab-runner"
