@@ -413,9 +413,9 @@ spec:
       #   sslmode: disable
       #   migrations:
       #     enabled: true
-      # storage:
-      #   key: config
-      #   secret: registry-s3-config
+      storage:
+        key: config
+        secret: registry-s3-config
       # ingress:
       #   enabled: true
       #   tls:
