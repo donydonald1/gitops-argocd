@@ -10,13 +10,13 @@ spec:
       elements:
       # - name: keycloak
       #   namespace: security
-      # - name: harbor-ha
-      #   namespace: harbor
-      #   serverSideApply: true
-      #   SkipCRDs: true
-      #   helm:
-      #     values:
-      #     - values.yaml
+      - name: harbor-ha
+        namespace: harbor
+        serverSideApply: true
+        SkipCRDs: true
+        helm:
+          values:
+          - values.yaml
       # - name: velero
       #   namespace: velero
       #   serverSideApply: true
