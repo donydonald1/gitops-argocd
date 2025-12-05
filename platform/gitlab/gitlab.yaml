@@ -155,6 +155,8 @@ spec:
     certmanager-issuer:
       email: donydonald1@icloud.com
     global:
+    serviceAccount:
+      enabled: true
       cell:
         enabled: true
         id: 1
