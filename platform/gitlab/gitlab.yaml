@@ -416,10 +416,10 @@ spec:
       # storage:
       #   key: config
       #   secret: registry-s3-config
-      ingress:
-        enabled: true
-        tls:
-          secretName: registry-tls-secret
-      tls:
-        enabled: true
-        secretName: registry-tls-secret
+      # ingress:
+      #   enabled: true
+      #   tls:
+      #     secretName: registry-tls-secret
+      # tls:
+      #   enabled: true
+      #   secretName: registry-tls-secret
