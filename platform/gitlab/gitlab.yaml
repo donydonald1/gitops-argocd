@@ -164,9 +164,9 @@ spec:
       # shell:
       #   tcp:
       #     proxyProtocol: true
-      # rails:
-      #   bootsnap:
-      #     enabled: false
+      rails:
+        bootsnap:
+          enabled: false
 
 
 
@@ -335,9 +335,9 @@ spec:
         # tls:
         #   enabled: true
         #   secretName: gitlab-wildcard-tls
-      # initialRootPassword:
-      #   key: password
-      #   secret: gitlab-initial-root-password
+      initialRootPassword:
+        key: password
+        secret: gitlab-initial-root-password
       minio:
         enabled: false
       psql:
