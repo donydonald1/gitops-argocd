@@ -50,12 +50,16 @@ spec:
       enabled: true
 
     runners:
+      helpers:
+        image: "registry.gitlab.com/gitlab-org/gitlab-runner/gitlab-runner-helper:arm64-v18.6.1"
       config: |
         [[runners]]
           name = "gitlab-runner"
+          environment = ["FF_USE_LEGACY_KUBERNETES_EXECUTION_STRATEGY=true"]
           [runners.kubernetes]
             privileged = true
             poll_timeout = 2000
+
             node_selector_overwrite_allowed = ".*"
             namespace = "{{ .Release.Namespace }}"
             image = "docker:stable"
