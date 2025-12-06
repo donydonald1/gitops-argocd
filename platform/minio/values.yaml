@@ -413,13 +413,13 @@ minio:
     versioning: true
     objectlocking: false
 
-  - name: rke2-management-clusters
+  - name: ops-dc-tx-rke2-mgmt-prod
     policy: none
     purge: false
     versioning: true
     objectlocking: false
 
-  - name: rke2-downstream-clusters
+  - name: ops-dc-tx-rke2-mgmt-downstream
     policy: none
     purge: false
     versioning: true
