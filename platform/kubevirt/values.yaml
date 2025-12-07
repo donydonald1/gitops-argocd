@@ -23,9 +23,9 @@ kubevirt-stack:
       #   cpu: 100m
       #   memory: 128Mi
 
-    tolerations:
-    - key: CriticalAddonsOnly
-      operator: Exists
+    # tolerations:
+    # - key: CriticalAddonsOnly
+    #   operator: Exists
     monitorNamespace: "monitoring"
     monitorAccount: kps-prometheus
     prometheus:
@@ -96,9 +96,9 @@ kubevirt-stack:
     nodeSelector:
       kubernetes.io/os: linux
 
-    tolerations:
-    - key: CriticalAddonsOnly
-      operator: Exists
+    # tolerations:
+    # - key: CriticalAddonsOnly
+    #   operator: Exists
 
     affinity: {}
 
@@ -269,10 +269,10 @@ kubevirt-stack:
     healthAddr: ":9440"
     profilerAddress: ":6060"
 
-    contentionProfiling: true
-    insecureDiagnostics: true
-    watchConfigSecret: true
-    watchConfigMap: true
+    # contentionProfiling: true
+    # insecureDiagnostics: true
+    # watchConfigSecret: true
+    # watchConfigMap: true
 
     resources:
       manager:
