@@ -230,13 +230,18 @@ kubevirt-stack:
       # Configuration for enabling feature gates in different providers
       manager:
         featureGates:
-          proxmox:
-            # Name of the provider
-            ClusterTopology: true
-          core:
-            ClusterTopology: true
           kubeadm:
-            ClusterTopology: true
+            MachinePool: true
+            KubeadmBootstrapFormatIgnition: true
+          core:
+            MachinePool: true
+            KubeadmBootstrapFormatIgnition: true
+          kubevirt:
+            MachinePool: true
+            KubeadmBootstrapFormatIgnition: true
+          bootstrap:
+            MachinePool: true
+            KubeadmBootstrapFormatIgnition: true
 
     fetchConfig: {}
     # ---
