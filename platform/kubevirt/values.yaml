@@ -1,0 +1,316 @@
+kubevirt-stack:
+  ################################################################################
+  #   ___  _ __   ___ _ __ __ _| |_ ___  _ __
+  #  / _ \| '_ \ / _ \ '__/ _` | __/ _ \| '__|
+  # | (_) | |_) |  __/ | | (_| | || (_) | |
+  #  \___/| .__/ \___|_|  \__,_|\__\___/|_|
+  #       |_|
+  ################################################################################
+  operator:
+    replicaCount: 1
+
+    image:
+      repository: quay.io/kubevirt/virt-operator
+
+    fullnameOverride: kubevirt-operator
+    securityContext:
+      privileged: true
+    resources: {}
+      # limits:
+      #   cpu: 100m
+      #   memory: 128Mi
+      # requests:
+      #   cpu: 100m
+      #   memory: 128Mi
+
+    tolerations:
+    - key: CriticalAddonsOnly
+      operator: Exists
+    monitorNamespace: "monitoring"
+    monitorAccount: kps-prometheus
+    prometheus:
+      enabled: true
+      serviceName: "kps-prometheus"
+      serviceNamesapce: "monitoring"
+
+    useEmulation: false
+
+    featureGates:
+    - ExpandDisks
+    - CPUManager
+    - GPU
+    - HostDevices
+    - VMExport
+    - HotplugVolumes
+    - HostDisk
+    - Macvtap
+    - Passt
+    - HotplugNICs
+    - clientPassthrough
+    - Snapshot
+    - CPUNodeDiscovery
+
+  ################################################################################
+  #   ____ ____ ___
+  #  / ___|  _ \_ _|
+  # | |   | | | | |
+  # | |___| |_| | |
+  #  \____|____/___|
+  ################################################################################
+  cdi:
+    replicaCount: 1
+
+    image:
+      repository: quay.io/kubevirt/cdi-operator
+
+    ingress:
+      enabled: true
+      className: nginx
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+        kubernetes.io/tls-acme: "true"
+        cert-manager.io/duration: 2160h
+        cert-manager.io/renew-before: 720h
+        cert-manager.io/revision-history-limit: "3"
+        external-dns.alpha.kubernetes.io/enabled: "true"
+        # nginx.ingress.kubernetes.io/enable-access-log: "true"
+        # nginx.ingress.kubernetes.io/proxy-body-size: "0"
+        # nginx.ingress.kubernetes.io/proxy-ssl-protocols: TLSv1.3 TLSv1.2
+        # nginx.ingress.kubernetes.io/ssl-redirect: "true"
+        # nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+      hosts:
+      - host: cdi.ops.techsecom.io
+        paths:
+        - path: /
+          pathType: ImplementationSpecific
+      tls:
+      - secretName: cdi-tls
+        hosts:
+        - cdi.ops.techsecom.io
+
+    resources:
+      requests:
+        cpu: 10m
+        memory: 150Mi
+
+    nodeSelector:
+      kubernetes.io/os: linux
+
+    tolerations:
+    - key: CriticalAddonsOnly
+      operator: Exists
+
+    affinity: {}
+
+    cdi:
+      featureGates:
+      - HonorWaitForFirstConsumer
+      resources:
+        limits:
+          cpu: "4"
+          memory: 4Gi
+        requests:
+          cpu: "1"
+          memory: 250Mi
+
+  ################################################################################
+  #  __  __
+  # |  \/  | __ _ _ __   __ _  __ _  ___ _ __
+  # | |\/| |/ _` | '_ \ / _` |/ _` |/ _ \ '__|
+  # | |  | | (_| | | | | (_| | (_| |  __/ |
+  # |_|  |_|\__,_|_| |_|\__,_|\__, |\___|_|
+  ################################################################################
+  manager:
+    enabled: true
+    replicaCount: 1
+
+    service:
+      type: ClusterIP
+      port: 8080
+      protocol: TCP
+      name: http
+
+    prometheus:
+      enabled: false
+      serviceName: "mimir-query-frontend"
+      serviceNamesapce: "monitoring"
+      port: 8080
+
+    ingress:
+      enabled: true
+      className: "nginx"
+      hostname: "kubevirt.ops.techsecom.io"
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+        # kubernetes.io/tls-acme: "true"
+        cert-manager.io/duration: 2160h
+        cert-manager.io/renew-before: 720h
+        cert-manager.io/revision-history-limit: "3"
+        external-dns.alpha.kubernetes.io/enabled: "true"
+        # nginx.ingress.kubernetes.io/enable-access-log: "true"
+        # nginx.ingress.kubernetes.io/proxy-body-size: "0"
+        # nginx.ingress.kubernetes.io/proxy-ssl-protocols: TLSv1.3 TLSv1.2
+        nginx.ingress.kubernetes.io/ssl-redirect: "true"
+        nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+        nginx.org/location-snippets: |
+          proxy_set_header Upgrade $http_upgrade;
+          proxy_set_header Connection $connection_upgrade;
+      tls:
+        enabled: true
+        secretName: "tls-kubevirt-manager"
+
+  ################################################################################
+  #   ____ _           _                 _    ____ ___
+  #  / ___| |_   _ ___| |_ ___ _ __     / \  |  _ \_ _|
+  # | |   | | | | / __| __/ _ \ '__|   / _ \ | |_) | |
+  # | |___| | |_| \__ \ ||  __/ |     / ___ \|  __/| |
+  #  \____|_|\__,_|___/\__\___|_|    /_/   \_\_|  |___|
+  #
+  ################################################################################
+  capi:
+    enabled: true
+    # Cluster API provider options
+    core:
+      cluster-api:
+        namespace: "capi-system"
+        # version: "v1.11.2"
+        createNamespace: true
+
+    bootstrap:
+      kubeadm:
+        namespace: "kubevirt"
+        version: "v1.11.2"
+        createNamespace: false
+      rke2:
+        namespace: "kubevirt"
+        version: "v0.21.0"
+        createNamespace: false
+      k3s:
+        namespace: "kubevirt"
+        version: "v0.3.0"
+        createNamespace: false
+        fetchConfig:
+          url: "https://github.com/k3s-io/cluster-api-k3s/releases/v0.3.0/bootstrap-components.yaml"
+
+    controlPlane:
+      kubeadm:
+        namespace: "kubevirt"
+        version: "v1.11.2"
+        createNamespace: false
+      rke2:
+        namespace: "kubevirt"
+        version: "v0.20.1"
+        createNamespace: false
+      k3s:
+        namespace: "kubevirt"
+        version: "v0.3.0"
+        createNamespace: false
+        fetchConfig:
+          url: "https://github.com/k3s-io/cluster-api-k3s/releases/v0.3.0/control-plane-components.yaml"
+
+    infrastructure:
+      kubevirt:
+        namespace: "kubevirt"
+        createNamespace: false
+        version: "v0.1.10"
+
+    addon:
+      helm:
+        namespace: "kubevirt"
+        createNamespace: false
+        version: "v0.4.1"
+
+    ipam:
+      in-cluster:
+        namespace: "kubevirt"
+        createNamespace: false
+        version: "v1.0.3"
+
+    manager.featureGates:
+      # Configuration for enabling feature gates in different providers
+      manager:
+        featureGates:
+          proxmox:
+            # Name of the provider
+            ClusterTopology: true
+          core:
+            ClusterTopology: true
+          kubeadm:
+            ClusterTopology: true
+
+    fetchConfig: {}
+    # ---
+    # Common configuration secret options
+
+    configSecret: {}
+
+    # ---
+    # CAPI operator deployment options
+    logLevel: 2
+    replicaCount: 1
+
+    leaderElection:
+      enabled: true
+
+    image:
+      manager:
+        repository: gcr.io/k8s-staging-capi-operator/cluster-api-operator
+        tag: v0.24.1
+        # pullPolicy: IfNotPresent
+    env:
+      manager: []
+
+    diagnosticsAddress: ":8443"
+    healthAddr: ":9440"
+    profilerAddress: ":6060"
+
+    contentionProfiling: true
+    insecureDiagnostics: true
+    watchConfigSecret: true
+    watchConfigMap: true
+
+    resources:
+      manager:
+        limits:
+          cpu: 100m
+          memory: 300Mi
+        requests:
+          cpu: 100m
+          memory: 100Mi
+
+    containerSecurityContext: {}
+
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: kubernetes.io/arch
+              operator: In
+              values:
+              - amd64
+              - arm64
+              - ppc64le
+            - key: kubernetes.io/os
+              operator: In
+              values:
+              - linux
+    tolerations:
+    - effect: NoSchedule
+      key: node-role.kubernetes.io/master
+    - effect: NoSchedule
+      key: node-role.kubernetes.io/control-plane
+
+    volumes:
+    - name: cert
+      secret:
+        defaultMode: 420
+        secretName: capi-operator-webhook-service-cert
+
+    volumeMounts:
+      manager:
+      - mountPath: /tmp/k8s-webhook-server/serving-certs
+        name: cert
+        readOnly: true
+
+    enableHelmHook: true

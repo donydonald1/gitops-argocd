@@ -17,6 +17,13 @@ spec:
         helm:
           values:
           - values.yaml
+      - name: kubevirt
+        namespace: kubevirt
+        serverSideApply: true
+        SkipCRDs: true
+        helm:
+          values:
+          - values.yaml
       # - name: velero
       #   namespace: velero
       #   serverSideApply: true

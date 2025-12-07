@@ -1,0 +1,8 @@
+apiVersion: v2
+name: kubevirt
+description: A Helm chart for kubevirt stack 0.3.0
+version: 0.1.4
+dependencies:
+- name: kubevirt-stack
+  version: 0.3.0
+  repository: https://cloudymax.github.io/kubevirt-community-stack
