@@ -29,7 +29,7 @@ spec:
         secretKeyRef:
           key: secretAccessKey
           name: aws-credentials
-    runnerToken: "glrt-ocXGQ9YGBdeQ1C4K7qAciG86MQp0OjEKdToxCw.01.120a2h4dx"
+    runnerToken: "glrt-eEnOIq-lyhx55oN0EeY28286MQp0OjEKdToxCw.01.120ngokhm"
 
     unregisterRunners: true
 
