@@ -328,7 +328,6 @@ spec:
       ingress:
         annotations:
           cert-manager.io/cluster-issuer: letsencrypt-prod
-          kubernetes.io/tls-acme: "true"
           cert-manager.io/duration: 2160h
           cert-manager.io/renew-before: 720h
           cert-manager.io/revision-history-limit: "3"
@@ -336,7 +335,7 @@ spec:
 
           nginx.ingress.kubernetes.io/enable-access-log: "true"
           nginx.ingress.kubernetes.io/proxy-body-size: "0"
-          nginx.ingress.kubernetes.io/proxy-ssl-protocols: TLSv1.3 TLSv1.2
+          # nginx.ingress.kubernetes.io/proxy-ssl-protocols: TLSv1.3 TLSv1.2
           nginx.ingress.kubernetes.io/ssl-redirect: "true"
           nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
 
