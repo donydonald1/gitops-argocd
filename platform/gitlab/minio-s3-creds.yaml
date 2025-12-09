@@ -124,3 +124,22 @@ spec:
         remoteRef:
             key: secret/minio/
             property: postgres_password
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+    name: aws-credentials-glab-runner
+spec:
+    refreshInterval: 1h
+    secretStoreRef:
+        kind: ClusterSecretStore
+        name: vault
+    data:
+      - secretKey: accesskey
+        remoteRef:
+            key: secret/minio/
+            property: postgres_user
+      - secretKey: secretkey
+        remoteRef:
+            key: secret/minio/
+            property: postgres_password

@@ -60,8 +60,8 @@ spec:
         cpu: 812m
         ephemeral-storage: 800Mi
     runners:
-      # cache: 
-      #   secretName: aws-credentials
+      cache: 
+        secretName: aws-credentials-glab-runner
       helpers:
         image: "registry.gitlab.com/gitlab-org/gitlab-runner/gitlab-runner-helper:v18.6.1"
 
