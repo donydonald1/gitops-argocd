@@ -111,7 +111,6 @@ spec:
       config: |
         [[runners]]
           name = "gitlab-runner"
-          # environment = ["FF_USE_LEGACY_KUBERNETES_EXECUTION_STRATEGY=true"]
           [runners.kubernetes]
             privileged = true
             poll_timeout = 2000
