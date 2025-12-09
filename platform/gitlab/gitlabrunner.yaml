@@ -13,6 +13,13 @@ spec:
   valuesContent: |-
     replicas: 3
 
+    metrics:
+      enabled: true
+      portName: metrics
+      port: 9252
+      serviceMonitor:
+        enabled: true
+
     revisionHistoryLimit: 50
     certsSecretName: gitlab-wildcard-tls-chain
     gitlabUrl: "https://gitlab.ops.techsecom.io"
@@ -44,16 +51,28 @@ spec:
       CACHE_S3_BUCKET_LOCATION: us-east-1
       CACHE_SHARED: true
 
-    ## Additional environment variables from other data sources
-    extraEnvFrom: {}
-      # CACHE_S3_ACCESS_KEY:
-      #   secretKeyRef:
-      #     name: s3access
-      #     key: accesskey
-      # CACHE_S3_SECRET_KEY:
-      #   secretKeyRef:
-      #     name: s3access
-      #     key: secretkey
+    extraEnvFrom: 
+      CACHE_S3_ACCESS_KEY:
+        secretKeyRef:
+          name: aws-credentials-glab-runner
+          key: accesskey
+      CACHE_S3_SECRET_KEY:
+        secretKeyRef:
+          name: aws-credentials-glab-runner
+          key: secretkey
+
+    extraObjects: 
+     - name: docker
+       image: docker:20.10-dind
+       securityContext:
+         privileged: true
+       volumeMounts:
+         - mountPath: /var/run/
+           name: dind-socket
+       lifecycle:
+         postStart:
+           exec:
+             command: [ "sh", "-c", "until docker info; do sleep 1; done;" 
 
     runnerToken: "glrt-oyBMZNYu_cnxfuWgYlVtdG86MQp0OjEKdToxCw.01.120xdlplk"
 
