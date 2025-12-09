@@ -29,6 +29,8 @@ spec:
         secretKeyRef:
           key: secretAccessKey
           name: aws-credentials
+    - name: NO_PROXY
+      value: "localhost,127.0.0.1,::1,gitlab.ops.techsecom.io,.svc,.cluster.local"
     runnerToken: "glrt-oyBMZNYu_cnxfuWgYlVtdG86MQp0OjEKdToxCw.01.120xdlplk"
 
     unregisterRunners: true
@@ -62,7 +64,7 @@ spec:
 
             node_selector_overwrite_allowed = ".*"
             namespace = "{{ .Release.Namespace }}"
-            image = "docker:stable"
+            image = "ubuntu:24.04"
             service_account = "default"
 
           [runners.cache]
