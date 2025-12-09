@@ -61,18 +61,18 @@ spec:
           name: aws-credentials-glab-runner
           key: secretkey
 
-    extraObjects: 
-    - name: docker
-      image: docker:20.10-dind
-      securityContext:
-        privileged: true
-      volumeMounts:
-      - mountPath: /var/run/
-        name: dind-socket
-      lifecycle:
-        postStart:
-          exec:
-            command: [ "sh", "-c", "until docker info; do sleep 1; done;" ]
+    # extraObjects: 
+    # - name: docker
+    #   image: docker:20.10-dind
+    #   securityContext:
+    #     privileged: true
+    #   volumeMounts:
+    #   - mountPath: /var/run/
+    #     name: dind-socket
+    #   lifecycle:
+    #     postStart:
+    #       exec:
+    #         command: [ "sh", "-c", "until docker info; do sleep 1; done;" ]
 
     runnerToken: "glrt-oyBMZNYu_cnxfuWgYlVtdG86MQp0OjEKdToxCw.01.120xdlplk"
 
