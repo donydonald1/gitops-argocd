@@ -50,10 +50,21 @@ spec:
 
     service:
       enabled: true
-
+    resources: 
+      # limits:
+      #   memory: 256Mi
+      #   cpu: 200m
+      #   ephemeral-storage: 512Mi
+      requests:
+        memory: 1000Mi
+        cpu: 812m
+        ephemeral-storage: 800Mi
     runners:
+      # cache: 
+      #   secretName: aws-credentials
       helpers:
         image: "registry.gitlab.com/gitlab-org/gitlab-runner/gitlab-runner-helper:v18.6.1"
+
       config: |
         [[runners]]
           name = "gitlab-runner"
@@ -63,7 +74,7 @@ spec:
             poll_timeout = 2000
 
             node_selector_overwrite_allowed = ".*"
-            namespace = "{{ .Release.Namespace }}"
+            namespace = "{{ default .Release.Namespace .Values.runners.jobNamespace }}"
             image = "ubuntu:24.04"
             service_account = "default"
 
