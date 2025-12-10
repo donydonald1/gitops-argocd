@@ -21,7 +21,7 @@ spec:
         enabled: true
 
     revisionHistoryLimit: 50
-    certsSecretName: gitlab-wildcard-tls-chain
+    # certsSecretName: gitlab-wildcard-tls-chain
     gitlabUrl: "https://gitlab.ops.techsecom.io"
     envVars:
     - name: DOCKER_TLS_CERTDIR
