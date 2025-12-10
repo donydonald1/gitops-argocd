@@ -154,9 +154,9 @@ kubevirt-stack:
         # # nginx.ingress.kubernetes.io/proxy-ssl-protocols: TLSv1.3 TLSv1.2
         # nginx.ingress.kubernetes.io/ssl-redirect: "true"
         # nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-        nginx.org/location-snippets: |
-          proxy_set_header Upgrade $http_upgrade;
-          proxy_set_header Connection $connection_upgrade;
+        # nginx.org/location-snippets: |
+        #   proxy_set_header Upgrade $http_upgrade;
+        #   proxy_set_header Connection $connection_upgrade;
       tls:
         enabled: true
         secretName: "tls-kubevirt-manager"
