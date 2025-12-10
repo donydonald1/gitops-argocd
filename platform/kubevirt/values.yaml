@@ -142,6 +142,8 @@ kubevirt-stack:
       hostname: "kubevirt.ops.techsecom.io"
       annotations:
         cert-manager.io/cluster-issuer: letsencrypt-prod
+        # nginx.ingress.kubernetes.io/auth-url: "https://oauth2-proxy.oauth2.svc.cluster.local/oauth2/auth"
+        nginx.ingress.kubernetes.io/auth-signin: "https://auth.ops.techsecom.io/oauth2/start?rd=$escaped_request_uri"
         # kubernetes.io/tls-acme: "true"
         # cert-manager.io/duration: 2160h
         # cert-manager.io/renew-before: 720h
