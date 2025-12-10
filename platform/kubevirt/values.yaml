@@ -143,8 +143,8 @@ kubevirt-stack:
       annotations:
         cert-manager.io/cluster-issuer: letsencrypt-prod
         # nginx.ingress.kubernetes.io/auth-url: "https://oauth2-proxy.oauth2.svc.cluster.local/oauth2/auth"
+        nginx.ingress.kubernetes.io/auth-url: "https://auth.ops.techsecom.io/oauth2/auth"
         nginx.ingress.kubernetes.io/auth-signin: "https://auth.ops.techsecom.io/oauth2/start?rd=$escaped_request_uri"
-        # kubernetes.io/tls-acme: "true"
         # cert-manager.io/duration: 2160h
         # cert-manager.io/renew-before: 720h
         # cert-manager.io/revision-history-limit: "3"
@@ -154,9 +154,9 @@ kubevirt-stack:
         # # nginx.ingress.kubernetes.io/proxy-ssl-protocols: TLSv1.3 TLSv1.2
         # nginx.ingress.kubernetes.io/ssl-redirect: "true"
         # nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-        # nginx.org/location-snippets: |
-        #   proxy_set_header Upgrade $http_upgrade;
-        #   proxy_set_header Connection $connection_upgrade;
+        nginx.org/location-snippets: |
+          proxy_set_header Upgrade $http_upgrade;
+          proxy_set_header Connection $connection_upgrade;
       tls:
         enabled: true
         secretName: "tls-kubevirt-manager"
