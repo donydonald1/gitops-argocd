@@ -20,7 +20,7 @@ spec:
       serviceMonitor:
         enabled: true
 
-    revisionHistoryLimit: 50
+    # revisionHistoryLimit: 50
     # certsSecretName: gitlab-wildcard-tls-chain
     gitlabUrl: "https://gitlab.ops.techsecom.io"
     envVars:
@@ -78,9 +78,9 @@ spec:
 
     unregisterRunners: true
 
-    logLevel: debug
+    # logLevel: debug
 
-    logFormat: runner
+    # logFormat: runner
 
     rbac:
       create: true
@@ -106,7 +106,7 @@ spec:
       cache: 
         secretName: aws-credentials-glab-runner
       helpers:
-        image: "registry.gitlab.com/gitlab-org/gitlab-runner/gitlab-runner-helper:v18.6.1"
+        # image: "registry.gitlab.com/gitlab-org/gitlab-runner/gitlab-runner-helper:v18.6.1"
 
       config: |
         [[runners]]
