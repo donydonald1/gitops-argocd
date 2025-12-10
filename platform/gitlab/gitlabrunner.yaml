@@ -104,11 +104,11 @@ spec:
             Insecure = false
             AuthenticationType = "access-key"
 
-        [[runners.kubernetes.services]]
-          name = "docker:24.0-dind"
-          privileged = true
-          command = ["dockerd-entrypoint.sh"]
-          args = ["--tls=true", "--tlsverify=true"]
+        # [[runners.kubernetes.services]]
+        #   name = "docker:24.0-dind"
+        #   privileged = true
+        #   command = ["dockerd-entrypoint.sh"]
+        #   args = ["--tls=true", "--tlsverify=true"]
 
         [[runners.kubernetes.volumes.empty_dir]]
           name = "docker-certs"
