@@ -101,8 +101,7 @@ spec:
             BucketName = "gitlab-runner-cache"
             BucketLocation = "us-east-1"
             S3ForcePathStyle = true
-            Insecure = false
-            AuthenticationType = "access-key"
+            Insecure = true
 
         # [[runners.kubernetes.services]]
         #   name = "docker:24.0-dind"
