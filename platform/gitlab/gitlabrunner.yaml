@@ -82,6 +82,7 @@ spec:
       config: |
         [[runners]]
           name = "k8s-docker-runner"
+          request_concurrency = 4
           [runners.kubernetes]
             privileged = true
             poll_timeout = 2000
