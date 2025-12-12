@@ -183,20 +183,20 @@ spec:
 
       registry:
         bucket: gitlab-registry
-        # notifications:
-        #   events:
-        #     includereferences: true
-        #   endpoints:
-        #   - name: alertmanager
-        #     url: http://kps-alertmanager.monitoring.svc.cluster.local:9093
-        #     timeout: 500ms
-        #     # DEPRECATED: use `maxretries` instead https://gitlab.com/gitlab-org/container-registry/-/issues/1243.
-        #     # When using `maxretries`, `threshold` is ignored: https://gitlab.com/gitlab-org/container-registry/-/blob/master/docs/configuration.md?ref_type=heads#endpoints
-        #     threshold: 5
-        #     maxretries: 5
-        #     backoff: 1s
-        #     headers:
-        #       X-Random-Config: [ plain direct ]
+        notifications:
+          events:
+            includereferences: true
+          endpoints:
+          - name: alertmanager
+            url: http://kps-alertmanager.monitoring.svc.cluster.local:9093
+            timeout: 500ms
+            # DEPRECATED: use `maxretries` instead https://gitlab.com/gitlab-org/container-registry/-/issues/1243.
+            # When using `maxretries`, `threshold` is ignored: https://gitlab.com/gitlab-org/container-registry/-/blob/master/docs/configuration.md?ref_type=heads#endpoints
+            threshold: 5
+            maxretries: 5
+            backoff: 1s
+            headers:
+              X-Random-Config: [ plain direct ]
       appConfig:
         initialDefaults:
           signupEnabled: false
@@ -307,6 +307,9 @@ spec:
             secret: redis-creds
             key: REDIS_PASSWORD
       hosts:
+        main:
+          name: gitlab.ops.techsecom.io
+          protocol: https
         domain: techsecom.io
         https: true
         hostSuffix: null
@@ -387,40 +390,9 @@ spec:
       install: false
     redis:
       install: false
-    # redis:
-    #   # architecture: replication
-    #   global:
-    #     defaultStorageClass: longhorn
-    #     storageClass: longhorn
-    #   replica:
-    #     kind: StatefulSet
-    #     persistence:
-    #       size: 100Gi
-    #     replicaCount: 3
-    #   resources:
-    #     requests:
-    #       cpu: 500m
-    #   sentinel:
-    #     enabled: true
-    #   image:
-    #     registry: docker.io
-    #     repository: bitnamilegacy/redis-sentinel
-    #     tag: 8.2.1-debian-12-r0
 
     registry:
       enabled: true
-      # database:
-      #   enabled: true
-      #   name: gitlab-registry
-      #   user: postgres
-      #   password:
-      #     key: password
-      #     secret: postgres-superuser-secret
-      #   host: cnpg-cluster-rw.cnpg-system.svc.cluster.local
-      #   port: 5432
-      #   sslmode: disable
-      #   migrations:
-      #     enabled: true
       storage:
         key: config
         secret: registry-s3-config
