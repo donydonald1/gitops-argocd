@@ -96,6 +96,8 @@ spec:
               key: config
       webservice:
         maxReplicas: 10
+        extraEnv:
+          WEB_IDE_EXTENSION_HOST_DOMAIN: "ide.ops.techsecom.io"
         ingress:
           tls:
             secretName: webservice-tls-secret
