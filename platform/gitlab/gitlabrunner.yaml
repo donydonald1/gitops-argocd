@@ -60,6 +60,8 @@ spec:
 
     unregisterRunners: true
 
+    concurrent: 20
+
     rbac:
       create: true
 
@@ -75,6 +77,13 @@ spec:
         cpu: 812m
         ephemeral-storage: 800Mi
 
+    podAnnotations:
+      gitlab.com/prometheus_scrape: "true"
+      gitlab.com/prometheus_port: 9252
+    podSecurityContext:
+      seccompProfile:
+        type: "RuntimeDefault"
+        
     runners:
       cache:
         secretName: aws-credentials-glab-runner
