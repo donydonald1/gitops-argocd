@@ -77,7 +77,7 @@ spec:
                       accesskey: "{{ .MINIO_ACCESS_KEY }}"
                       secretkey: "{{ .MINIO_SECRET_KEY }}"
                       region: "us-east-1"
-                      regionendpoint: "minio.minio.svc.cluster.local:9000"
+                      regionendpoint: "s3.ops.techsecom.io"
                       v4auth: true
                       pathstyle: true
                       secure: false
