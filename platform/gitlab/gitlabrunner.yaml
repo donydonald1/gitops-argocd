@@ -103,15 +103,15 @@ spec:
             S3ForcePathStyle = true
             Insecure = true
 
-        [[runners.kubernetes.services]]
-          name = "docker:27.3-dind"
-          privileged = true
-          command = ["dockerd-entrypoint.sh"]
-        #   args = ["--tls=true", "--tlsverify=true"]
+          [[runners.kubernetes.services]]
+            name = "docker:27.3-dind"
+            privileged = true
+            command = ["dockerd-entrypoint.sh"]
+            args = ["--host=tcp://0.0.0.0:2375", "--host=unix:///var/run/docker.sock"]
 
-        [[runners.kubernetes.volumes.empty_dir]]
-          name = "docker-certs"
-          mount_path = "/certs/client"
+        # [[runners.kubernetes.volumes.empty_dir]]
+        #   name = "docker-certs"
+        #   mount_path = "/certs/client"
 
       privileged: true
       serviceAccountName: gitlab-runner
