@@ -88,7 +88,7 @@ spec:
             poll_timeout = 2000
             node_selector_overwrite_allowed = ".*"
             namespace = "{{ default .Release.Namespace .Values.runners.jobNamespace }}"
-            image = "docker:dind"
+            image = "docker:27.3-cli"
             service_account = "default"
 
           [runners.cache]
@@ -103,10 +103,10 @@ spec:
             S3ForcePathStyle = true
             Insecure = true
 
-        # [[runners.kubernetes.services]]
-        #   name = "docker:24.0-dind"
-        #   privileged = true
-        #   command = ["dockerd-entrypoint.sh"]
+        [[runners.kubernetes.services]]
+          name = "docker:27.3-dind"
+          privileged = true
+          command = ["dockerd-entrypoint.sh"]
         #   args = ["--tls=true", "--tlsverify=true"]
 
         [[runners.kubernetes.volumes.empty_dir]]

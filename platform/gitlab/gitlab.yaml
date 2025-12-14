@@ -160,7 +160,7 @@ spec:
       serviceAccount:
         enabled: true
       cell:
-        enabled: true
+        enabled: false
         id: 1
         database:
           skipSequenceAlteration: false
@@ -340,11 +340,9 @@ spec:
 
           nginx.ingress.kubernetes.io/enable-access-log: "true"
           nginx.ingress.kubernetes.io/proxy-body-size: "0"
-          # nginx.ingress.kubernetes.io/proxy-ssl-protocols: TLSv1.3 TLSv1.2
+          nginx.ingress.kubernetes.io/proxy-ssl-protocols: TLSv1.3 TLSv1.2
           nginx.ingress.kubernetes.io/ssl-redirect: "true"
           nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-
-          # 🔴 important for live logs + websockets:
           nginx.ingress.kubernetes.io/proxy-buffering: "off"
           nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
           nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
