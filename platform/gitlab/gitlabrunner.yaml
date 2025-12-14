@@ -97,7 +97,7 @@ spec:
             poll_timeout = 2000
             node_selector_overwrite_allowed = ".*"
             namespace = "{{ default .Release.Namespace .Values.runners.jobNamespace }}"
-            image = "docker:27.3-cli"
+            image = "ubuntu:22.04"
             service_account = "default"
 
           [runners.cache]
