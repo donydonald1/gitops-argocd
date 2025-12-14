@@ -83,7 +83,7 @@ spec:
     podSecurityContext:
       seccompProfile:
         type: "RuntimeDefault"
-        
+
     runners:
       cache:
         secretName: aws-credentials-glab-runner
@@ -118,9 +118,9 @@ spec:
             command = ["dockerd-entrypoint.sh"]
             args = ["--host=tcp://0.0.0.0:2375", "--host=unix:///var/run/docker.sock"]
 
-        # [[runners.kubernetes.volumes.empty_dir]]
-        #   name = "docker-certs"
-        #   mount_path = "/certs/client"
+        [[runners.kubernetes.volumes.empty_dir]]
+          name = "docker-certs"
+          mount_path = "/certs/client"
 
       privileged: true
       serviceAccountName: gitlab-runner
