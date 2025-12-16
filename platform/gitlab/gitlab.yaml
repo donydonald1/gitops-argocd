@@ -105,11 +105,11 @@ spec:
         #   tls:
         #     enabled: true
         #     secretName: webservice-metrics-tls-secret
-        minReplicas: 3
-        resources:
-          requests:
-            cpu: 2
-            memory: 4Gi
+        minReplicas: 1
+        # resources:
+        #   requests:
+        #     cpu: 3
+        #     memory: 4Gi
         # tls:
         #   enabled: true
         #   secretName: gitlab-wildcard-tls
