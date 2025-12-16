@@ -241,19 +241,32 @@ harbor:
     components:
     - core
     - jobservice
-    - trivy
+    - clair
 
   # Use recreate strategy to avoid registry volume stuck in mounting status
   updateStrategy:
     type: Recreate
+  clair:
+    enabled: true
+    clair:
+      image:
+        repository: goharbor/clair-photon
+      # resources:
+      #  requests:
+      #    memory: 256Mi
+      #    cpu: 100m
+    adapter:
+      image:
+        repository: goharbor/clair-adapter-photon
+      # resources:
+      #  requests:
+      #    memory: 256Mi
+      #    cpu: 100m
+    replicas: 3
 
   persistence:
     enabled: true
     resourcePolicy: "keep"
-    persistentVolumeClaim:
-      trivy:
-        storageClass: longhorn
-        size: 60Gi
     imageChartStorage:
       type: "s3"
       # https://github.com/goharbor/harbor-helm/issues/1318
@@ -266,7 +279,7 @@ harbor:
   portal:
     replicas: 3
   notary:
-    enabled: false
+    enabled: true
 
   database:
     type: external

@@ -4,7 +4,7 @@ description: A Helm chart for Harbor with HA
 version: 0.0.0
 dependencies:
 - name: harbor
-  version: 1.18.0
+  version: 1.18.1
   repository: https://helm.goharbor.io
 - name: redis
   version: 22.0.7
