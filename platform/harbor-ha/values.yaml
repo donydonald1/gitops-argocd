@@ -192,9 +192,9 @@ harbor:
         requests:
           cpu: 0.5
           memory: 300Mi
-  trivy:
-    # enabled the flag to enable Trivy scanner
-    enabled: true
+    # trivy:
+    #   # enabled the flag to enable Trivy scanner
+    #   enabled: true
     gitHubToken: ""
   fullnameOverride: harbor
   externalURL: https://harbor.ops.techsecom.io
