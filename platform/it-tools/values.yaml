@@ -51,8 +51,8 @@ it-tools:
 
   resources:
     limits:
-      cpu: 100m
-      memory: 128Mi
+      cpu: 312m
+      memory: 800Mi
     requests:
       cpu: 100m
       memory: 128Mi
