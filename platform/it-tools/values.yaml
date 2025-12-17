@@ -6,7 +6,7 @@ it-tools:
     image:
       repository: nginx/nginx-prometheus-exporter
       pullPolicy: IfNotPresent
-      tag: "1.4.2"
+      # tag: "1.4.2"
     args:
     - --nginx.scrape-uri=http://localhost:8081/stub_status
     port: 9113
@@ -45,10 +45,9 @@ it-tools:
       cert-manager.io/cluster-issuer: letsencrypt-prod
     hosts:
     - host: tools.ops.techsecom.io
-    tls:
-
-      hosts:
-      - tools.ops.techsecom.io
+    # tls:
+    # - host: tools.ops.techsecom.io
+    # - secretName: tools-tls
 
   resources:
     limits:
