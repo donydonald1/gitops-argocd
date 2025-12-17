@@ -4,6 +4,6 @@ version: 0.9.11
 dependencies:
 - name: wikijs
   version: 0.9.11
-  repository: https://charts.plcnk.net
+  repository: https://geek-cookbook.github.io/charts/
 
 # Kawha1234
