@@ -45,6 +45,13 @@ it-tools:
       cert-manager.io/cluster-issuer: letsencrypt-prod
     hosts:
     - host: tools.ops.techsecom.io
+      paths:
+      - path: /
+        pathType: Prefix
+        # one of these patterns will match your chart:
+        service:
+          name: it-tools
+          port: 80
     # tls:
     # - host: tools.ops.techsecom.io
     # - secretName: tools-tls
