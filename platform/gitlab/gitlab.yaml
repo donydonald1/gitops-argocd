@@ -23,9 +23,7 @@ spec:
           requests:
             cpu: 500m
             memory: 1000M
-        # tls:
-        #   enabled: true
-        #   secretName: gitlab-pages-tls-secret
+
       gitlab-rails:
         artifacts:
           objectStorage:
@@ -174,8 +172,6 @@ spec:
       # rails:
       #   bootsnap:
       #     enabled: false
-
-
 
       registry:
         bucket: gitlab-registry
