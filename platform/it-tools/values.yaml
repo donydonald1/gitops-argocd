@@ -52,9 +52,10 @@ it-tools:
         service:
           name: it-tools
           port: 80
-    # tls:
-    # - host: tools.ops.techsecom.io
-    # - secretName: tools-tls
+    tls:
+    - secretName: tools-tls
+      hosts:
+      - tools.ops.techsecom.io
 
   resources:
     limits:
