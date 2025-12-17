@@ -127,7 +127,7 @@ spec:
       indexStorage: 128Gi
 
     openbao:
-      install: false
+      install: true
       ingress:
         enabled: true
         className: nginx
