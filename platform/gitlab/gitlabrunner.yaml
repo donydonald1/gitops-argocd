@@ -14,7 +14,7 @@ spec:
     replicas: 3
 
     gitlabUrl: "https://gitlab.ops.techsecom.io"
-    runnerToken: "glrt-qb56qeC8cVvrA9QH8NZI3G86MQp0OjEKdToxCw.01.120bno48j"
+    runnerToken: "glrt-nmPIYcURc6v3U755SpAKqm86MQp0OjEKdToxCw.01.1217hvtmp"
     # certsSecretName: gitlab-wildcard-tls-chain
 
     metrics:
