@@ -10,45 +10,48 @@ spec:
       elements:
       # - name: keycloak
       #   namespace: security
-      - name: harbor-ha
-        namespace: harbor
-        serverSideApply: true
-        SkipCRDs: true
-        helm:
-          values:
-          - values.yaml
-      # - name: kubevirt
-      #   namespace: kubevirt
+      # - name: harbor-ha
+      #   namespace: harbor
       #   serverSideApply: true
       #   SkipCRDs: true
+      #   wave: "1"
       #   helm:
       #     values:
       #     - values.yaml
-      # - name: velero
-      #   namespace: velero
+      # # - name: kubevirt
+      # #   namespace: kubevirt
+      # #   serverSideApply: true
+      # #   SkipCRDs: true
+      # #   helm:
+      # #     values:
+      # #     - values.yaml
+      # # - name: velero
+      # #   namespace: velero
+      # #   serverSideApply: true
+      # # - name: sonar
+      # #   namespace: sonar
+      # - name: gitlab
+      #   wave: "1"
+      #   namespace: gitlab
       #   serverSideApply: true
-      # - name: sonar
-      #   namespace: sonar
-      - name: gitlab
-        namespace: gitlab
-        serverSideApply: true
-      # SkipCRDs: true
-      # helm:
-      #   values:
-      #   - values.yaml
-      #   # - name: netbootxyz
-      #   #   namespace: netbootxyz
-      #   #   serverSideApply: true
-      #   # helm:
-      #   #   values:
-      #   #   - values.yaml
+      # # SkipCRDs: true
+      # # helm:
+      # #   values:
+      # #   - values.yaml
+      # #   # - name: netbootxyz
+      # #   #   namespace: netbootxyz
+      # #   #   serverSideApply: true
+      # #   # helm:
+      # #   #   values:
+      # #   #   - values.yaml
 
-      - name: cnpg-cluster
-        namespace: cnpg-system
-        helm:
-          values:
-          - values.yaml
-        serverSideApply: true
+      # - name: cnpg-cluster
+      #   namespace: cnpg-system
+      #   wave: "0"
+      #   helm:
+      #     values:
+      #     - values.yaml
+      #   serverSideApply: true
 
       - name: wikijs
         namespace: wikijs
