@@ -164,6 +164,8 @@ gitlab:
   gitlab-runner:
     install: true
     replicas: 3
+    # Use internal URL to bypass Cloudflare for API calls (fixes artifact upload issues)
+    gitlabUrl: http://gitlab-webservice-default.gitlab.svc:8181
     rbac:
       create: true
     runners:
