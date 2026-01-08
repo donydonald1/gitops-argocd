@@ -70,10 +70,10 @@ clickhouse:
     failureThreshold: 6
     successThreshold: 1
 
-  # Volume permissions for longhorn
+  # Volume permissions disabled - Longhorn handles this
   defaultInitContainers:
     volumePermissions:
-      enabled: true
+      enabled: false
 
   # Extra configuration for gitlab user grants
   extraOverrides: |
