@@ -24,7 +24,7 @@ clickhouse:
     replicaCount: 3
     image:
       registry: docker.io
-      repository: bitnamilegacy/clickhouse
+      repository: bitnamilegacy/clickhouse-keeper
     persistence:
       enabled: true
       storageClass: longhorn
