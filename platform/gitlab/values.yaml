@@ -129,6 +129,14 @@ gitlab:
     email: donydonald1@icloud.com
 
   global:
+    # Override deprecated API versions for K8s 1.25+
+    hpa:
+      apiVersion: "autoscaling/v2"
+    pdb:
+      apiVersion: "policy/v1"
+    batch:
+      cronJob:
+        apiVersion: "batch/v1"
     serviceAccount:
       enabled: true
     cell:
