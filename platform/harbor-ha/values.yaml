@@ -2,7 +2,7 @@ redis:
   fullnameOverride: redis
   image:
     registry: docker.io
-    repository: bitnamilegacy/redis
+    repository: bitnami/redis
   global:
     storageClass: longhorn
   auth:
@@ -49,16 +49,11 @@ redis:
       successThreshold: 1
       failureThreshold: 10
 
-  kubectl:
-    image:
-      registry: docker.io
-      repository: bitnamilegacy/kubectl
-
   sentinel:
     enabled: true
     image:
       registry: docker.io
-      repository: bitnamilegacy/redis-sentinel
+      repository: bitnami/redis-sentinel
     masterSet: mymaster
     quorum: 2
     replicas: 3
@@ -88,15 +83,9 @@ redis:
 
   volumePermissions:
     enabled: true
-    image:
-      registry: docker.io
-      repository: bitnamilegacy/os-shell
 
   metrics:
     enabled: true
-    image:
-      registry: docker.io
-      repository: bitnamilegacy/redis-exporter
     serviceMonitor:
       enabled: true
       additionalLabels:
