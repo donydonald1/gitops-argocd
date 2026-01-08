@@ -105,6 +105,7 @@ spec:
       - name: cloudnative-pg
         namespace: cnpg-system
         serverSideApply: true
+        wave: "-1"  # Deploy operator before clusters
         # - name: ghost
         # - name: go-healthcheck
 
@@ -114,8 +115,7 @@ spec:
       annotations:
         argocd.argoproj.io/manifest-generate-paths: "."
         notifications.argoproj.io/subscribe.on-sync-succeeded.telegram: "-1001726711150"
-        argocd.argoproj.io/sync-wave: "5"
-        argocd.argoproj.io/hook: PreSync
+        argocd.argoproj.io/sync-wave: '{{ default "0" (dig "wave" "" .) }}'
         # argocd.argoproj.io/compare-options: '{{ printf "%s=%s" "ServerSideDiff" (dig "serverSideDiff" "false" . | toString) }}'
     spec:
       project: system

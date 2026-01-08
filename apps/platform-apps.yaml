@@ -46,9 +46,17 @@ spec:
       #   #   values:
       #   #   - values.yaml
 
+      - name: minio
+        namespace: minio
+        serverSideApply: true
+        wave: "0"  # Deploy MinIO first (storage for other apps)
+        helm:
+          values:
+          - values.yaml
+
       - name: cnpg-cluster
         namespace: cnpg-system
-        wave: "0"
+        wave: "1"  # Deploy after CNPG operator (wave -1 in system-apps)
         helm:
           values:
           - values.yaml
@@ -57,19 +65,14 @@ spec:
       - name: wikijs
         namespace: wikijs
         serverSideApply: true
-
-      - name: minio
-        namespace: minio
-        serverSideApply: true
-        helm:
-          values:
-          - values.yaml
+        wave: "2"  # Deploy after databases are ready
 
       # # - name: go-healthcheck
 
       - name: it-tools
         namespace: it-tools
         serverSideApply: true
+        wave: "2"
         helm:
           values:
           - values.yaml
@@ -77,6 +80,7 @@ spec:
       - name: kroki
         namespace: kroki
         serverSideApply: true
+        wave: "2"
         helm:
           values:
           - values.yaml
