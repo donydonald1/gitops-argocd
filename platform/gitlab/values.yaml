@@ -446,15 +446,17 @@ gitlab:
     time_zone: America/Chicago
 
     # ClickHouse configuration for CI/CD analytics
+    # Temporarily disabled - requires proper cluster table setup
+    # TODO: Enable once ClickHouse tables are properly replicated
     clickhouse:
-      enabled: true
-      main:
-        url: http://clickhouse.clickhouse.svc.cluster.local:8123
-        database: gitlab_ci_analytics
-        username: gitlab
-        password:
-          secret: clickhouse-auth
-          key: password
+      enabled: false
+      # main:
+      #   url: http://clickhouse.clickhouse.svc.cluster.local:8123
+      #   database: gitlab_ci_analytics
+      #   username: gitlab
+      #   password:
+      #     secret: clickhouse-auth
+      #     key: password
 
   image:
     pullPolicy: Always
