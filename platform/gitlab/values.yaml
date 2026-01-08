@@ -441,18 +441,18 @@ gitlab:
 
     time_zone: America/Chicago
 
-    # ClickHouse configuration for CI/CD analytics (disabled until ClickHouse is stable)
+    # ClickHouse configuration for CI/CD analytics (using Bitnami chart)
     clickhouse:
-      enabled: false
-      # main:
-      #   url: http://clickhouse-clickhouse.clickhouse.svc.cluster.local:8123
-      #   database: gitlab
-      #   username:
-      #     secret: clickhouse-auth
-      #     key: username
-      #   password:
-      #     secret: clickhouse-auth
-      #     key: password
+      enabled: true
+      main:
+        url: http://clickhouse.clickhouse.svc.cluster.local:8123
+        database: gitlab
+        username:
+          secret: clickhouse-auth
+          key: username
+        password:
+          secret: clickhouse-auth
+          key: password
 
   image:
     pullPolicy: Always

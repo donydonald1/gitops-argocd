@@ -1,52 +1,38 @@
 clickhouse:
-  clickhouse:
-    defaultUser:
-      password_secret_name: clickhouse-auth
-      allowExternalAccess: true
+  # Use existing secret for authentication
+  auth:
+    username: gitlab
+    existingSecret: clickhouse-auth
+    existingSecretKey: password
 
-    # Start with 1 replica to get stable, then scale up
-    replicasCount: 1
-    shardsCount: 1
+  # Cluster configuration
+  clusterName: clickhouse
 
-    # Anti-affinity to spread pods across nodes
-    antiAffinity: true
-    antiAffinityScope: "ClickHouseInstallation"
+  # ClickHouse shards/replicas
+  shards: 1
+  replicaCount: 3
 
-    persistence:
-      enabled: true
-      size: 100Gi
-      storageClass: longhorn
-      logs:
-        enabled: true
-        size: 20Gi
-        storageClass: longhorn
+  # Resources
+  resourcesPreset: "medium"
+  resources:
+    requests:
+      cpu: 1
+      memory: 4Gi
+    limits:
+      cpu: 4
+      memory: 16Gi
 
-    image:
-      repository: altinity/clickhouse-server
-      pullPolicy: IfNotPresent
-      tag: "25.3.6.10034.altinitystable"
+  # Persistence
+  persistence:
+    enabled: true
+    size: 100Gi
+    storageClass: longhorn
 
-    service:
-      type: ClusterIP
+  # Service
+  service:
+    type: ClusterIP
 
-    resources:
-      requests:
-        cpu: 1
-        memory: 4Gi
-      limits:
-        cpu: 4
-        memory: 16Gi
-
-    # Create gitlab user with access to gitlab database
-    users:
-      - name: gitlab
-        hostIP: ["0.0.0.0/0"]
-        accessManagement: 0
-        password_secret_name: "clickhouse-auth"
-        grants:
-          - "GRANT ALL ON gitlab.*"
-
-  # Enable ClickHouse Keeper for replication coordination (top-level in chart)
+  # ClickHouse Keeper for coordination
   keeper:
     enabled: true
     replicaCount: 3
@@ -54,3 +40,18 @@ clickhouse:
       enabled: true
       size: 10Gi
       storageClass: longhorn
+    resourcesPreset: "small"
+
+  # Zookeeper is external (use keeper instead)
+  zookeeper:
+    enabled: false
+
+  # Extra users - create default user for GitLab
+  extraUsers:
+    - name: default
+      password: ""
+      networks:
+        - 0.0.0.0/0
+      profile: default
+      quota: default
+      access_management: 1

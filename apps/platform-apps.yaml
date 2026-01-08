@@ -102,6 +102,14 @@ spec:
           values:
           - values.yaml
 
+      - name: gitlab-agent
+        namespace: gitlab
+        serverSideApply: true
+        wave: "3"  # Deploy after GitLab is fully ready
+        helm:
+          values:
+          - values.yaml
+
   template:
     metadata:
       name: "{{ .name }}"

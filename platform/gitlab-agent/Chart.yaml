@@ -1,0 +1,10 @@
+apiVersion: v2
+name: gitlab-agent
+description: GitLab Agent for Kubernetes - enables cluster access and GitOps workflows
+type: application
+version: 0.1.0
+appVersion: "v18.7.0"
+dependencies:
+- name: gitlab-agent
+  version: "2.22.0"
+  repository: https://charts.gitlab.io/

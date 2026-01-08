@@ -1,6 +1,6 @@
 dependencies:
 - name: clickhouse
-  repository: https://helm.altinity.com/
-  version: 0.3.7
-digest: sha256:417533b9e8ccd8689d35bf91f5c3ee72fe1924ff2a3dd30a3893a93063ef5746
-generated: "2026-01-07T20:19:23.099172-06:00"
+  repository: https://charts.bitnami.com/bitnami
+  version: 9.4.4
+digest: sha256:9f8f81f28ecf7e215ded8ef2e59e7d3f1256f4771eac272a95ccf2c1b5f0cc73
+generated: "2026-01-07T21:23:46.936277-06:00"

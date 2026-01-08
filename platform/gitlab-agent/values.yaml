@@ -1,0 +1,59 @@
+# GitLab Agent for Kubernetes
+# Agent connects to GitLab KAS server for cluster integration and workspaces
+
+gitlab-agent:
+  # Image configuration
+  image:
+    tag: v18.7.0-rc1
+    pullPolicy: IfNotPresent
+
+  # GitLab configuration
+  config:
+    # KAS address - using the GitLab KAS service
+    kasAddress: "wss://kas.gitlab.techsecom.io"
+    # kasAddress: "wss://gitlab.ops.techsecom.io/-/kubernetes-agent/"
+
+    # Token secret for agent authentication
+    token:
+      # Token is pulled from Vault via External Secret
+      secret: gitlab-agent-token
+      key: token
+
+  # Replicas for HA
+  replicas: 2
+
+  # Resource configuration
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  # Pod disruption budget
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+
+  # Service account configuration - use our custom SA with cluster-admin
+  serviceAccount:
+    create: true
+    name: gitlab-agent
+    annotations: {}
+
+  # RBAC - disabled here, using custom cluster-admin ClusterRole/Binding in templates/
+  rbac:
+    create: false  # We create our own cluster-admin RBAC in templates/cluster-admin-rbac.yaml
+
+  # Observability
+  observability:
+    enabled: true
+    logging:
+      level: info
+
+  # Security context
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 65534
+    fsGroup: 65534
