@@ -44,6 +44,7 @@ minio:
         ignore_invalid_headers off;
       nginx.ingress.kubernetes.io/configuration-snippet: |
         chunked_transfer_encoding off;
+        proxy_set_header Accept-Encoding "identity";
         proxy_hide_header x-amz-id-2;
         proxy_hide_header x-amz-request-id;
     hosts:
