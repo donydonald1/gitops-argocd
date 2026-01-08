@@ -50,8 +50,13 @@ gitlab-agent:
     logging:
       level: info
 
-  # Security context
-  securityContext:
+  # Pod-level security context (fsGroup is a pod-level field)
+  podSecurityContext:
+    fsGroup: 65534
     runAsNonRoot: true
     runAsUser: 65534
-    fsGroup: 65534
+
+  # Container-level security context
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
