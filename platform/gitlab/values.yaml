@@ -352,6 +352,9 @@ gitlab:
         connection: {}
         enabled: true
         proxy_download: true
+      # Remote Development (Workspaces) configuration
+      remote_development:
+        enabled: true
 
     common:
       labels:
