@@ -21,6 +21,9 @@ ingress-nginx:
       use-forwarded-headers: true
       allow-snippet-annotations: true
       annotations-risk-level: Critical
+      # Remove quotes from blocklist to allow proxy_set_header with values
+      # Still blocks dangerous directives like load_module, lua, location, proxy_pass
+      annotation-value-word-blocklist: "load_module,lua_package,_by_lua,location,root,proxy_pass,serviceaccount,{,}"
       enable-brotli: "true"
       brotli-level: "6"
       # Added text/html and application/vnd.api+json + default ones:
