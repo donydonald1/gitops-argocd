@@ -11,11 +11,6 @@ gitlab:
   upgradeCheck:
     enabled: false
 
-  # Migrations configuration - bypass ClickHouse schema check for initial deployment
-  migrations:
-    extraEnv:
-      BYPASS_CLICKHOUSE_SCHEMA_VERSION: "true"
-
   gitlab:
     gitaly:
       persistence:
@@ -66,8 +61,6 @@ gitlab:
     sidekiq:
       maxReplicas: 10
       minReplicas: 1
-      extraEnv:
-        BYPASS_CLICKHOUSE_SCHEMA_VERSION: "true"
       resources:
         requests:
           cpu: 4
@@ -100,7 +93,6 @@ gitlab:
         AWS_REQUEST_CHECKSUM_CALCULATION: WHEN_REQUIRED
         AWS_ENDPOINT_URL_S3: http://minio.minio.svc.cluster.local:9000
         AWS_S3_FORCE_PATH_STYLE: "1"
-        BYPASS_CLICKHOUSE_SCHEMA_VERSION: "true"
       persistence:
         enabled: true
       backups:
@@ -119,7 +111,6 @@ gitlab:
       maxReplicas: 10
       extraEnv:
         WEB_IDE_EXTENSION_HOST_DOMAIN: "ide.ops.techsecom.io"
-        BYPASS_CLICKHOUSE_SCHEMA_VERSION: "true"
       ingress:
         tls:
           secretName: webservice-tls-secret
@@ -452,12 +443,11 @@ gitlab:
     time_zone: America/Chicago
 
     # ClickHouse configuration for CI/CD analytics
-    # TEMPORARILY DISABLED for initial deployment - enable after GitLab is running
     clickhouse:
-      enabled: false
+      enabled: true
       main:
         url: http://clickhouse.clickhouse.svc.cluster.local:8123
-        database: gitlab_production
+        database: gitlab_ci_analytics
         username: gitlab
         password:
           secret: clickhouse-auth
