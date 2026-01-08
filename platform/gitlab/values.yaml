@@ -410,6 +410,7 @@ gitlab:
         cert-manager.io/renew-before: 720h
         cert-manager.io/revision-history-limit: "3"
         external-dns.alpha.kubernetes.io/enabled: "true"
+        external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
         nginx.ingress.kubernetes.io/enable-access-log: "true"
         nginx.ingress.kubernetes.io/proxy-ssl-protocols: TLSv1.3 TLSv1.2
         nginx.ingress.kubernetes.io/ssl-redirect: "true"
@@ -446,17 +447,15 @@ gitlab:
     time_zone: America/Chicago
 
     # ClickHouse configuration for CI/CD analytics
-    # Temporarily disabled - requires proper cluster table setup
-    # TODO: Enable once ClickHouse tables are properly replicated
     clickhouse:
-      enabled: false
-      # main:
-      #   url: http://clickhouse.clickhouse.svc.cluster.local:8123
-      #   database: gitlab_ci_analytics
-      #   username: gitlab
-      #   password:
-      #     secret: clickhouse-auth
-      #     key: password
+      enabled: true
+      main:
+        url: http://clickhouse.clickhouse.svc.cluster.local:8123
+        database: gitlab_ci_analytics
+        username: gitlab
+        password:
+          secret: clickhouse-auth
+          key: main_password
 
   image:
     pullPolicy: Always
