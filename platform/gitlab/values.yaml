@@ -439,6 +439,9 @@ gitlab:
         nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
         nginx.ingress.kubernetes.io/service-upstream: "true"
         nginx.ingress.kubernetes.io/proxy-body-size: "512m"
+        # WebSocket support for ActionCable (real-time job logs)
+        nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
+        nginx.ingress.kubernetes.io/upstream-hash-by: "$remote_addr"
         # Fix for Cloudflare proxy encoding issues with git operations and artifact uploads
         # proxy_request_buffering off is critical for multipart uploads (artifacts)
         nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
@@ -446,6 +449,9 @@ gitlab:
         nginx.ingress.kubernetes.io/configuration-snippet: |
           chunked_transfer_encoding off;
           proxy_set_header Accept-Encoding "identity";
+          # WebSocket headers for ActionCable
+          proxy_set_header Upgrade $http_upgrade;
+          proxy_set_header Connection $connection_upgrade;
       class: nginx
       configureCertmanager: false
       apiVersion: "networking.k8s.io/v1"
