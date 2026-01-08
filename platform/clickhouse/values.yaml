@@ -1,4 +1,11 @@
 clickhouse:
+  # Override image to use official ClickHouse image (Bitnami image unavailable)
+  image:
+    registry: docker.io
+    repository: clickhouse/clickhouse-server
+    tag: "25.12"
+    pullPolicy: IfNotPresent
+
   # Use existing secret for authentication
   auth:
     username: gitlab
@@ -8,9 +15,9 @@ clickhouse:
   # Cluster configuration
   clusterName: clickhouse
 
-  # ClickHouse shards/replicas
+  # ClickHouse shards/replicas - start with 1 replica for stability
   shards: 1
-  replicaCount: 3
+  replicaCount: 1
 
   # Resources
   resourcesPreset: "medium"
@@ -36,6 +43,11 @@ clickhouse:
   keeper:
     enabled: true
     replicaCount: 3
+    image:
+      registry: docker.io
+      repository: clickhouse/clickhouse-keeper
+      tag: "25.12"
+      pullPolicy: IfNotPresent
     persistence:
       enabled: true
       size: 10Gi
