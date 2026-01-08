@@ -423,6 +423,10 @@ gitlab:
         nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
         nginx.ingress.kubernetes.io/service-upstream: "true"
         nginx.ingress.kubernetes.io/proxy-body-size: "512m"
+        # Fix for Cloudflare proxy encoding issues with git operations
+        nginx.ingress.kubernetes.io/configuration-snippet: |
+          chunked_transfer_encoding off;
+          proxy_set_header Accept-Encoding "identity";
       class: nginx
       configureCertmanager: false
       apiVersion: "networking.k8s.io/v1"
