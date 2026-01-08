@@ -1,0 +1,550 @@
+# GitLab Runner Configuration (deployed as separate HelmChart)
+gitlabRunner:
+  enabled: false
+  replicas: 3
+  runnerToken: "glrt-xxxxx"  # Replace with actual token
+
+# GitLab Configuration
+gitlab:
+  gitlab:
+    gitaly:
+      persistence:
+        size: 300Gi
+        storageClass: longhorn
+    gitlab-pages:
+      maxReplicas: 10
+      minReplicas: 3
+      resources:
+        requests:
+          cpu: 500m
+          memory: 1000M
+
+    gitlab-rails:
+      artifacts:
+        objectStorage:
+          bucket: gitlab-artifacts
+          connection: {}
+          enabled: true
+
+    gitlab-shell:
+      maxReplicas: 10
+      minReplicas: 3
+      sshDaemon: gitlab-sshd
+      opensshd:
+        supplemental_config: |-
+          HostKeyAlgorithms +ssh-rsa,ssh-rsa-cert-v01@openssh.com
+          PubkeyAcceptedAlgorithms +ssh-rsa,ssh-rsa-cert-v01@openssh.com
+          CASignatureAlgorithms +ssh-rsa
+
+    sidekiq:
+      maxReplicas: 10
+      minReplicas: 1
+      resources:
+        requests:
+          cpu: 4
+          memory: 6Gi
+      readinessProbe:
+        initialDelaySeconds: 60
+        periodSeconds: 20
+        timeoutSeconds: 20
+        successThreshold: 1
+        failureThreshold: 10
+      livenessProbe:
+        initialDelaySeconds: 90
+        periodSeconds: 15
+        timeoutSeconds: 15
+        successThreshold: 1
+        failureThreshold: 10
+
+    toolbox:
+      extraEnvFrom:
+        AWS_ACCESS_KEY_ID:
+          secretKeyRef:
+            name: aws-credentials
+            key: accessKeyId
+        AWS_SECRET_ACCESS_KEY:
+          secretKeyRef:
+            name: aws-credentials
+            key: secretAccessKey
+      extraEnv:
+        AWS_DEFAULT_REGION: us-east-1
+        AWS_REQUEST_CHECKSUM_CALCULATION: WHEN_REQUIRED
+        AWS_ENDPOINT_URL_S3: http://minio.minio.svc.cluster.local:9000
+        AWS_S3_FORCE_PATH_STYLE: "1"
+      persistence:
+        enabled: true
+      backups:
+        cron:
+          enabled: true
+          schedule: "0 * * * *"
+          extraArgs: "--s3tool awscli --aws-s3-endpoint-url http://minio.minio.svc.cluster.local:9000"
+          persistence:
+            enabled: true
+        objectStorage:
+          config:
+            secret: s3cmd-config
+            key: config
+
+    webservice:
+      maxReplicas: 10
+      extraEnv:
+        WEB_IDE_EXTENSION_HOST_DOMAIN: "ide.ops.techsecom.io"
+      ingress:
+        tls:
+          secretName: webservice-tls-secret
+      minReplicas: 1
+      workhorse:
+        monitoring:
+          exporter:
+            enabled: true
+
+  gitlab-zoekt:
+    install: false
+    replicas: 1
+    indexStorage: 128Gi
+
+  openbao:
+    install: false
+    ingress:
+      enabled: true
+      className: nginx
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+      hostname: openbao.ops.techsecom.io
+      tls:
+        enabled: true
+        secretName: openbao-tls-secret
+    resources:
+      requests:
+        cpu: 1
+        memory: 2Gi
+
+  gitlab-runner:
+    install: false
+
+  certmanager-issuer:
+    email: donydonald1@icloud.com
+
+  global:
+    serviceAccount:
+      enabled: true
+    cell:
+      enabled: false
+    monitoring:
+      enabled: true
+    openbao:
+      enabled: true
+    webservice:
+      workerTimeout: 240
+
+    registry:
+      bucket: gitlab-registry
+      notifications:
+        events:
+          includereferences: true
+        endpoints:
+          - name: alertmanager
+            url: http://kps-alertmanager.monitoring.svc.cluster.local:9093
+            timeout: 500ms
+            threshold: 5
+            maxretries: 5
+            backoff: 1s
+            headers:
+              X-Random-Config: [plain direct]
+
+    appConfig:
+      initialDefaults:
+        signupEnabled: false
+        gitlabProductUsageData: true
+      artifacts:
+        bucket: gitlab-artifacts
+        connection: {}
+        enabled: true
+        proxy_download: true
+      backups:
+        bucket: gitlab-backups
+        tmpBucket: gitlab-tmp-backups
+      ciSecureFiles:
+        bucket: gitlab-ci-secure-files
+        connection: {}
+        enabled: true
+      defaultProjectsFeatures:
+        issues: true
+        mergeRequests: true
+        wiki: true
+        snippets: true
+        builds: true
+        containerRegistry: true
+      contentSecurityPolicy:
+        directives:
+          default_src: "'self'"
+          frame_ancestors: "'self'"
+          frame_src: "'self' https://www.recaptcha.net/ https://content.googleapis.com https://content-compute.googleapis.com https://content-cloudbilling.googleapis.com https://content-cloudresourcemanager.googleapis.com"
+          img_src: "* data: blob:"
+          script_src: "'self' 'unsafe-inline' 'unsafe-eval' https://www.recaptcha.net https://apis.google.com"
+          style_src: "'self' 'unsafe-inline'"
+        enabled: true
+      dependencyProxy:
+        bucket: gitlab-dependency-proxy
+        connection: {}
+        enabled: true
+        proxy_download: true
+      externalDiffs:
+        bucket: gitlab-mr-diffs
+        connection: {}
+        enabled: false
+        proxy_download: true
+        when: null
+      lfs:
+        bucket: git-lfs
+        connection: {}
+        enabled: true
+        proxy_download: true
+      object_store:
+        connection:
+          key: connection
+          secret: minio-s3-creds
+        enabled: true
+        proxy_download: true
+      omniauth:
+        aautoSignInWithProvider: saml
+        allowBypassTwoFactor: []
+        autoLinkSamlUser: true
+        enabled: true
+        providers:
+          - secret: idp-provider
+        syncProfileAttributes:
+          - email
+          - username
+          - profile
+      packages:
+        bucket: gitlab-packages
+        connection: {}
+        enabled: true
+        proxy_download: true
+      terraformState:
+        bucket: gitlab-terraform-state
+        connection: {}
+        enabled: true
+      uploads:
+        bucket: gitlab-uploads
+        connection: {}
+        enabled: true
+        proxy_download: true
+
+    common:
+      labels:
+        environment: production
+
+    redis:
+      host: mymaster
+      port: 6379
+      sentinels:
+        - host: redis-main.gitlab.svc.cluster.local
+          port: 26379
+      database: 6
+      auth:
+        enabled: true
+        secret: redis-creds
+        key: REDIS_PASSWORD
+      cache:
+        host: mymaster
+        port: 6379
+        sentinels:
+          - host: redis-cache.gitlab.svc.cluster.local
+            port: 26379
+        password:
+          enabled: true
+          secret: redis-creds
+          key: REDIS_PASSWORD
+
+    hosts:
+      main:
+        name: gitlab.ops.techsecom.io
+        protocol: https
+      domain: techsecom.io
+      https: true
+      hostSuffix: null
+      gitlab:
+        name: gitlab.ops.techsecom.io
+        https: true
+      kas:
+        name: kas.gitlab.techsecom.io
+        protocol: https
+      pages:
+        name: pages.gitlab.techsecom.io
+        protocol: https
+      registry:
+        name: gitlab.registry.techsecom.io
+      smartcard:
+        name: smartcard.gitlab.techsecom.io
+
+    ingress:
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+        cert-manager.io/duration: 2160h
+        cert-manager.io/renew-before: 720h
+        cert-manager.io/revision-history-limit: "3"
+        external-dns.alpha.kubernetes.io/enabled: "true"
+        nginx.ingress.kubernetes.io/enable-access-log: "true"
+        nginx.ingress.kubernetes.io/proxy-ssl-protocols: TLSv1.3 TLSv1.2
+        nginx.ingress.kubernetes.io/ssl-redirect: "true"
+        nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+        nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+        nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+        nginx.ingress.kubernetes.io/service-upstream: "true"
+        nginx.ingress.kubernetes.io/proxy-body-size: "512m"
+      class: nginx
+      configureCertmanager: false
+      apiVersion: "networking.k8s.io/v1"
+      enabled: true
+      provider: nginx
+
+    initialRootPassword:
+      key: password
+      secret: gitlab-initial-root-password
+
+    minio:
+      enabled: false
+
+    psql:
+      database: gitlab
+      host: cnpg-cluster-rw.cnpg-system.svc.cluster.local
+      password:
+        key: password
+        secret: postgres-superuser-secret
+        useSecret: true
+      port: 5432
+      connectTimeout: 120
+      preparedStatements: true
+      username: postgres
+
+    time_zone: America/Chicago
+
+  image:
+    pullPolicy: Always
+    tagSuffix: -fips
+
+  installCertmanager: false
+  nginx-ingress:
+    enabled: false
+  postgresql:
+    install: false
+  prometheus:
+    install: false
+  redis:
+    install: false
+
+  registry:
+    enabled: true
+    storage:
+      key: config
+      secret: registry-s3-config
+    ingress:
+      enabled: true
+      tls:
+        secretName: registry-tls-secret
+
+# Redis Main Instance Configuration
+redis-main:
+  fullnameOverride: redis-main
+  image:
+    registry: docker.io
+    repository: bitnami/redis
+  global:
+    storageClass: longhorn
+  auth:
+    enabled: true
+    existingSecret: redis-creds
+    existingSecretPasswordKey: REDIS_PASSWORD
+    sentinel: false
+  architecture: replication
+  replica:
+    replicaCount: 3
+    disableCommands:
+      - FLUSHDB
+    persistence:
+      enabled: true
+      storageClass: longhorn
+      size: 60Gi
+    terminationGracePeriodSeconds: 60
+    startupProbe:
+      enabled: true
+      initialDelaySeconds: 60
+      periodSeconds: 20
+      timeoutSeconds: 20
+      successThreshold: 1
+      failureThreshold: 30
+    readinessProbe:
+      enabled: true
+      initialDelaySeconds: 60
+      periodSeconds: 20
+      timeoutSeconds: 20
+      successThreshold: 1
+      failureThreshold: 10
+    livenessProbe:
+      enabled: true
+      initialDelaySeconds: 90
+      periodSeconds: 15
+      timeoutSeconds: 15
+      successThreshold: 1
+      failureThreshold: 10
+  sentinel:
+    enabled: true
+    masterSet: mymaster
+    quorum: 2
+    replicas: 3
+    terminationGracePeriodSeconds: 60
+    persistence:
+      enabled: true
+      storageClass: longhorn
+      size: 60Gi
+    startupProbe:
+      enabled: true
+      initialDelaySeconds: 60
+      periodSeconds: 15
+      timeoutSeconds: 15
+      failureThreshold: 20
+    readinessProbe:
+      enabled: true
+      initialDelaySeconds: 60
+      periodSeconds: 10
+      timeoutSeconds: 10
+      failureThreshold: 10
+    livenessProbe:
+      enabled: true
+      initialDelaySeconds: 90
+      periodSeconds: 15
+      timeoutSeconds: 10
+      failureThreshold: 10
+  volumePermissions:
+    enabled: true
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      additionalLabels:
+        release: prometheus
+    startupProbe:
+      enabled: true
+      initialDelaySeconds: 60
+      periodSeconds: 20
+      timeoutSeconds: 20
+      successThreshold: 1
+      failureThreshold: 10
+    livenessProbe:
+      enabled: true
+      initialDelaySeconds: 90
+      periodSeconds: 10
+      timeoutSeconds: 10
+      successThreshold: 1
+      failureThreshold: 5
+    readinessProbe:
+      enabled: true
+      initialDelaySeconds: 60
+      periodSeconds: 5
+      timeoutSeconds: 5
+      successThreshold: 1
+      failureThreshold: 3
+
+# Redis Cache Instance Configuration
+redis-cache:
+  fullnameOverride: redis-cache
+  image:
+    registry: docker.io
+    repository: bitnami/redis
+  global:
+    storageClass: longhorn
+  auth:
+    enabled: true
+    existingSecret: redis-creds
+    existingSecretPasswordKey: REDIS_PASSWORD
+    sentinel: false
+  architecture: replication
+  replica:
+    replicaCount: 3
+    disableCommands:
+      - FLUSHDB
+    persistence:
+      enabled: true
+      storageClass: longhorn
+      size: 60Gi
+    terminationGracePeriodSeconds: 60
+    startupProbe:
+      enabled: true
+      initialDelaySeconds: 60
+      periodSeconds: 20
+      timeoutSeconds: 20
+      successThreshold: 1
+      failureThreshold: 30
+    readinessProbe:
+      enabled: true
+      initialDelaySeconds: 60
+      periodSeconds: 20
+      timeoutSeconds: 20
+      successThreshold: 1
+      failureThreshold: 10
+    livenessProbe:
+      enabled: true
+      initialDelaySeconds: 90
+      periodSeconds: 15
+      timeoutSeconds: 15
+      successThreshold: 1
+      failureThreshold: 10
+  sentinel:
+    enabled: true
+    masterSet: mymaster
+    quorum: 2
+    replicas: 3
+    terminationGracePeriodSeconds: 60
+    persistence:
+      enabled: true
+      storageClass: longhorn
+      size: 60Gi
+    startupProbe:
+      enabled: true
+      initialDelaySeconds: 60
+      periodSeconds: 15
+      timeoutSeconds: 15
+      failureThreshold: 20
+    readinessProbe:
+      enabled: true
+      initialDelaySeconds: 60
+      periodSeconds: 10
+      timeoutSeconds: 10
+      failureThreshold: 10
+    livenessProbe:
+      enabled: true
+      initialDelaySeconds: 90
+      periodSeconds: 15
+      timeoutSeconds: 10
+      failureThreshold: 10
+  volumePermissions:
+    enabled: true
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      additionalLabels:
+        release: prometheus
+    startupProbe:
+      enabled: true
+      initialDelaySeconds: 60
+      periodSeconds: 20
+      timeoutSeconds: 20
+      successThreshold: 1
+      failureThreshold: 10
+    livenessProbe:
+      enabled: true
+      initialDelaySeconds: 90
+      periodSeconds: 10
+      timeoutSeconds: 10
+      successThreshold: 1
+      failureThreshold: 5
+    readinessProbe:
+      enabled: true
+      initialDelaySeconds: 60
+      periodSeconds: 5
+      timeoutSeconds: 5
+      successThreshold: 1
+      failureThreshold: 3

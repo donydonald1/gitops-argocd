@@ -15,7 +15,7 @@ spec:
         namespace: harbor
         serverSideApply: true
         SkipCRDs: true
-        wave: "1"
+        wave: "3"  # Deploy after databases and storage are ready
         helm:
           values:
           - values.yaml
@@ -32,19 +32,12 @@ spec:
       # - name: sonar
       #   namespace: sonar
       - name: gitlab
-        wave: "1"
+        wave: "3"  # Deploy after databases (CNPG) and storage (MinIO) are ready
         namespace: gitlab
         serverSideApply: true
-      # SkipCRDs: true
-      # helm:
-      #   values:
-      #   - values.yaml
-      #   # - name: netbootxyz
-      #   #   namespace: netbootxyz
-      #   #   serverSideApply: true
-      #   # helm:
-      #   #   values:
-      #   #   - values.yaml
+        helm:
+          values:
+          - values.yaml
 
       - name: minio
         namespace: minio
