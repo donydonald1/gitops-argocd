@@ -14,6 +14,11 @@ gitlab:
   gitlab:
     gitaly:
       replicas: 3
+      # Run Gitaly as UID 977 to match NFS file ownership
+      # This fixes "dubious ownership" error when NFS has different UID
+      securityContext:
+        runAsUser: 977
+        fsGroup: 988
       persistence:
         size: 300Gi
         storageClass: nfs-csi
@@ -217,6 +222,12 @@ gitlab:
     email: donydonald1@icloud.com
 
   global:
+    # Fix for "dubious ownership" error when NFS has different UID than container user
+    # Sets GIT_CONFIG_* env vars to add safe.directory=* globally for all GitLab components
+    extraEnv:
+      GIT_CONFIG_COUNT: "1"
+      GIT_CONFIG_KEY_0: "safe.directory"
+      GIT_CONFIG_VALUE_0: "*"
     # Override deprecated API versions for K8s 1.25+
     hpa:
       apiVersion: "autoscaling/v2"
