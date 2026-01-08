@@ -16,7 +16,7 @@ gitlab:
       replicas: 3
       persistence:
         size: 300Gi
-        storageClass: longhorn
+        storageClass: nfs-csi
     gitlab-pages:
       maxReplicas: 10
       minReplicas: 3
