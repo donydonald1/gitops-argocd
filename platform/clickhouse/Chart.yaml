@@ -2,10 +2,10 @@ apiVersion: v2
 name: clickhouse
 description: ClickHouse database for GitLab CI/CD analytics
 type: application
-version: 0.2.0
-appVersion: "25.7.5"
+version: 0.3.0
+appVersion: "25.3.6"
 
 dependencies:
 - name: clickhouse
-  version: "9.4.4"
-  repository: https://charts.bitnami.com/bitnami
+  version: "0.3.7"
+  repository: https://helm.altinity.com/

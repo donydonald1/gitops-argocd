@@ -138,6 +138,20 @@ spec:
         kind: "*"
         jqPathExpressions:
         - .spec.template.spec.hostUsers
+      # Ignore ClickHouse operator-managed fields to prevent reconciliation loops
+      - group: clickhouse.altinity.com
+        kind: ClickHouseInstallation
+        jqPathExpressions:
+        - .status
+        - .metadata.annotations
+        - .metadata.finalizers
+        - .spec.configuration.users
+      - group: clickhouse.altinity.com
+        kind: ClickHouseKeeperInstallation
+        jqPathExpressions:
+        - .status
+        - .metadata.annotations
+        - .metadata.finalizers
       syncPolicy:
         automated:
           prune: true
