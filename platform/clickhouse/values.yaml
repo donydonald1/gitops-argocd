@@ -70,10 +70,13 @@ clickhouse:
     failureThreshold: 6
     successThreshold: 1
 
-  # Volume permissions disabled - Longhorn handles this
+  # Volume permissions with bitnamilegacy image
   defaultInitContainers:
     volumePermissions:
-      enabled: false
+      enabled: true
+      image:
+        registry: docker.io
+        repository: bitnamilegacy/os-shell
 
   # Extra configuration for gitlab user grants
   extraOverrides: |
