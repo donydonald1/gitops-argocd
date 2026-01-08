@@ -6,6 +6,9 @@ gitlabRunner:
 
 # GitLab Configuration
 gitlab:
+  # Disable upgrade check - not needed for fresh deployment or ArgoCD managed
+  upgradeCheck:
+    enabled: false
   gitlab:
     gitaly:
       persistence:
