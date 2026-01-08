@@ -1,0 +1,9 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+    name: praefect-db
+spec:
+    name: praefect
+    owner: praefect
+    cluster:
+        name: cnpg-cluster

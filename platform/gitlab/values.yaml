@@ -15,6 +15,23 @@ gitlab:
       persistence:
         size: 300Gi
         storageClass: longhorn
+    praefect:
+      enabled: true
+      replaceInternalGitaly: true
+      autoMigrate: true
+      virtualStorages:
+        - name: default
+          gitalyReplicas: 3
+          maxUnavailable: 1
+      psql:
+        host: cnpg-cluster-rw.cnpg-system.svc.cluster.local
+        port: 5432
+        dbName: praefect
+        user: praefect
+        sslMode: disable
+        password:
+          secret: praefect-user-secret
+          key: password
     gitlab-pages:
       maxReplicas: 10
       minReplicas: 3
