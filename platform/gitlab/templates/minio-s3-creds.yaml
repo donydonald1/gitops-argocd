@@ -19,8 +19,8 @@ spec:
                 connection: |
                     provider: AWS
                     region: us-east-1
-                    aws_access_key_id: "{{ .MINIO_ACCESS_KEY }}"
-                    aws_secret_access_key: "{{ .MINIO_SECRET_KEY }}"
+                    aws_access_key_id: "{{ "{{" }} .MINIO_ACCESS_KEY {{ "}}" }}"
+                    aws_secret_access_key: "{{ "{{" }} .MINIO_SECRET_KEY {{ "}}" }}"
                     aws_signature_version: 4
                     host: minio.minio.svc.cluster.local
                     endpoint: "http://minio.minio.svc.cluster.local:9000"
@@ -74,8 +74,8 @@ spec:
                 config: |-
                     s3:
                       bucket: gitlab-registry
-                      accesskey: "{{ .MINIO_ACCESS_KEY }}"
-                      secretkey: "{{ .MINIO_SECRET_KEY }}"
+                      accesskey: "{{ "{{" }} .MINIO_ACCESS_KEY {{ "}}" }}"
+                      secretkey: "{{ "{{" }} .MINIO_SECRET_KEY {{ "}}" }}"
                       region: "us-east-1"
                       regionendpoint: "s3.ops.techsecom.io"
                       v4auth: true
@@ -110,8 +110,8 @@ spec:
             data:
                 config: |
                     [default]
-                      access_key = "{{ .MINIO_ACCESS_KEY }}"
-                      secret_key = "{{ .MINIO_SECRET_KEY }}"
+                      access_key = "{{ "{{" }} .MINIO_ACCESS_KEY {{ "}}" }}"
+                      secret_key = "{{ "{{" }} .MINIO_SECRET_KEY {{ "}}" }}"
                       bucket_location = us-east-1
                       multipart_chunk_size_mb = 128
                       regionendpoint: "http://minio.minio.svc.cluster.local:9000"
