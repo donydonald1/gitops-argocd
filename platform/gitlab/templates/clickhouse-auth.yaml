@@ -23,3 +23,7 @@ spec:
     remoteRef:
       key: secret/clickhouse/
       property: password
+  - secretKey: main_password
+    remoteRef:
+      key: secret/clickhouse/
+      property: password
