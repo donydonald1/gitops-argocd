@@ -14,14 +14,15 @@ clickhouse:
     existingSecret: clickhouse-auth
     existingSecretKey: password
 
-  # HA Configuration: 2 shards x 2 replicas = 4 ClickHouse nodes
+  # Single instance configuration - GitLab doesn't support true ClickHouse cluster replication
+  # The Bitnami chart creates separate instances that don't share data
   shards: 1
-  replicaCount: 3
+  replicaCount: 1
 
-  # Enable ClickHouse Keeper for coordination (required for replication)
+  # Disable ClickHouse Keeper - not needed for single replica
   keeper:
-    enabled: true
-    replicaCount: 3
+    enabled: false
+    replicaCount: 1
     image:
       registry: docker.io
       repository: bitnamilegacy/clickhouse-keeper
