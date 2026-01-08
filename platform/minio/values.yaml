@@ -36,11 +36,16 @@ minio:
       nginx.ingress.kubernetes.io/proxy-buffering: "off"
       nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
       nginx.ingress.kubernetes.io/proxy-body-size: "0"
+      # Preserve AWS SigV4 Authorization header for S3 API compatibility
+      nginx.ingress.kubernetes.io/upstream-hash-by: "$request_uri"
+      nginx.ingress.kubernetes.io/proxy-pass-headers: "Authorization,X-Amz-Date,X-Amz-Content-SHA256"
       # https://min.io/docs/minio/linux/integrations/setup-nginx-proxy-with-minio.html
       nginx.ingress.kubernetes.io/server-snippet: |
         ignore_invalid_headers off;
       nginx.ingress.kubernetes.io/configuration-snippet: |
         chunked_transfer_encoding off;
+        proxy_hide_header x-amz-id-2;
+        proxy_hide_header x-amz-request-id;
     hosts:
     - &host s3.ops.techsecom.io
     tls:
