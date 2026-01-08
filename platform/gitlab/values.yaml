@@ -15,37 +15,8 @@ gitlab:
     gitaly:
       replicas: 3
       # NFS files are owned by UID 977, but Gitaly container runs as UID 1000
-      # Using init container to fix ownership on NFS directories
-      init:
-        containerSecurityContext:
-          runAsUser: 0  # Run init as root to chown
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-              - ALL
-            add:
-              - CHOWN
-              - FOWNER
-      # Add extra init container to fix NFS ownership
-      extraInitContainers: |
-        - name: fix-nfs-ownership
-          image: busybox:latest
-          command:
-            - sh
-            - -c
-            - |
-              echo "Fixing NFS ownership for Gitaly..."
-              chown -R 1000:1000 /home/git/repositories || true
-              echo "Ownership fix complete"
-          securityContext:
-            runAsUser: 0
-            capabilities:
-              add:
-                - CHOWN
-                - FOWNER
-          volumeMounts:
-            - name: repo-data
-              mountPath: /home/git/repositories
+      # Fix the dubious ownership error by setting git safe.directory globally
+      # The extraEnv vars are set at global level (see global.extraEnv below)
       persistence:
         size: 300Gi
         storageClass: nfs-csi
