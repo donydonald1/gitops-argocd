@@ -10,6 +10,12 @@ gitlab:
   # Disable upgrade check - not needed for fresh deployment or ArgoCD managed
   upgradeCheck:
     enabled: false
+
+  # Migrations configuration - bypass ClickHouse schema check for initial deployment
+  migrations:
+    extraEnv:
+      BYPASS_CLICKHOUSE_SCHEMA_VERSION: "true"
+
   gitlab:
     gitaly:
       persistence:
@@ -60,6 +66,8 @@ gitlab:
     sidekiq:
       maxReplicas: 10
       minReplicas: 1
+      extraEnv:
+        BYPASS_CLICKHOUSE_SCHEMA_VERSION: "true"
       resources:
         requests:
           cpu: 4
@@ -92,6 +100,7 @@ gitlab:
         AWS_REQUEST_CHECKSUM_CALCULATION: WHEN_REQUIRED
         AWS_ENDPOINT_URL_S3: http://minio.minio.svc.cluster.local:9000
         AWS_S3_FORCE_PATH_STYLE: "1"
+        BYPASS_CLICKHOUSE_SCHEMA_VERSION: "true"
       persistence:
         enabled: true
       backups:
@@ -110,6 +119,7 @@ gitlab:
       maxReplicas: 10
       extraEnv:
         WEB_IDE_EXTENSION_HOST_DOMAIN: "ide.ops.techsecom.io"
+        BYPASS_CLICKHOUSE_SCHEMA_VERSION: "true"
       ingress:
         tls:
           secretName: webservice-tls-secret
