@@ -45,19 +45,11 @@ clickhouse:
         grants:
           - "GRANT ALL ON gitlab.*"
 
-  # Enable ClickHouse Keeper for replication coordination
-  clickhouse-keeper:
+  # Enable ClickHouse Keeper for replication coordination (top-level in chart)
+  keeper:
     enabled: true
-    replicasCount: 3
+    replicaCount: 3
     persistence:
       enabled: true
       size: 10Gi
       storageClass: longhorn
-
-  # Metrics/monitoring
-  metrics:
-    enabled: true
-    serviceMonitor:
-      enabled: true
-      additionalLabels:
-        release: prometheus
