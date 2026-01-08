@@ -36,11 +36,6 @@ clickhouse:
       limits:
         cpu: 500m
         memory: 1Gi
-    # Disable volume permissions init container for Keeper (chart bug with empty volume name)
-    defaultInitContainers:
-      volumePermissions:
-        enabled: false
-
   # Zookeeper disabled - using Keeper instead
   zookeeper:
     enabled: false
@@ -92,13 +87,10 @@ clickhouse:
     failureThreshold: 6
     successThreshold: 1
 
-  # Volume permissions with bitnamilegacy image
+  # Disable volume permissions globally (chart bug with empty volume name for keeper)
   defaultInitContainers:
     volumePermissions:
-      enabled: true
-      image:
-        registry: docker.io
-        repository: bitnamilegacy/os-shell
+      enabled: false
 
   # Extra configuration for gitlab user grants
   extraOverrides: |
