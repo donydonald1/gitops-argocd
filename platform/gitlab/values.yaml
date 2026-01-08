@@ -13,6 +13,7 @@ gitlab:
 
   gitlab:
     gitaly:
+      replicas: 3
       persistence:
         size: 300Gi
         storageClass: longhorn
