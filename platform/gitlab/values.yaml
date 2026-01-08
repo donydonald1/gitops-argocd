@@ -350,7 +350,7 @@ redis-main:
   fullnameOverride: redis-main
   image:
     registry: docker.io
-    repository: bitnami/redis
+    repository: bitnamilegacy/redis
   global:
     storageClass: longhorn
   auth:
@@ -452,7 +452,7 @@ redis-cache:
   fullnameOverride: redis-cache
   image:
     registry: docker.io
-    repository: bitnami/redis
+    repository: bitnamilegacy/redis
   global:
     storageClass: longhorn
   auth:
