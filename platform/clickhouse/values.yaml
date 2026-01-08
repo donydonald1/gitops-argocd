@@ -36,6 +36,10 @@ clickhouse:
       limits:
         cpu: 500m
         memory: 1Gi
+    # Disable volume permissions init container for Keeper (chart bug with empty volume name)
+    defaultInitContainers:
+      volumePermissions:
+        enabled: false
 
   # Zookeeper disabled - using Keeper instead
   zookeeper:
