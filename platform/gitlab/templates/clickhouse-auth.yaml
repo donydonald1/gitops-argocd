@@ -17,9 +17,9 @@ spec:
   data:
   - secretKey: username
     remoteRef:
-      key: secret/gitlab/
-      property: dbusername
+      key: secret/clickhouse/
+      property: username
   - secretKey: password
     remoteRef:
-      key: secret/gitlab/
-      property: dbpassword
+      key: secret/clickhouse/
+      property: password
