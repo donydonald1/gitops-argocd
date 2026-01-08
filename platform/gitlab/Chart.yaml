@@ -1,19 +1,11 @@
 apiVersion: v2
 name: gitlab
-description: GitLab Helm Chart with Redis dependencies
+description: GitLab Helm Chart (Redis deployed separately to avoid global conflicts)
 type: application
-version: 0.1.0
+version: 0.1.1
 appVersion: "17.0.0"
 
 dependencies:
 - name: gitlab
   version: "9.7.1"
   repository: https://charts.gitlab.io/
-- name: redis
-  version: "24.1.0"
-  repository: https://charts.bitnami.com/bitnami
-  alias: redis-main
-- name: redis
-  version: "24.1.0"
-  repository: https://charts.bitnami.com/bitnami
-  alias: redis-cache

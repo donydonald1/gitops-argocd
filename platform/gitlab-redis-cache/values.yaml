@@ -1,0 +1,98 @@
+redis:
+  fullnameOverride: redis-cache
+  image:
+    registry: docker.io
+    repository: bitnamilegacy/redis
+  auth:
+    enabled: true
+    existingSecret: redis-creds
+    existingSecretPasswordKey: REDIS_PASSWORD
+    sentinel: false
+  architecture: replication
+  replica:
+    replicaCount: 3
+    disableCommands:
+      - FLUSHDB
+    persistence:
+      enabled: true
+      storageClass: longhorn
+      size: 60Gi
+    terminationGracePeriodSeconds: 60
+    startupProbe:
+      enabled: true
+      initialDelaySeconds: 60
+      periodSeconds: 20
+      timeoutSeconds: 20
+      successThreshold: 1
+      failureThreshold: 30
+    readinessProbe:
+      enabled: true
+      initialDelaySeconds: 60
+      periodSeconds: 20
+      timeoutSeconds: 20
+      successThreshold: 1
+      failureThreshold: 10
+    livenessProbe:
+      enabled: true
+      initialDelaySeconds: 90
+      periodSeconds: 15
+      timeoutSeconds: 15
+      successThreshold: 1
+      failureThreshold: 10
+  sentinel:
+    enabled: true
+    masterSet: mymaster
+    quorum: 2
+    replicas: 3
+    terminationGracePeriodSeconds: 60
+    persistence:
+      enabled: true
+      storageClass: longhorn
+      size: 60Gi
+    startupProbe:
+      enabled: true
+      initialDelaySeconds: 60
+      periodSeconds: 15
+      timeoutSeconds: 15
+      failureThreshold: 20
+    readinessProbe:
+      enabled: true
+      initialDelaySeconds: 60
+      periodSeconds: 10
+      timeoutSeconds: 10
+      failureThreshold: 10
+    livenessProbe:
+      enabled: true
+      initialDelaySeconds: 90
+      periodSeconds: 15
+      timeoutSeconds: 10
+      failureThreshold: 10
+  volumePermissions:
+    enabled: true
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      additionalLabels:
+        release: prometheus
+    startupProbe:
+      enabled: true
+      initialDelaySeconds: 60
+      periodSeconds: 20
+      timeoutSeconds: 20
+      successThreshold: 1
+      failureThreshold: 10
+    livenessProbe:
+      enabled: true
+      initialDelaySeconds: 90
+      periodSeconds: 10
+      timeoutSeconds: 10
+      successThreshold: 1
+      failureThreshold: 5
+    readinessProbe:
+      enabled: true
+      initialDelaySeconds: 60
+      periodSeconds: 5
+      timeoutSeconds: 5
+      successThreshold: 1
+      failureThreshold: 3
