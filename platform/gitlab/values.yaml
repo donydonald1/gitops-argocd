@@ -393,7 +393,7 @@ gitlab:
     clickhouse:
       enabled: true
       main:
-        url: http://clickhouse.clickhouse.svc.cluster.local:8123
+        url: http://clickhouse-clickhouse.clickhouse.svc.cluster.local:8123
         database: gitlab
         username:
           secret: clickhouse-auth
