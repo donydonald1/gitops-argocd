@@ -1,0 +1,6 @@
+dependencies:
+- name: clickhouse
+  repository: https://helm.altinity.com/
+  version: 0.3.7
+digest: sha256:417533b9e8ccd8689d35bf91f5c3ee72fe1924ff2a3dd30a3893a93063ef5746
+generated: "2026-01-07T20:19:23.099172-06:00"

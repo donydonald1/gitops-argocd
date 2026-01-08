@@ -1,0 +1,63 @@
+clickhouse:
+  clickhouse:
+    defaultUser:
+      password_secret_name: clickhouse-auth
+      allowExternalAccess: true
+
+    # 3 replicas for HA - requires keeper
+    replicasCount: 3
+    shardsCount: 1
+
+    # Anti-affinity to spread pods across nodes
+    antiAffinity: true
+    antiAffinityScope: "ClickHouseInstallation"
+
+    persistence:
+      enabled: true
+      size: 100Gi
+      storageClass: longhorn
+      logs:
+        enabled: true
+        size: 20Gi
+
+    image:
+      repository: altinity/clickhouse-server
+      pullPolicy: IfNotPresent
+      tag: "25.3.6.10034.altinitystable"
+
+    service:
+      type: ClusterIP
+
+    resources:
+      requests:
+        cpu: 1
+        memory: 4Gi
+      limits:
+        cpu: 4
+        memory: 16Gi
+
+    # Create gitlab user with access to gitlab database
+    users:
+      - name: gitlab
+        hostIP: ["0.0.0.0/0"]
+        accessManagement: 0
+        password_secret_name: "clickhouse-auth"
+        grants:
+          - "GRANT ALL ON gitlab.*"
+
+  # Enable ClickHouse Keeper for replication coordination
+  clickhouse-keeper:
+    enabled: true
+    replicasCount: 3
+    persistence:
+      enabled: true
+      size: 10Gi
+      storageClass: longhorn
+
+  # Metrics/monitoring
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      additionalLabels:
+        release: prometheus

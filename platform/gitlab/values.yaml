@@ -1,3 +1,10 @@
+# GitLab Runner Configuration (deployed via RKE2 HelmChart CRD)
+# Disabled - using gitlab-runner within the GitLab chart instead
+gitlabRunner:
+  enabled: false
+  replicas: 3
+  runnerToken: "<path:secret/gitlab#runner-token>"  # Pulled from Vault via AVP
+
 # GitLab Configuration
 gitlab:
   # Disable upgrade check - not needed for fresh deployment or ArgoCD managed
@@ -124,22 +131,28 @@ gitlab:
     runners:
       locked: false
       secret: "gitlab-runner-secret"
+      cache:
+        secretName: aws-credentials-glab-runner
       config: |
         [[runners]]
+          name = "k8s-gitlab-runner"
+          request_concurrency = 4
           [runners.kubernetes]
-          image = "ubuntu:22.04"
-          privileged = true
-          namespace = "gitlab"
+            image = "ubuntu:22.04"
+            privileged = true
+            namespace = "gitlab"
+            poll_timeout = 2000
+            service_account = "default"
           [runners.cache]
             Type = "s3"
             Path = "gitlab-runner"
             Shared = true
             [runners.cache.s3]
               ServerAddress = "minio.minio.svc.cluster.local:9000"
-              BucketName = "runner-cache"
+              BucketName = "gitlab-runner-cache"
               BucketLocation = "us-east-1"
+              S3ForcePathStyle = true
               Insecure = true
-              AuthenticationType = "access-key"
     envVars:
       - name: CACHE_S3_ACCESS_KEY
         valueFrom:
@@ -151,6 +164,11 @@ gitlab:
           secretKeyRef:
             name: aws-credentials-glab-runner
             key: secretkey
+    extraEnv:
+      CACHE_S3_SERVER_ADDRESS: "minio.minio.svc.cluster.local:9000"
+      CACHE_S3_BUCKET_NAME: "gitlab-runner-cache"
+      CACHE_S3_BUCKET_LOCATION: us-east-1
+      CACHE_SHARED: "true"
     podAnnotations:
       gitlab.com/prometheus_scrape: "true"
       gitlab.com/prometheus_port: "9252"

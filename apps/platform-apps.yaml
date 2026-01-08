@@ -71,6 +71,14 @@ spec:
           - values.yaml
         serverSideApply: true
 
+      - name: clickhouse
+        namespace: clickhouse
+        wave: "1"  # Deploy after storage (MinIO) and CNPG operator are ready
+        serverSideApply: true
+        helm:
+          values:
+          - values.yaml
+
       - name: wikijs
         namespace: wikijs
         serverSideApply: true

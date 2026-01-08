@@ -1,0 +1,11 @@
+apiVersion: v2
+name: clickhouse
+description: ClickHouse database for GitLab CI/CD analytics
+type: application
+version: 0.1.0
+appVersion: "25.3.6"
+
+dependencies:
+- name: clickhouse
+  version: "0.3.7"
+  repository: https://helm.altinity.com/
