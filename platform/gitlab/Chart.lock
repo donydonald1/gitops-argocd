@@ -1,0 +1,12 @@
+dependencies:
+- name: gitlab
+  repository: https://charts.gitlab.io/
+  version: 9.7.1
+- name: redis
+  repository: https://charts.bitnami.com/bitnami
+  version: 24.1.0
+- name: redis
+  repository: https://charts.bitnami.com/bitnami
+  version: 24.1.0
+digest: sha256:1bc17bab56706e7523c47471d1433880415ada18de625be40e567853a774fa3b
+generated: "2026-01-07T19:15:08.259077-06:00"
