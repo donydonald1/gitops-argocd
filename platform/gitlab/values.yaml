@@ -16,9 +16,18 @@ gitlab:
       replicas: 3
       # Run Gitaly as UID 977 to match NFS file ownership
       # This fixes "dubious ownership" error when NFS has different UID
+      # Pod-level securityContext
       securityContext:
         runAsUser: 977
         fsGroup: 988
+      # Container-level securityContext (overrides default runAsUser: 1000)
+      containerSecurityContext:
+        runAsUser: 977
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
       persistence:
         size: 300Gi
         storageClass: nfs-csi
