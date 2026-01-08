@@ -14,15 +14,30 @@ clickhouse:
     existingSecret: clickhouse-auth
     existingSecretKey: password
 
-  # Single shard, single replica for simplicity
+  # HA Configuration: 2 shards x 2 replicas = 4 ClickHouse nodes
   shards: 1
-  replicaCount: 1
+  replicaCount: 3
 
-  # Keeper disabled - using standalone mode for simplicity
+  # Enable ClickHouse Keeper for coordination (required for replication)
   keeper:
-    enabled: false
+    enabled: true
+    replicaCount: 3
+    image:
+      registry: docker.io
+      repository: bitnamilegacy/clickhouse
+    persistence:
+      enabled: true
+      storageClass: longhorn
+      size: 10Gi
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 1Gi
 
-  # Zookeeper disabled
+  # Zookeeper disabled - using Keeper instead
   zookeeper:
     enabled: false
 
@@ -44,6 +59,9 @@ clickhouse:
   # Service
   service:
     type: ClusterIP
+
+  # Pod anti-affinity for HA
+  podAntiAffinityPreset: soft
 
   # Startup/liveness/readiness probes with generous timeouts
   startupProbe:
