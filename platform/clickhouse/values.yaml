@@ -1,56 +1,86 @@
 clickhouse:
-  clickhouse:
-    defaultUser:
-      password_secret_name: clickhouse-auth
-      allowExternalAccess: true
+  # Use bitnamilegacy for available images
+  image:
+    registry: docker.io
+    repository: bitnamilegacy/clickhouse
+    pullPolicy: IfNotPresent
 
-    # Single replica for stability
-    replicasCount: 1
-    shardsCount: 1
+  # Cluster name
+  clusterName: gitlab
 
-    # Anti-affinity to spread pods across nodes
-    antiAffinity: true
-    antiAffinityScope: "ClickHouseInstallation"
+  # Authentication
+  auth:
+    username: gitlab
+    existingSecret: clickhouse-auth
+    existingSecretKey: password
 
-    persistence:
-      enabled: true
-      size: 100Gi
-      storageClass: longhorn
-      logs:
-        enabled: true
-        size: 20Gi
-        storageClass: longhorn
+  # Single shard, single replica for simplicity
+  shards: 1
+  replicaCount: 1
 
-    image:
-      repository: altinity/clickhouse-server
-      pullPolicy: IfNotPresent
-      tag: "25.3.6.10034.altinitystable"
-
-    service:
-      type: ClusterIP
-
-    resources:
-      requests:
-        cpu: 1
-        memory: 4Gi
-      limits:
-        cpu: 4
-        memory: 16Gi
-
-    # Create gitlab user with access to gitlab database
-    users:
-      - name: gitlab
-        hostIP: ["0.0.0.0/0"]
-        accessManagement: 0
-        password_secret_name: "clickhouse-auth"
-        grants:
-          - "GRANT ALL ON gitlab.*"
-
-  # Enable ClickHouse Keeper for replication coordination (top-level in chart)
+  # Keeper disabled - using standalone mode for simplicity
   keeper:
+    enabled: false
+
+  # Zookeeper disabled
+  zookeeper:
+    enabled: false
+
+  # Resources
+  resources:
+    requests:
+      cpu: 500m
+      memory: 2Gi
+    limits:
+      cpu: 4
+      memory: 16Gi
+
+  # Persistence
+  persistence:
     enabled: true
-    replicaCount: 3
-    persistence:
+    storageClass: longhorn
+    size: 100Gi
+
+  # Service
+  service:
+    type: ClusterIP
+
+  # Startup/liveness/readiness probes with generous timeouts
+  startupProbe:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 30
+    successThreshold: 1
+
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+
+  # Volume permissions for longhorn
+  defaultInitContainers:
+    volumePermissions:
       enabled: true
-      size: 10Gi
-      storageClass: longhorn
+
+  # Extra configuration for gitlab user grants
+  extraOverrides: |
+    <clickhouse>
+      <users>
+        <gitlab>
+          <access_management>0</access_management>
+        </gitlab>
+      </users>
+    </clickhouse>
