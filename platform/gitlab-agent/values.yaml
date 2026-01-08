@@ -13,11 +13,9 @@ gitlab-agent:
     kasAddress: "wss://kas.gitlab.techsecom.io"
     # kasAddress: "wss://gitlab.ops.techsecom.io/-/kubernetes-agent/"
 
-    # Token secret for agent authentication
-    token:
-      # Token is pulled from Vault via External Secret
-      secret: gitlab-agent-token
-      key: token
+    # Token secret name - references the secret created by ExternalSecret
+    # The secret is created by templates/externalsecret.yaml with key 'token'
+    secretName: gitlab-agent-token
 
   # Replicas for HA
   replicas: 2
