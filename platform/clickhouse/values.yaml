@@ -4,8 +4,8 @@ clickhouse:
       password_secret_name: clickhouse-auth
       allowExternalAccess: true
 
-    # 3 replicas for HA - requires keeper
-    replicasCount: 3
+    # Start with 1 replica to get stable, then scale up
+    replicasCount: 1
     shardsCount: 1
 
     # Anti-affinity to spread pods across nodes
@@ -19,6 +19,7 @@ clickhouse:
       logs:
         enabled: true
         size: 20Gi
+        storageClass: longhorn
 
     image:
       repository: altinity/clickhouse-server
