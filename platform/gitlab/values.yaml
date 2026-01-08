@@ -398,7 +398,7 @@ gitlab:
         name: pages.gitlab.techsecom.io
         protocol: https
       registry:
-        name: gitlab.registry.techsecom.io
+        name: registry.gitlab.techsecom.io
       smartcard:
         name: smartcard.gitlab.techsecom.io
       # GitLab Workspaces DNS zone - requires wildcard DNS *.workspaces.gitlab.techsecom.io
