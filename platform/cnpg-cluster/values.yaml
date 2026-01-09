@@ -90,6 +90,15 @@ monitoring:
 
 
 managedRoles:
+# BuyCheapNow E-commerce Platform
+- name: buycheapnow
+  ensure: present
+  login: true
+  createrole: true
+  bypassrls: true
+  passwordSecret:
+    name: buycheapnow-user-secret
+
 - name: grafana
   ensure: present
   login: true
