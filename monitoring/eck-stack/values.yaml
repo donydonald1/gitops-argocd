@@ -290,7 +290,7 @@ eck-stack:
           resources:
             requests:
               storage: 15Gi
-          storageClassName: vsphere
+          storageClassName: longhorn
 
     - name: hot
       count: 3
@@ -335,7 +335,7 @@ eck-stack:
           resources:
             requests:
               storage: 15Gi
-          storageClassName: vsphere
+          storageClassName: longhorn
     - name: warm
       count: 3
       config:
@@ -379,7 +379,7 @@ eck-stack:
           resources:
             requests:
               storage: 10Gi
-          storageClassName: vsphere
+          storageClassName: longhorn
     - name: cold
       count: 3
       config:
@@ -423,7 +423,7 @@ eck-stack:
           resources:
             requests:
               storage: 20Gi
-          storageClassName: vsphere
+          storageClassName: longhorn
   eck-kibana:
     enabled: true
     version: 8.17.1
