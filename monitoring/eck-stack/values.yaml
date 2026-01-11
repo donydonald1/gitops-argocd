@@ -453,12 +453,13 @@ eck-stack:
           containers:
           - name: kibana
             resources:
+              # CPU must be multiples of 2 due to SMT alignment on your nodes
               requests:
                 memory: 1Gi
-                cpu: 400m
+                cpu: 2
               limits:
-                memory: 1.5Gi
-                cpu: 1
+                memory: 2Gi
+                cpu: 2
             env:
             - name: NODE_OPTIONS
               value: "--max-old-space-size=2048"
@@ -516,14 +517,13 @@ eck-stack:
             containers:
             - name: filebeat
               resources:
-                # -- Pod resource limits
+                # CPU must be multiples of 2 due to SMT alignment on your nodes
                 limits:
                   memory: 2Gi
-                  cpu: 1000m
-                # -- Pod resource requests
+                  cpu: 2
                 requests:
-                  cpu: 700m
-                  memory: 1000Mi
+                  cpu: 2
+                  memory: 1Gi
               securityContext:
                 runAsUser: 0
               volumeMounts:
@@ -625,12 +625,31 @@ eck-stack:
 
     podTemplate:
       spec:
+        # Override init container resources to fix SMT alignment error
+        # Your nodes require CPU requests to be multiples of 2 (SMT cores per physical core)
+        initContainers:
+        - name: logstash-internal-init-config
+          resources:
+            requests:
+              cpu: 2
+              memory: 128Mi
+            limits:
+              cpu: 2
+              memory: 256Mi
+        - name: elastic-internal-init-keystore
+          resources:
+            requests:
+              cpu: 2
+              memory: 1Gi
+            limits:
+              cpu: 2
+              memory: 2Gi
         containers:
         - name: logstash
           resources:
-            # requests:
-            #     memory: 1200Mi
-            #     cpu: 700m
+            requests:
+              memory: 2Gi
+              cpu: 2
             limits:
               memory: 4Gi
               cpu: 2
