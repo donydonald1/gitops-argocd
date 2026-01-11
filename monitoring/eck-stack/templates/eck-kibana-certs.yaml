@@ -1,22 +1,37 @@
+{{- if and .Values.certificates.enabled .Values.certificates.kibana.enabled }}
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: kibana-cert
-  namespace: elastic-system
+  name: {{ .Values.certificates.kibana.secretName }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: kibana
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: tls-certificate
 spec:
   isCA: false
-  dnsNames:
-    - kibana.dev.techsecoms.com
-    - kibana.elastic-system.svc
-    - kibana.elastic-system.svc.cluster.local
+  commonName: kibana
+  secretName: {{ .Values.certificates.kibana.secretName }}
+  duration: 8760h # 1 year
+  renewBefore: 720h # 30 days
   subject:
     organizations:
-      - Techsecoms Consulting Group LLc
+      - {{ .Values.certificates.organization }}
   privateKey:
-    algorithm: RSA
+    algorithm: {{ .Values.certificates.kibana.privateKey.algorithm }}
     encoding: PKCS1
-    size: 2048
+    size: {{ .Values.certificates.kibana.privateKey.size }}
+  usages:
+    - server auth
+    - client auth
+  dnsNames:
+    {{- range .Values.certificates.kibana.dnsNames }}
+    - {{ . }}
+    {{- end }}
+    {{- range .Values.certificates.kibana.externalDnsNames }}
+    - {{ . }}
+    {{- end }}
   issuerRef:
     kind: Issuer
-    name: elastic-system-ca-issuer
-  secretName: kibana-tls-cert
+    name: {{ .Values.certificates.issuer.issuerName }}
+{{- end }}

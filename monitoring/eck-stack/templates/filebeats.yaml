@@ -1,46 +1,163 @@
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: filebeat
-rules:
-  - apiGroups: [""] # "" indicates the core API group
-    resources:
-      - namespaces
-      - pods
-      - nodes
-    verbs:
-      - get
-      - watch
-      - list
-  - apiGroups: ["apps"]
-    resources:
-      - replicasets
-    verbs:
-      - list
-      - watch
-  - apiGroups: ["batch"]
-    resources:
-      - jobs
-    verbs:
-      - list
-      - watch
+{{- if index .Values "eck-stack" "eck-beats" "enabled" }}
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: filebeat
-  namespace: elastic-system
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: filebeat
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: log-collector
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ .Release.Name }}-filebeat
+  labels:
+    app.kubernetes.io/name: filebeat
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: log-collector
+rules:
+  # Core API group - pods, namespaces, nodes, events
+  - apiGroups: [""]
+    resources:
+      - namespaces
+      - pods
+      - nodes
+      - events
+      - persistentvolumes
+      - persistentvolumeclaims
+      - services
+      - configmaps
+      - secrets
+    verbs:
+      - get
+      - watch
+      - list
+  # Apps API group - deployments, replicasets, statefulsets, daemonsets
+  - apiGroups: ["apps"]
+    resources:
+      - replicasets
+      - deployments
+      - statefulsets
+      - daemonsets
+    verbs:
+      - get
+      - list
+      - watch
+  # Batch API group - jobs, cronjobs
+  - apiGroups: ["batch"]
+    resources:
+      - jobs
+      - cronjobs
+    verbs:
+      - get
+      - list
+      - watch
+  # Networking API group
+  - apiGroups: ["networking.k8s.io"]
+    resources:
+      - ingresses
+    verbs:
+      - get
+      - list
+      - watch
+  # Storage API group
+  - apiGroups: ["storage.k8s.io"]
+    resources:
+      - storageclasses
+    verbs:
+      - get
+      - list
+      - watch
+  # Policy API group
+  - apiGroups: ["policy"]
+    resources:
+      - podsecuritypolicies
+    verbs:
+      - get
+      - list
+      - watch
+  # RBAC API group (for auditing)
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    resources:
+      - clusterroles
+      - clusterrolebindings
+      - roles
+      - rolebindings
+    verbs:
+      - get
+      - list
+      - watch
+  # Coordination API group (for leader election if needed)
+  - apiGroups: ["coordination.k8s.io"]
+    resources:
+      - leases
+    verbs:
+      - get
+      - create
+      - update
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: filebeat
+  name: {{ .Release.Name }}-filebeat
+  labels:
+    app.kubernetes.io/name: filebeat
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: log-collector
 subjects:
   - kind: ServiceAccount
     name: filebeat
-    namespace: elastic-system
+    namespace: {{ .Release.Namespace }}
 roleRef:
   kind: ClusterRole
-  name: filebeat
+  name: {{ .Release.Name }}-filebeat
   apiGroup: rbac.authorization.k8s.io
+---
+# Role for namespace-specific permissions (if needed)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ .Release.Name }}-filebeat
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: filebeat
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: log-collector
+rules:
+  # Allow filebeat to read secrets in its own namespace (for ES certs)
+  - apiGroups: [""]
+    resources:
+      - secrets
+      - configmaps
+    verbs:
+      - get
+      - list
+      - watch
+  # Allow filebeat to manage its state
+  - apiGroups: [""]
+    resources:
+      - pods
+    verbs:
+      - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ .Release.Name }}-filebeat
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: filebeat
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: log-collector
+subjects:
+  - kind: ServiceAccount
+    name: filebeat
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: Role
+  name: {{ .Release.Name }}-filebeat
+  apiGroup: rbac.authorization.k8s.io
+{{- end }}

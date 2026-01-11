@@ -1,28 +1,59 @@
+{{- if .Values.ilm.enabled }}
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: kibana-space-role-rolemapping
-  namespace: elastic-system
+  name: {{ .Release.Name }}-elasticsearch-ilm-setup
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: elasticsearch-ilm-setup
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "10"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 spec:
+  ttlSecondsAfterFinished: 300
+  backoffLimit: 5
   template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: elasticsearch-ilm-setup
     spec:
+      restartPolicy: OnFailure
       containers:
-      - name: kibana-space-role-rolemapping
-        image: lucashalbert/curl:latest
-        command: [ "sh", "-c" ]
+      - name: ilm-setup
+        image: {{ .Values.ilm.image | default "curlimages/curl:latest" }}
+        command: ["sh", "-c"]
         args:
         - |
-          until curl --insecure --user $ES_USER:$ES_PASSWORD --fail https://kibana-kb-http.elastic-system.svc.cluster.local:5601/api/status; do
-            echo 'Waiting for Kibana...'
-            sleep 3
-          done
-          until curl --insecure --user $ES_USER:$ES_PASSWORD --fail https://elasticsearch-es-http.elastic-system.svc.cluster.local:9200; do
-            echo 'Waiting for Elasticsearch...'
-            sleep 3
-          done
+          set -e
 
-          echo "Creating ILM Policy for Audit Logs"
-          curl --insecure -u $ES_USER:$ES_PASSWORD -X PUT "https://elasticsearch-es-http.elastic-system.svc.cluster.local:9200/_ilm/policy/hot_warm_delete-audit-logs" -H 'Content-Type: application/json' -d '
+          ES_URL="https://{{ .Values.ilm.elasticsearch.serviceName }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.ilm.elasticsearch.port }}"
+          KIBANA_URL="https://{{ .Values.ilm.kibana.serviceName }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.ilm.kibana.port }}"
+
+          echo "=== Waiting for Elasticsearch to be ready ==="
+          until curl --silent --insecure --user "$ES_USER:$ES_PASSWORD" --fail "$ES_URL/_cluster/health?wait_for_status=yellow&timeout=60s"; do
+            echo "Waiting for Elasticsearch cluster to be ready..."
+            sleep 10
+          done
+          echo ""
+          echo "Elasticsearch is ready!"
+
+          echo "=== Waiting for Kibana to be ready ==="
+          until curl --silent --insecure --user "$ES_USER:$ES_PASSWORD" --fail "$KIBANA_URL/api/status" | grep -q '"overall":{"level":"available"'; do
+            echo "Waiting for Kibana to be ready..."
+            sleep 10
+          done
+          echo ""
+          echo "Kibana is ready!"
+
+          #######################################
+          # ILM Policy for Audit Logs
+          #######################################
+          echo ""
+          echo "=== Creating ILM Policy: {{ .Values.ilm.policies.auditLogs.name }} ==="
+          curl --silent --insecure -u "$ES_USER:$ES_PASSWORD" -X PUT "$ES_URL/_ilm/policy/{{ .Values.ilm.policies.auditLogs.name }}" \
+            -H 'Content-Type: application/json' -d '
           {
             "policy": {
               "phases": {
@@ -30,18 +61,29 @@ spec:
                   "min_age": "0ms",
                   "actions": {
                     "rollover": {
-                      "max_age": "5m",
-                      "min_docs": 1000,
-                      "max_primary_shard_docs": 5000
+                      "max_age": "{{ .Values.ilm.policies.auditLogs.hot.rollover.maxAge }}",
+                      "max_primary_shard_size": "{{ .Values.ilm.policies.auditLogs.hot.rollover.maxPrimaryShardSize }}",
+                      "max_docs": {{ .Values.ilm.policies.auditLogs.hot.rollover.maxDocs }}
+                    },
+                    "set_priority": {
+                      "priority": 100
                     }
                   }
                 },
                 "warm": {
-                  "min_age": "5m",
+                  "min_age": "{{ .Values.ilm.policies.auditLogs.warm.minAge }}",
                   "actions": {
-                    "migrate": {},
+                    "allocate": {
+                      "require": {
+                        "box_type": "warm"
+                      },
+                      "number_of_replicas": {{ .Values.ilm.policies.auditLogs.warm.replicas }}
+                    },
                     "forcemerge": {
                       "max_num_segments": 1
+                    },
+                    "shrink": {
+                      "number_of_shards": 1
                     },
                     "set_priority": {
                       "priority": 50
@@ -49,30 +91,44 @@ spec:
                   }
                 },
                 "cold": {
-                  "min_age": "10m",
+                  "min_age": "{{ .Values.ilm.policies.auditLogs.cold.minAge }}",
                   "actions": {
                     "allocate": {
                       "require": {
                         "box_type": "cold"
-                      }
+                      },
+                      "number_of_replicas": {{ .Values.ilm.policies.auditLogs.cold.replicas }}
                     },
                     "set_priority": {
                       "priority": 0
-                    }
+                    },
+                    "readonly": {}
                   }
                 },
                 "delete": {
-                  "min_age": "15m",
+                  "min_age": "{{ .Values.ilm.policies.auditLogs.delete.minAge }}",
                   "actions": {
-                    "delete": {}
+                    "wait_for_snapshot": {
+                      "policy": "{{ .Values.ilm.policies.auditLogs.delete.waitForSnapshot | default "none" }}"
+                    },
+                    "delete": {
+                      "delete_searchable_snapshot": true
+                    }
                   }
                 }
               }
             }
           }'
+          echo ""
+          echo "ILM Policy {{ .Values.ilm.policies.auditLogs.name }} created successfully"
 
-          echo "Creating ILM Policy for Container Logs"
-          curl --insecure -u $ES_USER:$ES_PASSWORD -X PUT "https://elasticsearch-es-http.elastic-system.svc.cluster.local:9200/_ilm/policy/hot_warm_delete-container-logs" -H 'Content-Type: application/json' -d '
+          #######################################
+          # ILM Policy for Container Logs
+          #######################################
+          echo ""
+          echo "=== Creating ILM Policy: {{ .Values.ilm.policies.containerLogs.name }} ==="
+          curl --silent --insecure -u "$ES_USER:$ES_PASSWORD" -X PUT "$ES_URL/_ilm/policy/{{ .Values.ilm.policies.containerLogs.name }}" \
+            -H 'Content-Type: application/json' -d '
           {
             "policy": {
               "phases": {
@@ -80,18 +136,29 @@ spec:
                   "min_age": "0ms",
                   "actions": {
                     "rollover": {
-                      "max_age": "5m",
-                      "min_docs": 1000,
-                      "max_primary_shard_docs": 5000
+                      "max_age": "{{ .Values.ilm.policies.containerLogs.hot.rollover.maxAge }}",
+                      "max_primary_shard_size": "{{ .Values.ilm.policies.containerLogs.hot.rollover.maxPrimaryShardSize }}",
+                      "max_docs": {{ .Values.ilm.policies.containerLogs.hot.rollover.maxDocs }}
+                    },
+                    "set_priority": {
+                      "priority": 100
                     }
                   }
                 },
                 "warm": {
-                  "min_age": "5m",
+                  "min_age": "{{ .Values.ilm.policies.containerLogs.warm.minAge }}",
                   "actions": {
-                    "migrate": {},
+                    "allocate": {
+                      "require": {
+                        "box_type": "warm"
+                      },
+                      "number_of_replicas": {{ .Values.ilm.policies.containerLogs.warm.replicas }}
+                    },
                     "forcemerge": {
                       "max_num_segments": 1
+                    },
+                    "shrink": {
+                      "number_of_shards": 1
                     },
                     "set_priority": {
                       "priority": 50
@@ -99,87 +166,264 @@ spec:
                   }
                 },
                 "cold": {
-                  "min_age": "10m",
+                  "min_age": "{{ .Values.ilm.policies.containerLogs.cold.minAge }}",
                   "actions": {
+                    "allocate": {
+                      "require": {
+                        "box_type": "cold"
+                      },
+                      "number_of_replicas": {{ .Values.ilm.policies.containerLogs.cold.replicas }}
+                    },
                     "set_priority": {
                       "priority": 0
-                    }
+                    },
+                    "readonly": {}
                   }
                 },
                 "delete": {
-                  "min_age": "15m",
+                  "min_age": "{{ .Values.ilm.policies.containerLogs.delete.minAge }}",
                   "actions": {
-                    "delete": {}
+                    "wait_for_snapshot": {
+                      "policy": "{{ .Values.ilm.policies.containerLogs.delete.waitForSnapshot | default "none" }}"
+                    },
+                    "delete": {
+                      "delete_searchable_snapshot": true
+                    }
                   }
                 }
               }
             }
           }'
-          echo "Creating Index Templates for Audit Logs"
-          curl --insecure -u $ES_USER:$ES_PASSWORD -X PUT "https://elasticsearch-es-http.elastic-system.svc.cluster.local:9200/_index_template/audit-logs-template" -H 'Content-Type: application/json' -d '
+          echo ""
+          echo "ILM Policy {{ .Values.ilm.policies.containerLogs.name }} created successfully"
+
+          #######################################
+          # Index Template for Audit Logs
+          #######################################
+          echo ""
+          echo "=== Creating Index Template: audit-logs-template ==="
+          curl --silent --insecure -u "$ES_USER:$ES_PASSWORD" -X PUT "$ES_URL/_index_template/audit-logs-template" \
+            -H 'Content-Type: application/json' -d '
           {
             "index_patterns": ["audit-logs-*"],
+            "priority": 200,
             "template": {
               "settings": {
-                "index.routing.allocation.require.box_type":"hot",
-                "index.number_of_replicas": 0,
-                "index.number_of_shards": 1,
-                "index.lifecycle.name": "hot_warm_delete-audit-logs",
-                "index.lifecycle.rollover_alias": "audit-logs"
+                "index.routing.allocation.require.box_type": "hot",
+                "index.number_of_replicas": {{ .Values.ilm.indexTemplates.auditLogs.replicas }},
+                "index.number_of_shards": {{ .Values.ilm.indexTemplates.auditLogs.shards }},
+                "index.lifecycle.name": "{{ .Values.ilm.policies.auditLogs.name }}",
+                "index.lifecycle.rollover_alias": "audit-logs",
+                "index.refresh_interval": "{{ .Values.ilm.indexTemplates.auditLogs.refreshInterval | default "5s" }}"
+              },
+              "mappings": {
+                "_source": {
+                  "enabled": true
+                },
+                "properties": {
+                  "@timestamp": {
+                    "type": "date"
+                  }
+                }
               }
             }
           }'
+          echo ""
+          echo "Index Template audit-logs-template created successfully"
 
-          echo "Creating Index Templates for Container Logs"
-          curl --insecure -u $ES_USER:$ES_PASSWORD -X PUT "https://elasticsearch-es-http.elastic-system.svc.cluster.local:9200/_index_template/container-logs-template" -H 'Content-Type: application/json' -d '
+          #######################################
+          # Index Template for Container Logs
+          #######################################
+          echo ""
+          echo "=== Creating Index Template: container-logs-template ==="
+          curl --silent --insecure -u "$ES_USER:$ES_PASSWORD" -X PUT "$ES_URL/_index_template/container-logs-template" \
+            -H 'Content-Type: application/json' -d '
           {
             "index_patterns": ["container-logs-*"],
+            "priority": 200,
             "template": {
               "settings": {
-                "index.routing.allocation.require.box_type":"hot",
-                "index.number_of_replicas": 0,
-                "index.number_of_shards": 1,
-                "index.lifecycle.name": "hot_warm_delete-container-logs",
-                "index.lifecycle.rollover_alias": "container-logs"
+                "index.routing.allocation.require.box_type": "hot",
+                "index.number_of_replicas": {{ .Values.ilm.indexTemplates.containerLogs.replicas }},
+                "index.number_of_shards": {{ .Values.ilm.indexTemplates.containerLogs.shards }},
+                "index.lifecycle.name": "{{ .Values.ilm.policies.containerLogs.name }}",
+                "index.lifecycle.rollover_alias": "container-logs",
+                "index.refresh_interval": "{{ .Values.ilm.indexTemplates.containerLogs.refreshInterval | default "5s" }}"
+              },
+              "mappings": {
+                "_source": {
+                  "enabled": true
+                },
+                "properties": {
+                  "@timestamp": {
+                    "type": "date"
+                  }
+                }
               }
             }
           }'
+          echo ""
+          echo "Index Template container-logs-template created successfully"
 
-          echo "Creating Index Aliases"
-          curl --insecure -u $ES_USER:$ES_PASSWORD -X PUT "https://elasticsearch-es-http.elastic-system.svc.cluster.local:9200/container-logs-000001" -H 'Content-Type: application/json' -d '
-          {
-            "aliases": {
-              "container-logs": {
-                "is_write_index": true
+          #######################################
+          # Bootstrap Initial Indices with Aliases
+          #######################################
+          echo ""
+          echo "=== Bootstrapping initial index: audit-logs-000001 ==="
+          # Check if index already exists
+          if curl --silent --insecure -u "$ES_USER:$ES_PASSWORD" --fail "$ES_URL/audit-logs-000001" > /dev/null 2>&1; then
+            echo "Index audit-logs-000001 already exists, skipping creation"
+          else
+            curl --silent --insecure -u "$ES_USER:$ES_PASSWORD" -X PUT "$ES_URL/audit-logs-000001" \
+              -H 'Content-Type: application/json' -d '
+            {
+              "aliases": {
+                "audit-logs": {
+                  "is_write_index": true
+                }
               }
-            }
-          }'
+            }'
+            echo ""
+            echo "Index audit-logs-000001 created with write alias"
+          fi
 
-          curl --insecure -u $ES_USER:$ES_PASSWORD -X PUT "https://elasticsearch-es-http.elastic-system.svc.cluster.local:9200/audit-logs-000001" -H 'Content-Type: application/json' -d '
-          {
-            "aliases": {
-              "audit-logs": {
-                "is_write_index": true
+          echo ""
+          echo "=== Bootstrapping initial index: container-logs-000001 ==="
+          # Check if index already exists
+          if curl --silent --insecure -u "$ES_USER:$ES_PASSWORD" --fail "$ES_URL/container-logs-000001" > /dev/null 2>&1; then
+            echo "Index container-logs-000001 already exists, skipping creation"
+          else
+            curl --silent --insecure -u "$ES_USER:$ES_PASSWORD" -X PUT "$ES_URL/container-logs-000001" \
+              -H 'Content-Type: application/json' -d '
+            {
+              "aliases": {
+                "container-logs": {
+                  "is_write_index": true
+                }
               }
-            }
-          }'
-          echo "Creating Audit Logs Data View"
-          curl --insecure --user $ES_USER:$ES_PASSWORD -X POST "https://kibana-kb-http.elastic-system.svc.cluster.local:5601/api/data_views/data_view" -H "kbn-xsrf: true" -H 'Content-Type: application/json' -d '
+            }'
+            echo ""
+            echo "Index container-logs-000001 created with write alias"
+          fi
+
+          #######################################
+          # Create Kibana Data Views
+          #######################################
+          echo ""
+          echo "=== Creating Kibana Data Views ==="
+
+          # Create Audit Logs Data View
+          curl --silent --insecure --user "$ES_USER:$ES_PASSWORD" -X POST "$KIBANA_URL/api/data_views/data_view" \
+            -H "kbn-xsrf: true" \
+            -H 'Content-Type: application/json' -d '
           {
             "data_view": {
-              "title": "audit-logs",
+              "title": "audit-logs*",
+              "name": "Audit Logs",
               "timeFieldName": "@timestamp"
-            }
-          }'
+            },
+            "override": true
+          }' || echo "Data view may already exist"
+          echo ""
 
-          echo "Creating Container Logs Data View"
-          curl --insecure --user $ES_USER:$ES_PASSWORD -X POST "https://kibana-kb-http.elastic-system.svc.cluster.local:5601/api/data_views/data_view" -H "kbn-xsrf: true" -H 'Content-Type: application/json' -d '
+          # Create Container Logs Data View
+          curl --silent --insecure --user "$ES_USER:$ES_PASSWORD" -X POST "$KIBANA_URL/api/data_views/data_view" \
+            -H "kbn-xsrf: true" \
+            -H 'Content-Type: application/json' -d '
           {
             "data_view": {
-              "title": "container-logs",
+              "title": "container-logs*",
+              "name": "Container Logs",
               "timeFieldName": "@timestamp"
-            }
-          }'
+            },
+            "override": true
+          }' || echo "Data view may already exist"
+          echo ""
+
+          {{- if .Values.kibana.spaces.enabled }}
+          #######################################
+          # Create Kibana Spaces
+          #######################################
+          echo ""
+          echo "=== Creating Kibana Spaces ==="
+          {{- range .Values.kibana.spaces.list }}
+
+          echo "Creating space: {{ .id }}"
+          curl --silent --insecure --user "$ES_USER:$ES_PASSWORD" -X POST "$KIBANA_URL/api/spaces/space" \
+            -H "kbn-xsrf: true" \
+            -H 'Content-Type: application/json' -d '
+          {
+            "id": "{{ .id }}",
+            "name": "{{ .name }}",
+            "description": "{{ .description | default "" }}",
+            "disabledFeatures": {{ .disabledFeatures | default list | toJson }}
+          }' 2>/dev/null || echo "Space {{ .id }} may already exist"
+          echo ""
+          {{- end }}
+          {{- end }}
+
+          {{- if .Values.kibana.roles.enabled }}
+          #######################################
+          # Create Elasticsearch Roles
+          #######################################
+          echo ""
+          echo "=== Creating Elasticsearch Roles ==="
+          {{- range .Values.kibana.roles.list }}
+
+          echo "Creating role: {{ .name }}"
+          curl --silent --insecure -u "$ES_USER:$ES_PASSWORD" -X PUT "$ES_URL/_security/role/{{ .name }}" \
+            -H 'Content-Type: application/json' -d '{{ .definition | toJson }}'
+          echo ""
+          {{- end }}
+          {{- end }}
+
+          {{- if .Values.kibana.roleMappings.enabled }}
+          #######################################
+          # Create Role Mappings
+          #######################################
+          echo ""
+          echo "=== Creating Role Mappings ==="
+          {{- range .Values.kibana.roleMappings.list }}
+
+          echo "Creating role mapping: {{ .name }}"
+          curl --silent --insecure -u "$ES_USER:$ES_PASSWORD" -X PUT "$ES_URL/_security/role_mapping/{{ .name }}" \
+            -H 'Content-Type: application/json' -d '{{ .definition | toJson }}'
+          echo ""
+          {{- end }}
+          {{- end }}
+
+          #######################################
+          # Verify ILM Policies
+          #######################################
+          echo ""
+          echo "=== Verifying ILM Policies ==="
+          echo "Audit Logs ILM Policy:"
+          curl --silent --insecure -u "$ES_USER:$ES_PASSWORD" "$ES_URL/_ilm/policy/{{ .Values.ilm.policies.auditLogs.name }}" | head -c 500
+          echo ""
+          echo ""
+          echo "Container Logs ILM Policy:"
+          curl --silent --insecure -u "$ES_USER:$ES_PASSWORD" "$ES_URL/_ilm/policy/{{ .Values.ilm.policies.containerLogs.name }}" | head -c 500
+          echo ""
+
+          #######################################
+          # Verify Index Lifecycle Status
+          #######################################
+          echo ""
+          echo "=== Checking Index Lifecycle Status ==="
+          curl --silent --insecure -u "$ES_USER:$ES_PASSWORD" "$ES_URL/audit-logs-*/_ilm/explain" | head -c 1000
+          echo ""
+          curl --silent --insecure -u "$ES_USER:$ES_PASSWORD" "$ES_URL/container-logs-*/_ilm/explain" | head -c 1000
+          echo ""
+
+          echo ""
+          echo "=== ILM Setup Complete ==="
+          echo "Audit logs retention: {{ .Values.ilm.policies.auditLogs.delete.minAge }}"
+          echo "Container logs retention: {{ .Values.ilm.policies.containerLogs.delete.minAge }}"
+          echo ""
+          echo "Lifecycle phases:"
+          echo "  Hot -> Warm: audit={{ .Values.ilm.policies.auditLogs.warm.minAge }}, container={{ .Values.ilm.policies.containerLogs.warm.minAge }}"
+          echo "  Warm -> Cold: audit={{ .Values.ilm.policies.auditLogs.cold.minAge }}, container={{ .Values.ilm.policies.containerLogs.cold.minAge }}"
+          echo "  Cold -> Delete: audit={{ .Values.ilm.policies.auditLogs.delete.minAge }}, container={{ .Values.ilm.policies.containerLogs.delete.minAge }}"
 
         env:
         - name: ES_USER
@@ -187,6 +431,13 @@ spec:
         - name: ES_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: elasticsearch-es-elastic-user
-              key: elastic
-      restartPolicy: OnFailure
+              name: {{ .Values.ilm.elasticsearch.secretName }}
+              key: {{ .Values.ilm.elasticsearch.secretKey }}
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+{{- end }}

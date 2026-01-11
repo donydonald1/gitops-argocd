@@ -1,52 +1,88 @@
+{{- if .Values.certificates.enabled }}
+{{- if .Values.certificates.issuer.createSelfSigned }}
+---
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
-  name: elastic-system-cert-issuer
+  name: {{ .Values.certificates.issuer.clusterIssuerName }}
+  labels:
+    app.kubernetes.io/name: elasticsearch
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: certificate-issuer
 spec:
   selfSigned: {}
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: elastic-system-cert-ca
+  name: {{ .Values.certificates.issuer.clusterIssuerName }}-ca
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: elasticsearch
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: ca-certificate
 spec:
   isCA: true
-  commonName: elastic-system-cert-ca
-  secretName: root-ca-secret
+  commonName: {{ .Values.certificates.issuer.clusterIssuerName }}-ca
+  secretName: {{ .Values.certificates.issuer.caSecretName }}
+  duration: 87600h # 10 years
+  renewBefore: 720h # 30 days
   privateKey:
     algorithm: ECDSA
     size: 256
   issuerRef:
     kind: ClusterIssuer
-    name: elastic-system-cert-issuer
+    name: {{ .Values.certificates.issuer.clusterIssuerName }}
 ---
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
-  name: elastic-system-ca-issuer
+  name: {{ .Values.certificates.issuer.issuerName }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: elasticsearch
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: certificate-issuer
 spec:
   ca:
-    secretName: root-ca-secret
+    secretName: {{ .Values.certificates.issuer.caSecretName }}
+{{- end }}
 ---
+{{- if .Values.certificates.elasticsearch.enabled }}
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: elasticsearch-es-cert
+  name: {{ .Values.certificates.elasticsearch.secretName }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: elasticsearch
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: tls-certificate
 spec:
   isCA: false
-  dnsNames:
-    - elasticsearch-es-http
-    - elasticsearch.dev.techsecoms.com
-    - elasticsearch-es-http.elastic-system.svc
-    - elasticsearch-es-http.elastic-system.svc.cluster.local
+  commonName: elasticsearch
+  secretName: {{ .Values.certificates.elasticsearch.secretName }}
+  duration: 8760h # 1 year
+  renewBefore: 720h # 30 days
   subject:
     organizations:
-      - elasticsearch
+      - {{ .Values.certificates.organization }}
   privateKey:
-    algorithm: RSA
+    algorithm: {{ .Values.certificates.elasticsearch.privateKey.algorithm }}
     encoding: PKCS1
-    size: 2048
+    size: {{ .Values.certificates.elasticsearch.privateKey.size }}
+  usages:
+    - server auth
+    - client auth
+  dnsNames:
+    {{- range .Values.certificates.elasticsearch.dnsNames }}
+    - {{ . }}
+    {{- end }}
+    {{- range .Values.certificates.elasticsearch.externalDnsNames }}
+    - {{ . }}
+    {{- end }}
   issuerRef:
     kind: Issuer
-    name: elastic-system-ca-issuer
-  secretName: elasticsearch-es-cert
+    name: {{ .Values.certificates.issuer.issuerName }}
+{{- end }}
+{{- end }}

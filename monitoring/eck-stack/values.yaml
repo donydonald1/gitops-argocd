@@ -1,3 +1,222 @@
+########################################
+# TLS Certificates Configuration (cert-manager)
+########################################
+certificates:
+  enabled: true
+
+  # Organization name for certificate subject
+  organization: "Techsecoms Consulting Group LLC"
+
+  # Certificate issuer configuration
+  issuer:
+    # Create a self-signed CA issuer (set to false if using external issuer like Vault)
+    createSelfSigned: true
+    # Name of the ClusterIssuer for the self-signed CA
+    clusterIssuerName: elastic-system-cert-issuer
+    # Name of the namespace Issuer (created from CA)
+    issuerName: elastic-system-ca-issuer
+    # Secret name for the root CA
+    caSecretName: root-ca-secret
+
+  # Elasticsearch certificate
+  elasticsearch:
+    enabled: true
+    secretName: elasticsearch-es-cert
+    # Additional DNS names for the certificate
+    dnsNames:
+    - elasticsearch-es-http
+    - elasticsearch-es-http.elastic-system.svc
+    - elasticsearch-es-http.elastic-system.svc.cluster.local
+    # External hostnames (from ingress)
+    externalDnsNames:
+    - elasticsearch.ops.techsecom.io
+    privateKey:
+      algorithm: RSA
+      size: 2048
+
+  # Kibana certificate
+  kibana:
+    enabled: true
+    secretName: kibana-tls-cert
+    dnsNames:
+    - kibana-kb-http
+    - kibana-kb-http.elastic-system.svc
+    - kibana-kb-http.elastic-system.svc.cluster.local
+    externalDnsNames:
+    - kibana.ops.techsecom.io
+    privateKey:
+      algorithm: RSA
+      size: 2048
+
+  # Logstash certificate
+  logstash:
+    enabled: true
+    secretName: logstash-tls-cert
+    dnsNames:
+    - eck-stack-eck-logstash-ls-beats
+    - eck-stack-eck-logstash-ls-beats.elastic-system.svc
+    - eck-stack-eck-logstash-ls-beats.elastic-system.svc.cluster.local
+    - eck-stack-eck-logstash-ls-http
+    - eck-stack-eck-logstash-ls-http.elastic-system.svc
+    - eck-stack-eck-logstash-ls-http.elastic-system.svc.cluster.local
+    privateKey:
+      algorithm: RSA
+      size: 2048
+
+########################################
+# ILM (Index Lifecycle Management) Configuration
+########################################
+ilm:
+  enabled: true
+  image: curlimages/curl:latest
+
+  # Elasticsearch connection settings
+  elasticsearch:
+    serviceName: elasticsearch-es-http
+    port: 9200
+    secretName: elasticsearch-es-elastic-user
+    secretKey: elastic
+
+  # Kibana connection settings
+  kibana:
+    serviceName: kibana-kb-http
+    port: 5601
+
+  # ILM Policies Configuration
+  # TESTING VALUES: Using minutes/hours to observe data movement
+  # For production, change to days (e.g., "2d", "7d", "30d")
+  policies:
+    # Audit Logs ILM Policy
+    auditLogs:
+      name: hot_warm_delete-audit-logs
+      hot:
+        rollover:
+          maxAge: "5m" # Rollover after 5 minutes (testing)
+          maxPrimaryShardSize: "1gb" # Or when shard reaches 1GB
+          maxDocs: 10000 # Or when 10K docs (testing)
+      warm:
+        minAge: "10m" # Move to warm after 10 minutes
+        replicas: 0 # Reduce replicas in warm
+      cold:
+        minAge: "30m" # Move to cold after 30 minutes
+        replicas: 0 # No replicas in cold
+      delete:
+        minAge: "1h" # Delete after 1 hour total
+        waitForSnapshot: "none" # Set to snapshot policy name if using SLM
+
+    # Container Logs ILM Policy
+    containerLogs:
+      name: hot_warm_delete-container-logs
+      hot:
+        rollover:
+          maxAge: "5m" # Rollover after 5 minutes (testing)
+          maxPrimaryShardSize: "1gb" # Or when shard reaches 1GB
+          maxDocs: 10000 # Or when 10K docs (testing)
+      warm:
+        minAge: "10m" # Move to warm after 10 minutes
+        replicas: 0 # Reduce replicas in warm
+      cold:
+        minAge: "30m" # Move to cold after 30 minutes
+        replicas: 0 # No replicas in cold
+      delete:
+        minAge: "1h" # Delete after 1 hour total
+        waitForSnapshot: "none" # Set to snapshot policy name if using SLM
+
+  # Index Templates Configuration
+  indexTemplates:
+    auditLogs:
+      shards: 1
+      replicas: 1
+      refreshInterval: "5s"
+    containerLogs:
+      shards: 1
+      replicas: 1
+      refreshInterval: "5s"
+
+########################################
+# Kibana Spaces, Roles, and Role Mappings
+########################################
+kibana:
+  spaces:
+    enabled: false
+    list:
+    - id: "logs"
+      name: "Logs"
+      description: "Space for log analysis"
+      disabledFeatures: []
+    - id: "security"
+      name: "Security"
+      description: "Space for security monitoring"
+      disabledFeatures: []
+
+  roles:
+    enabled: false
+    list:
+    - name: "logs_reader"
+      definition:
+        cluster: []
+        indices:
+        - names:
+          - "container-logs-*"
+          - "audit-logs-*"
+          privileges:
+          - "read"
+          - "view_index_metadata"
+        applications:
+        - application: "kibana-.kibana"
+          privileges:
+          - "feature_discover.read"
+          - "feature_dashboard.read"
+          resources:
+          - "space:logs"
+    - name: "logs_admin"
+      definition:
+        cluster:
+        - "monitor"
+        indices:
+        - names:
+          - "container-logs-*"
+          - "audit-logs-*"
+          privileges:
+          - "all"
+        applications:
+        - application: "kibana-.kibana"
+          privileges:
+          - "feature_discover.all"
+          - "feature_dashboard.all"
+          - "feature_canvas.all"
+          - "feature_maps.all"
+          - "feature_visualize.all"
+          resources:
+          - "space:logs"
+
+  roleMappings:
+    enabled: false
+    list:
+    - name: "logs_reader_mapping"
+      definition:
+        enabled: true
+        roles:
+        - "logs_reader"
+        rules:
+          field:
+            groups: "cn=log-readers,ou=groups,dc=Techsecom,dc=com"
+        metadata:
+          description: "Maps LDAP log-readers group to logs_reader role"
+    - name: "logs_admin_mapping"
+      definition:
+        enabled: true
+        roles:
+        - "logs_admin"
+        rules:
+          field:
+            groups: "cn=log-admins,ou=groups,dc=Techsecom,dc=com"
+        metadata:
+          description: "Maps LDAP log-admins group to logs_admin role"
+
+########################################
+# ECK Stack Configuration
+########################################
 eck-stack:
   elasticPassword: "Techsecoms-@rke2"
   eck-elasticsearch:
@@ -21,7 +240,7 @@ eck-stack:
         my: label
       pathType: Prefix
       hosts:
-      - host: "elasticsearch.dev.techsecoms.com"
+      - host: "elasticsearch.ops.techsecom.io"
         path: "/"
     http:
       tls:
@@ -220,7 +439,7 @@ eck-stack:
       config:
         elasticsearch.requestHeadersWhitelist:
         - authorization
-        server.publicBaseUrl: https://kibana.dev.techsecoms.com
+        server.publicBaseUrl: https://kibana.ops.techsecom.io
       http:
         tls:
           certificate:
@@ -244,7 +463,7 @@ eck-stack:
             - name: NODE_OPTIONS
               value: "--max-old-space-size=2048"
             - name: SERVER_PUBLICBASEURL
-              value: "https://kibana.dev.techsecoms.com"
+              value: "https://kibana.ops.techsecom.io"
 
             volumeMounts:
             - name: certs
@@ -264,7 +483,7 @@ eck-stack:
         cert-manager.io/cluster-issuer: letsencrypt-prod
       pathType: Prefix
       hosts:
-      - host: "kibana.dev.techsecoms.com"
+      - host: "kibana.ops.techsecom.io"
         path: "/"
       tls:
         enabled: true
