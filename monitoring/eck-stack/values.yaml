@@ -220,7 +220,7 @@ kibana:
 eck-stack:
   elasticPassword: "Techsecoms-@rke2"
   eck-elasticsearch:
-    version: 8.17.1
+    version: 8.19.9
     fullnameOverride: elasticsearch
     auth:
       # disableElasticUser: true
@@ -426,7 +426,7 @@ eck-stack:
           storageClassName: longhorn
   eck-kibana:
     enabled: true
-    version: 8.17.1
+    version: 8.19.9
     # Name of the Kibana instance.
     #
     fullnameOverride: kibana
@@ -490,7 +490,7 @@ eck-stack:
         secretName: kibana-tls
   eck-beats:
     enabled: true
-    version: 8.17.1
+    version: 8.19.9
     spec:
       type: filebeat
       # daemonSet:
@@ -615,7 +615,7 @@ eck-stack:
 
   eck-logstash:
     enabled: true
-    version: 8.17.1
+    version: 8.19.9
     config:
       log.level: info
       queue.type: persisted
