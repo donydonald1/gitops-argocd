@@ -519,11 +519,11 @@ eck-stack:
               resources:
                 # CPU must be multiples of 2 due to SMT alignment on your nodes
                 limits:
-                  memory: 4Gi
-                  cpu: 2
+                  memory: 8Gi
+                  cpu: 4
                 requests:
-                  cpu: 2
-                  memory: 2Gi
+                  cpu: 4
+                  memory: 4Gi
               securityContext:
                 runAsUser: 0
               volumeMounts:
