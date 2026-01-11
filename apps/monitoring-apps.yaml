@@ -77,9 +77,9 @@ spec:
       #   valueFiles:
       #   - "values.yaml"
       # - "manifest-dev.yaml"
-      - name: eck-stack
-        namespace: elastic-system
-        serverSideApply: true
+      # - name: eck-stack
+      #   namespace: elastic-system
+      #   serverSideApply: true
 
   template:
     metadata:
