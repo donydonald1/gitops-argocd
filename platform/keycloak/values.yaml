@@ -58,7 +58,7 @@ keycloakx:
   podAnnotations:
     reloader.stakater.com/auto: "true"
 
-  # Ingress configuration
+  # Ingress configuration - single ingress for all Keycloak paths
   ingress:
     enabled: true
     annotations:
@@ -66,39 +66,20 @@ keycloakx:
       nginx.ingress.kubernetes.io/proxy-body-size: "10m"
       cert-manager.io/cluster-issuer: letsencrypt-prod
     ingressClassName: "nginx"
-    hostname: keycloak-api.ops.techsecom.io
+    hostname: keycloak.ops.techsecom.io
     servicePort: http
-    # API paths for external access
     rules:
-    - host: keycloak-api.ops.techsecom.io
+    - host: keycloak.ops.techsecom.io
       paths:
-      - path: '{{ tpl .Values.http.relativePath $ | trimSuffix "/" }}/realms/'
-        pathType: Prefix
-      - path: '{{ tpl .Values.http.relativePath $ | trimSuffix "/" }}/resources/'
-        pathType: Prefix
-      - path: '{{ tpl .Values.http.relativePath $ | trimSuffix "/" }}/js/'
+      - path: /
         pathType: Prefix
     tls:
     - secretName: keycloak-tls-secret
       hosts:
-      - keycloak-api.ops.techsecom.io
-
-    # Admin console ingress
+      - keycloak.ops.techsecom.io
+    # Disable separate console ingress - using single ingress
     console:
-      enabled: true
-      ingressClassName: "nginx"
-      annotations:
-        nginx.ingress.kubernetes.io/proxy-buffer-size: 256k
-        cert-manager.io/cluster-issuer: letsencrypt-prod
-      rules:
-      - host: keycloak.ops.techsecom.io
-        paths:
-        - path: '{{ tpl .Values.http.relativePath $ | trimSuffix "/" }}/admin'
-          pathType: Prefix
-      tls:
-      - secretName: keycloak-tls-secret
-        hosts:
-        - keycloak.ops.techsecom.io
+      enabled: false
 
   # Production resources
   resources:
