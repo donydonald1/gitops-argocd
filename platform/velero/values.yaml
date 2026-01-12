@@ -103,3 +103,65 @@ velero:
         for: 15m
         labels:
           severity: warning
+
+# ===========================================
+# Backup Schedules Configuration
+# ===========================================
+schedules:
+  # Critical namespaces to backup
+  criticalNamespaces:
+    # Core Infrastructure
+    - argocd
+    - cert-manager
+    - external-secrets
+    - vault
+    - ingress-nginx
+    - metallb-system
+    # Platform Services
+    - gitlab
+    - harbor
+    - minio
+    - cnpg-system
+    - clickhouse
+    - keycloak
+    # Monitoring & Observability
+    - monitoring
+    - elastic-system
+    # Application Namespaces
+    - buycheapnow
+    - homepage
+    - it-tools
+    - kroki
+    - sonarqube
+    - report-portal
+    # Operators
+    - keycloak-operator
+    - keda
+    - reloader
+    - kured
+    # Storage
+    - longhorn-system
+
+  # Daily backup of critical namespaces
+  daily:
+    enabled: true
+    schedule: "0 1 * * *"  # Every day at 1:00 AM
+    ttl: 336h0m0s          # 14 days retention
+
+  # Weekly backup of critical namespaces
+  weekly:
+    enabled: true
+    schedule: "0 1 * * 0"  # Every Sunday at 1:00 AM
+    ttl: 1440h0m0s         # 60 days retention
+
+  # Monthly backup of critical namespaces
+  monthly:
+    enabled: true
+    schedule: "0 2 1 * *"  # 1st of every month at 2:00 AM
+    ttl: 8760h0m0s         # 365 days retention
+
+  # Common settings for all schedules
+  defaults:
+    includeClusterResources: true
+    defaultVolumesToFsBackup: true
+    storageLocation: default

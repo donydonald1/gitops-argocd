@@ -1,94 +1,61 @@
-# Critical namespaces backup schedule - runs daily at 1:00 AM
-# Retention: 14 days (336 hours)
-# Backs up all production-critical namespaces
+# Critical namespaces backup schedules
+# Configuration is managed in values.yaml under 'schedules'
+{{- if .Values.schedules.daily.enabled }}
 apiVersion: velero.io/v1
 kind: Schedule
 metadata:
   name: critical-namespaces-daily
   namespace: velero
 spec:
-  schedule: "0 1 * * *"  # Every day at 1:00 AM
+  schedule: {{ .Values.schedules.daily.schedule | quote }}
   template:
     includedNamespaces:
-      # Core Infrastructure
-      - argocd
-      - cert-manager
-      - external-secrets
-      - vault
-      - ingress-nginx
-      - metallb-system
-      # Platform Services
-      - gitlab
-      - harbor
-      - minio
-      - cnpg-system
-      - clickhouse
-      # Monitoring & Observability
-      - monitoring
-      - elastic-system
-      # Application Namespaces
-      - wikijs
-      - homepage
-      - it-tools
-      - kroki
-      - sonarqube
-      # Operators
-      - keycloak-operator
-      - keda
-      - reloader
-      - kured
-      # Storage
-      - longhorn-system
-    # Include cluster-scoped resources related to these namespaces
-    includeClusterResources: true
-    # Use file-level backup for PVs (Kopia uploader)
-    defaultVolumesToFsBackup: true
-    storageLocation: default
-    ttl: 336h0m0s  # 14 days
+      {{- range .Values.schedules.criticalNamespaces }}
+      - {{ . }}
+      {{- end }}
+    includeClusterResources: {{ .Values.schedules.defaults.includeClusterResources }}
+    defaultVolumesToFsBackup: {{ .Values.schedules.defaults.defaultVolumesToFsBackup }}
+    storageLocation: {{ .Values.schedules.defaults.storageLocation }}
+    ttl: {{ .Values.schedules.daily.ttl }}
   useOwnerReferencesInBackup: true
+{{- end }}
 ---
-# Weekly full backup of critical namespaces - runs Sunday at 1:00 AM
-# Retention: 60 days (1440 hours)
+{{- if .Values.schedules.weekly.enabled }}
 apiVersion: velero.io/v1
 kind: Schedule
 metadata:
   name: critical-namespaces-weekly
   namespace: velero
 spec:
-  schedule: "0 1 * * 0"  # Every Sunday at 1:00 AM
+  schedule: {{ .Values.schedules.weekly.schedule | quote }}
   template:
     includedNamespaces:
-      # Core Infrastructure
-      - argocd
-      - cert-manager
-      - external-secrets
-      - vault
-      - ingress-nginx
-      - metallb-system
-      # Platform Services
-      - gitlab
-      - harbor
-      - minio
-      - cnpg-system
-      - clickhouse
-      # Monitoring & Observability
-      - monitoring
-      - elastic-system
-      # Application Namespaces
-      - wikijs
-      - homepage
-      - it-tools
-      - kroki
-      - sonarqube
-      # Operators
-      - keycloak-operator
-      - keda
-      - reloader
-      - kured
-      # Storage
-      - longhorn-system
-    includeClusterResources: true
-    defaultVolumesToFsBackup: true
-    storageLocation: default
-    ttl: 1440h0m0s  # 60 days
+      {{- range .Values.schedules.criticalNamespaces }}
+      - {{ . }}
+      {{- end }}
+    includeClusterResources: {{ .Values.schedules.defaults.includeClusterResources }}
+    defaultVolumesToFsBackup: {{ .Values.schedules.defaults.defaultVolumesToFsBackup }}
+    storageLocation: {{ .Values.schedules.defaults.storageLocation }}
+    ttl: {{ .Values.schedules.weekly.ttl }}
   useOwnerReferencesInBackup: true
+{{- end }}
+---
+{{- if .Values.schedules.monthly.enabled }}
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: critical-namespaces-monthly
+  namespace: velero
+spec:
+  schedule: {{ .Values.schedules.monthly.schedule | quote }}
+  template:
+    includedNamespaces:
+      {{- range .Values.schedules.criticalNamespaces }}
+      - {{ . }}
+      {{- end }}
+    includeClusterResources: {{ .Values.schedules.defaults.includeClusterResources }}
+    defaultVolumesToFsBackup: {{ .Values.schedules.defaults.defaultVolumesToFsBackup }}
+    storageLocation: {{ .Values.schedules.defaults.storageLocation }}
+    ttl: {{ .Values.schedules.monthly.ttl }}
+  useOwnerReferencesInBackup: true
+{{- end }}
