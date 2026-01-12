@@ -3,6 +3,12 @@ velero:
   annotations:
     reloader.stakater.com/auto: "true"
 
+  # Override kubectl image for CRD upgrade job (1.34 doesn't exist yet)
+  kubectl:
+    image:
+      repository: bitnami/kubectl
+      tag: "1.31"
+
   resources:
     # https://velero.io/docs/v1.10/performance-guidance/#case-3-1062510k-files-781-directories-1000mb-per-file-total-10376gb-content
     requests:
