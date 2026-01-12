@@ -51,6 +51,10 @@ velero:
         s3Url: http://minio.minio.svc:9000
         publicUrl: https://s3.ops.techsecom.io
 
+    # Disable VolumeSnapshotLocation - using file-level backups with MinIO S3
+    # Volume snapshots require cloud provider native support (EBS, GCE PD, etc.)
+    volumeSnapshotLocation: []
+
     # In Velero 1.14+, restic was replaced with kopia as the default uploader
     # uploaderType is now auto-detected, no need to set it
     fsBackupTimeout: 32h
