@@ -144,5 +144,52 @@ spec:
             echo "IDP created successfully"
           fi
 
-          echo "OIDC Identity Provider setup complete!"
+          # Configure IDP mapper to auto-assign admin role
+          echo ""
+          echo "Configuring role mapper for admin access..."
+
+          MAPPER_EXISTS=$(curl -sf -o /dev/null -w "%{http_code}" \
+            "${KEYCLOAK_URL}/admin/realms/master/identity-provider/instances/techsecoms-oidc/mappers" \
+            -H "Authorization: Bearer ${TOKEN}")
+
+          # Get existing mappers
+          EXISTING_MAPPER=$(curl -sf "${KEYCLOAK_URL}/admin/realms/master/identity-provider/instances/techsecoms-oidc/mappers" \
+            -H "Authorization: Bearer ${TOKEN}" | grep -o '"id":"[^"]*"' | head -1 | sed 's/"id":"//;s/"//')
+
+          # Get admin role ID
+          ADMIN_ROLE_ID=$(curl -sf "${KEYCLOAK_URL}/admin/realms/master/roles/admin" \
+            -H "Authorization: Bearer ${TOKEN}" | sed 's/.*"id":"\([^"]*\)".*/\1/')
+
+          MAPPER_CONFIG='{
+            "name": "admin-role-mapper",
+            "identityProviderMapper": "hardcoded-role-idp-mapper",
+            "identityProviderAlias": "techsecoms-oidc",
+            "config": {
+              "syncMode": "INHERIT",
+              "role": "admin"
+            }
+          }'
+
+          # Check if admin-role-mapper exists
+          MAPPER_ID=$(curl -sf "${KEYCLOAK_URL}/admin/realms/master/identity-provider/instances/techsecoms-oidc/mappers" \
+            -H "Authorization: Bearer ${TOKEN}" | grep -o '"name":"admin-role-mapper"[^}]*"id":"[^"]*"' | sed 's/.*"id":"//;s/".*//' || echo "")
+
+          if [ -n "$MAPPER_ID" ] && [ "$MAPPER_ID" != "" ]; then
+            echo "Role mapper already exists (ID: $MAPPER_ID), updating..."
+            curl -sf -X PUT "${KEYCLOAK_URL}/admin/realms/master/identity-provider/instances/techsecoms-oidc/mappers/${MAPPER_ID}" \
+              -H "Authorization: Bearer ${TOKEN}" \
+              -H "Content-Type: application/json" \
+              -d "${MAPPER_CONFIG}"
+            echo "Role mapper updated"
+          else
+            echo "Creating role mapper..."
+            curl -sf -X POST "${KEYCLOAK_URL}/admin/realms/master/identity-provider/instances/techsecoms-oidc/mappers" \
+              -H "Authorization: Bearer ${TOKEN}" \
+              -H "Content-Type: application/json" \
+              -d "${MAPPER_CONFIG}"
+            echo "Role mapper created"
+          fi
+
+          echo ""
+          echo "OIDC Identity Provider setup complete with admin role auto-assignment!"
 {{- end }}
