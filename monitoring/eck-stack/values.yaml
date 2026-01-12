@@ -731,9 +731,9 @@ eck-stack:
                 name: elasticsearch-es-elastic-user
                 key: elastic
           # Set JVM heap to 4GB (should be ~75% of memory limit)
-          # Also increase netty allocator for large batches from Filebeat
+          # maxOrder=14 supports batches up to 128MB (needed for large Filebeat batches)
           - name: LS_JAVA_OPTS
-            value: "-Xms4g -Xmx4g -Dio.netty.allocator.maxOrder=13"
+            value: "-Xms4g -Xmx4g -Dio.netty.allocator.maxOrder=14"
           volumeMounts:
           - mountPath: /usr/share/logstash/pq
             name: pq
