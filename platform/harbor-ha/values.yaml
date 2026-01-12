@@ -328,9 +328,10 @@ harbor:
     external:
       sentinelMasterSet: "mymaster"
       addr: "redis-headless.harbor.svc.cluster.local:26379"
-      # Use external secret for Redis password
-      existingSecret: "redis-creds"
-      username: ""
+      # NOTE: Harbor helm chart has a bug with existingSecret for external Redis when Trivy is enabled
+      # See: https://github.com/goharbor/harbor-helm/issues/2148
+      # Using inline password until the upstream fix is available
+      password: "Techsecoms-@rke2"
 
   cache:
     enabled: true
