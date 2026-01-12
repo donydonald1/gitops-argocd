@@ -13,9 +13,9 @@ keycloakx:
     enabled: true
 
   command:
-    - "/opt/keycloak/bin/kc.sh"
-    - "--verbose"
-    - "start"
+  - "/opt/keycloak/bin/kc.sh"
+  - "--verbose"
+  - "start"
 
   http:
     relativePath: "/"
@@ -66,22 +66,22 @@ keycloakx:
       nginx.ingress.kubernetes.io/proxy-body-size: "10m"
       cert-manager.io/cluster-issuer: letsencrypt-prod
     ingressClassName: "nginx"
-    hostname: keycloak.ops.techsecom.io
+    hostname: keycloak-api.ops.techsecom.io
     servicePort: http
     # API paths for external access
     rules:
-      - host: keycloak.ops.techsecom.io
-        paths:
-          - path: '{{ tpl .Values.http.relativePath $ | trimSuffix "/" }}/realms/'
-            pathType: Prefix
-          - path: '{{ tpl .Values.http.relativePath $ | trimSuffix "/" }}/resources/'
-            pathType: Prefix
-          - path: '{{ tpl .Values.http.relativePath $ | trimSuffix "/" }}/js/'
-            pathType: Prefix
+    - host: keycloak-api.ops.techsecom.io
+      paths:
+      - path: '{{ tpl .Values.http.relativePath $ | trimSuffix "/" }}/realms/'
+        pathType: Prefix
+      - path: '{{ tpl .Values.http.relativePath $ | trimSuffix "/" }}/resources/'
+        pathType: Prefix
+      - path: '{{ tpl .Values.http.relativePath $ | trimSuffix "/" }}/js/'
+        pathType: Prefix
     tls:
-      - secretName: keycloak-tls-secret
-        hosts:
-          - keycloak.ops.techsecom.io
+    - secretName: keycloak-tls-secret
+      hosts:
+      - keycloak-api.ops.techsecom.io
 
     # Admin console ingress
     console:
@@ -91,14 +91,14 @@ keycloakx:
         nginx.ingress.kubernetes.io/proxy-buffer-size: 256k
         cert-manager.io/cluster-issuer: letsencrypt-prod
       rules:
-        - host: keycloak.ops.techsecom.io
-          paths:
-            - path: '{{ tpl .Values.http.relativePath $ | trimSuffix "/" }}/admin'
-              pathType: Prefix
+      - host: keycloak.ops.techsecom.io
+        paths:
+        - path: '{{ tpl .Values.http.relativePath $ | trimSuffix "/" }}/admin'
+          pathType: Prefix
       tls:
-        - secretName: keycloak-tls-secret
-          hosts:
-            - keycloak.ops.techsecom.io
+      - secretName: keycloak-tls-secret
+        hosts:
+        - keycloak.ops.techsecom.io
 
   # Production resources
   resources:
@@ -132,19 +132,19 @@ keycloakx:
     minReplicas: 2
     maxReplicas: 5
     metrics:
-      - type: Resource
-        resource:
-          name: cpu
-          target:
-            type: Utilization
-            averageUtilization: 80
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 80
     behavior:
       scaleDown:
         stabilizationWindowSeconds: 300
         policies:
-          - type: Pods
-            value: 1
-            periodSeconds: 300
+        - type: Pods
+          value: 1
+          periodSeconds: 300
 
   # Pod Disruption Budget
   podDisruptionBudget:
