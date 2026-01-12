@@ -780,44 +780,48 @@ eck-stack:
             }
 
             if [audit] {
-              # Extract key audit fields to top level for easy querying
-              mutate {
-                add_field => {
-                  "audit_id" => "%{[audit][auditID]}"
-                  "audit_verb" => "%{[audit][verb]}"
-                  "audit_user" => "%{[audit][user][username]}"
-                  "audit_resource" => "%{[audit][objectRef][resource]}"
-                  "audit_namespace" => "%{[audit][objectRef][namespace]}"
-                  "audit_name" => "%{[audit][objectRef][name]}"
-                  "audit_api_version" => "%{[audit][objectRef][apiVersion]}"
-                  "audit_request_uri" => "%{[audit][requestURI]}"
-                }
+              # Safely extract audit fields using Ruby (handles missing fields)
+              ruby {
+                code => '
+                  audit = event.get("audit")
+                  if audit
+                    event.set("audit_id", audit["auditID"]) if audit["auditID"]
+                    event.set("audit_verb", audit["verb"]) if audit["verb"]
+                    event.set("audit_request_uri", audit["requestURI"]) if audit["requestURI"]
+
+                    if audit["user"]
+                      event.set("audit_user", audit["user"]["username"]) if audit["user"]["username"]
+                    end
+
+                    if audit["objectRef"]
+                      event.set("audit_resource", audit["objectRef"]["resource"]) if audit["objectRef"]["resource"]
+                      event.set("audit_namespace", audit["objectRef"]["namespace"]) if audit["objectRef"]["namespace"]
+                      event.set("audit_name", audit["objectRef"]["name"]) if audit["objectRef"]["name"]
+                      event.set("audit_api_version", audit["objectRef"]["apiVersion"]) if audit["objectRef"]["apiVersion"]
+                    end
+
+                    if audit["responseStatus"] && audit["responseStatus"]["code"]
+                      event.set("audit_response_code", audit["responseStatus"]["code"].to_i)
+                    end
+
+                    # Categorize action
+                    verb = audit["verb"]
+                    if verb == "create"
+                      event.set("audit_action", "CREATE")
+                    elsif verb == "delete"
+                      event.set("audit_action", "DELETE")
+                    elsif verb == "update" || verb == "patch"
+                      event.set("audit_action", "UPDATE")
+                    elsif verb == "get" || verb == "list" || verb == "watch"
+                      event.set("audit_action", "READ")
+                    else
+                      event.set("audit_action", "OTHER")
+                    end
+                  end
+                '
               }
 
-              # Extract response code if present
-              if [audit][responseStatus][code] {
-                mutate {
-                  add_field => { "audit_response_code" => "%{[audit][responseStatus][code]}" }
-                }
-                mutate {
-                  convert => { "audit_response_code" => "integer" }
-                }
-              }
-
-              # Categorize audit action
-              if [audit][verb] == "create" {
-                mutate { add_field => { "audit_action" => "CREATE" } }
-              } else if [audit][verb] == "delete" {
-                mutate { add_field => { "audit_action" => "DELETE" } }
-              } else if [audit][verb] == "update" or [audit][verb] == "patch" {
-                mutate { add_field => { "audit_action" => "UPDATE" } }
-              } else if [audit][verb] == "get" or [audit][verb] == "list" or [audit][verb] == "watch" {
-                mutate { add_field => { "audit_action" => "READ" } }
-              } else {
-                mutate { add_field => { "audit_action" => "OTHER" } }
-              }
-
-              # Remove verbose/unnecessary nested fields
+              # Remove verbose nested fields and original message
               mutate {
                 remove_field => [
                   "[audit][annotations]",
@@ -828,7 +832,8 @@ eck-stack:
                   "[audit][stageTimestamp]",
                   "[audit][userAgent]",
                   "[audit][user][extra]",
-                  "[audit][responseStatus][message]",
+                  "[audit][responseStatus]",
+                  "[audit][responseObject]",
                   "message"
                 ]
               }
@@ -843,25 +848,22 @@ eck-stack:
           # CONTAINER LOGS PROCESSING
           #===========================================
           else {
-            # Extract Kubernetes metadata to top-level fields
-            if [kubernetes] {
-              mutate {
-                add_field => {
-                  "namespace" => "%{[kubernetes][namespace]}"
-                  "pod" => "%{[kubernetes][pod][name]}"
-                  "container" => "%{[kubernetes][container][name]}"
-                  "node" => "%{[kubernetes][node][name]}"
-                }
-              }
+            # Extract Kubernetes metadata using Ruby (safe field access)
+            ruby {
+              code => '
+                k8s = event.get("kubernetes")
+                if k8s
+                  event.set("namespace", k8s["namespace"]) if k8s["namespace"]
+                  event.set("pod", k8s.dig("pod", "name")) if k8s.dig("pod", "name")
+                  event.set("container", k8s.dig("container", "name")) if k8s.dig("container", "name")
+                  event.set("node", k8s.dig("node", "name")) if k8s.dig("node", "name")
 
-              # Extract app name from labels if available
-              if [kubernetes][labels][app] {
-                mutate { add_field => { "app" => "%{[kubernetes][labels][app]}" } }
-              } else if [kubernetes][labels][app_kubernetes_io/name] {
-                mutate { add_field => { "app" => "%{[kubernetes][labels][app_kubernetes_io/name]}" } }
-              } else {
-                mutate { add_field => { "app" => "%{[kubernetes][container][name]}" } }
-              }
+                  # Extract app name
+                  labels = k8s["labels"] || {}
+                  app = labels["app"] || labels["app_kubernetes_io/name"] || k8s.dig("container", "name")
+                  event.set("app", app) if app
+                end
+              '
             }
 
             # Try to parse JSON logs (many apps output structured JSON)
@@ -873,31 +875,28 @@ eck-stack:
               }
 
               if [json_log] {
-                # Extract common JSON log fields
-                if [json_log][level] {
-                  mutate { add_field => { "log_level" => "%{[json_log][level]}" } }
-                } else if [json_log][severity] {
-                  mutate { add_field => { "log_level" => "%{[json_log][severity]}" } }
-                } else if [json_log][lvl] {
-                  mutate { add_field => { "log_level" => "%{[json_log][lvl]}" } }
-                }
+                # Extract common JSON log fields using Ruby
+                ruby {
+                  code => '
+                    jl = event.get("json_log")
+                    if jl
+                      # Log level
+                      level = jl["level"] || jl["severity"] || jl["lvl"]
+                      event.set("log_level", level.to_s.upcase) if level
 
-                if [json_log][msg] {
-                  mutate { add_field => { "log_message" => "%{[json_log][msg]}" } }
-                } else if [json_log][message] {
-                  mutate { add_field => { "log_message" => "%{[json_log][message]}" } }
-                }
+                      # Message
+                      msg = jl["msg"] || jl["message"]
+                      event.set("log_message", msg) if msg
 
-                if [json_log][error] {
-                  mutate { add_field => { "error_message" => "%{[json_log][error]}" } }
-                } else if [json_log][err] {
-                  mutate { add_field => { "error_message" => "%{[json_log][err]}" } }
-                }
+                      # Error
+                      err = jl["error"] || jl["err"]
+                      event.set("error_message", err) if err
 
-                if [json_log][stack_trace] {
-                  mutate { add_field => { "stack_trace" => "%{[json_log][stack_trace]}" } }
-                } else if [json_log][stacktrace] {
-                  mutate { add_field => { "stack_trace" => "%{[json_log][stacktrace]}" } }
+                      # Stack trace
+                      st = jl["stack_trace"] || jl["stacktrace"]
+                      event.set("stack_trace", st) if st
+                    end
+                  '
                 }
               }
             }
@@ -908,28 +907,32 @@ eck-stack:
                 match => { "message" => "(?i)(?<log_level>FATAL|ERROR|WARN(?:ING)?|INFO|DEBUG|TRACE)" }
                 tag_on_failure => []
               }
+              if [log_level] {
+                mutate { uppercase => [ "log_level" ] }
+              }
             }
 
-            # Normalize log levels to uppercase
-            if [log_level] {
-              mutate {
-                uppercase => [ "log_level" ]
-              }
-              # Normalize WARNING to WARN
-              if [log_level] == "WARNING" {
-                mutate { replace => { "log_level" => "WARN" } }
-              }
-            } else {
-              mutate { add_field => { "log_level" => "INFO" } }
-            }
+            # Normalize WARNING to WARN and set default
+            ruby {
+              code => '
+                level = event.get("log_level")
+                if level
+                  level = level.to_s.upcase
+                  level = "WARN" if level == "WARNING"
+                  event.set("log_level", level)
+                else
+                  event.set("log_level", "INFO")
+                end
 
-            # Categorize log severity for alerting
-            if [log_level] == "FATAL" or [log_level] == "ERROR" {
-              mutate { add_field => { "log_severity" => "error" } }
-            } else if [log_level] == "WARN" {
-              mutate { add_field => { "log_severity" => "warning" } }
-            } else {
-              mutate { add_field => { "log_severity" => "info" } }
+                # Set severity
+                if level == "FATAL" || level == "ERROR"
+                  event.set("log_severity", "error")
+                elsif level == "WARN"
+                  event.set("log_severity", "warning")
+                else
+                  event.set("log_severity", "info")
+                end
+              '
             }
 
             # Clean up - remove verbose nested fields
@@ -957,13 +960,9 @@ eck-stack:
                 "[input]",
                 "[log][offset]",
                 "[log][file]",
-                "_grokparsefailure"
+                "json_log",
+                "tags"
               ]
-            }
-
-            # Remove json_log after extraction to reduce document size
-            mutate {
-              remove_field => [ "json_log" ]
             }
 
             mutate {
