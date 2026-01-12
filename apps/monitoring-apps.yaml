@@ -30,6 +30,7 @@ spec:
         namespace: monitoring
         serverSideApply: true
         SkipCRDs: true
+        imageList: "prometheus=quay.io/prometheus/prometheus, alertmanager=quay.io/prometheus/alertmanager, grafana=grafana/grafana"
         helm:
           valueFiles:
           - "values.yaml"
@@ -80,6 +81,7 @@ spec:
       - name: eck-stack
         namespace: elastic-system
         serverSideApply: true
+        imageList: "elasticsearch=docker.elastic.co/elasticsearch/elasticsearch, kibana=docker.elastic.co/kibana/kibana, logstash=docker.elastic.co/logstash/logstash"
 
   template:
     metadata:

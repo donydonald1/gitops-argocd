@@ -10,6 +10,7 @@ spec:
       elements:
       - name: gethomepage
         namespace: homepage
+        imageList: "homepage=ghcr.io/gethomepage/homepage"
       # - name: focalboard
       #   namespace: focalboard
       # - name: actual

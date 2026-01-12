@@ -16,6 +16,7 @@ spec:
         serverSideApply: true
         SkipCRDs: true
         wave: "2"  # Deploy after databases and storage are ready
+        imageList: "harbor-core=goharbor/harbor-core, harbor-portal=goharbor/harbor-portal, harbor-jobservice=goharbor/harbor-jobservice, harbor-registry=goharbor/registry-photon, harbor-trivy=goharbor/trivy-adapter-photon"
         helm:
           values:
           - values.yaml
@@ -35,6 +36,7 @@ spec:
         wave: "1"  # Deploy Redis before GitLab
         namespace: gitlab
         serverSideApply: true
+        imageList: "redis=bitnami/redis"
         helm:
           values:
           - values.yaml
@@ -43,6 +45,7 @@ spec:
         wave: "1"  # Deploy Redis before GitLab
         namespace: gitlab
         serverSideApply: true
+        imageList: "redis=bitnami/redis"
         helm:
           values:
           - values.yaml
@@ -51,6 +54,7 @@ spec:
         wave: "2"  # Deploy after databases (CNPG), storage (MinIO), and Redis are ready
         namespace: gitlab
         serverSideApply: true
+        imageList: "gitlab=gitlab/gitlab-ee"
         helm:
           values:
           - values.yaml
@@ -59,6 +63,7 @@ spec:
         namespace: minio
         serverSideApply: true
         wave: "0"  # Deploy MinIO first (storage for other apps)
+        imageList: "minio=minio/minio"
         helm:
           values:
           - values.yaml
@@ -66,6 +71,7 @@ spec:
       - name: cnpg-cluster
         namespace: cnpg-system
         wave: "0"  # Deploy with minio after CNPG operator (wave -1)
+        imageList: "postgresql=ghcr.io/cloudnative-pg/postgresql"
         helm:
           values:
           - values.yaml
@@ -75,6 +81,7 @@ spec:
         namespace: clickhouse
         wave: "1"  # Deploy after storage (MinIO) and CNPG operator are ready
         serverSideApply: true
+        imageList: "clickhouse=bitnami/clickhouse"
         helm:
           values:
           - values.yaml
@@ -83,6 +90,7 @@ spec:
         namespace: wikijs
         serverSideApply: true
         wave: "1"  # Deploy after databases and storage are ready
+        imageList: "wikijs=ghcr.io/requarks/wiki"
 
       # # - name: go-healthcheck
 
@@ -90,6 +98,7 @@ spec:
         namespace: it-tools
         serverSideApply: true
         wave: "1"
+        imageList: "it-tools=corentinth/it-tools"
         helm:
           values:
           - values.yaml
@@ -98,6 +107,7 @@ spec:
         namespace: kroki
         serverSideApply: true
         wave: "1"
+        imageList: "kroki=yuzutech/kroki"
         helm:
           values:
           - values.yaml
@@ -106,6 +116,7 @@ spec:
         namespace: gitlab
         serverSideApply: true
         wave: "3"  # Deploy after GitLab is fully ready
+        imageList: "gitlab-agent=registry.gitlab.com/gitlab-org/cluster-integration/gitlab-agent"
         helm:
           values:
           - values.yaml
