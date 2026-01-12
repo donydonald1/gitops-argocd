@@ -394,6 +394,61 @@ spec:
           {{- end }}
           {{- end }}
 
+          {{- if .Values.snapshots.enabled }}
+          #######################################
+          # Register S3/MinIO Snapshot Repository
+          #######################################
+          echo ""
+          echo "=== Registering S3 Snapshot Repository ==="
+
+          # First, add S3 credentials to keystore (requires restart, so we use repository settings instead)
+          curl --silent --insecure -u "$ES_USER:$ES_PASSWORD" -X PUT "$ES_URL/_snapshot/s3-repository" \
+            -H 'Content-Type: application/json' -d '
+          {
+            "type": "s3",
+            "settings": {
+              "bucket": "{{ .Values.snapshots.s3.bucket }}",
+              "endpoint": "{{ .Values.snapshots.s3.endpoint }}",
+              "base_path": "{{ .Values.snapshots.s3.basePath }}",
+              "protocol": "http",
+              "path_style_access": true
+            }
+          }'
+          echo ""
+          echo "S3 Snapshot Repository registered"
+
+          #######################################
+          # Create Snapshot Lifecycle Management (SLM) Policy
+          #######################################
+          echo ""
+          echo "=== Creating SLM Policy: {{ .Values.snapshots.slm.name }} ==="
+          curl --silent --insecure -u "$ES_USER:$ES_PASSWORD" -X PUT "$ES_URL/_slm/policy/{{ .Values.snapshots.slm.name }}" \
+            -H 'Content-Type: application/json' -d '
+          {
+            "schedule": "{{ .Values.snapshots.slm.schedule }}",
+            "name": "<logs-snap-{now/d}>",
+            "repository": "s3-repository",
+            "config": {
+              "indices": ["audit-logs-*", "container-logs-*"],
+              "ignore_unavailable": true,
+              "include_global_state": false
+            },
+            "retention": {
+              "expire_after": "{{ .Values.snapshots.slm.retention.expireAfter }}",
+              "min_count": {{ .Values.snapshots.slm.retention.minCount }},
+              "max_count": {{ .Values.snapshots.slm.retention.maxCount }}
+            }
+          }'
+          echo ""
+          echo "SLM Policy {{ .Values.snapshots.slm.name }} created"
+
+          # Execute initial snapshot
+          echo ""
+          echo "=== Executing initial snapshot ==="
+          curl --silent --insecure -u "$ES_USER:$ES_PASSWORD" -X POST "$ES_URL/_slm/policy/{{ .Values.snapshots.slm.name }}/_execute"
+          echo ""
+          {{- end }}
+
           #######################################
           # Verify ILM Policies
           #######################################
@@ -417,15 +472,37 @@ spec:
           curl --silent --insecure -u "$ES_USER:$ES_PASSWORD" "$ES_URL/container-logs-*/_ilm/explain" | head -c 1000
           echo ""
 
+          {{- if .Values.snapshots.enabled }}
+          #######################################
+          # Verify Snapshot Repository
+          #######################################
+          echo ""
+          echo "=== Verifying Snapshot Repository ==="
+          curl --silent --insecure -u "$ES_USER:$ES_PASSWORD" "$ES_URL/_snapshot/s3-repository"
+          echo ""
+          echo ""
+          echo "=== SLM Policy Status ==="
+          curl --silent --insecure -u "$ES_USER:$ES_PASSWORD" "$ES_URL/_slm/policy/{{ .Values.snapshots.slm.name }}"
+          echo ""
+          {{- end }}
+
           echo ""
           echo "=== ILM Setup Complete ==="
           echo "Audit logs retention: {{ .Values.ilm.policies.auditLogs.delete.minAge }}"
           echo "Container logs retention: {{ .Values.ilm.policies.containerLogs.delete.minAge }}"
+          {{- if .Values.snapshots.enabled }}
+          echo "Snapshots: Enabled (to S3/MinIO bucket: {{ .Values.snapshots.s3.bucket }})"
+          echo "SLM Schedule: {{ .Values.snapshots.slm.schedule }}"
+          echo "Snapshot Retention: {{ .Values.snapshots.slm.retention.expireAfter }}"
+          {{- end }}
           echo ""
           echo "Lifecycle phases:"
           echo "  Hot -> Warm: audit={{ .Values.ilm.policies.auditLogs.warm.minAge }}, container={{ .Values.ilm.policies.containerLogs.warm.minAge }}"
           echo "  Warm -> Cold: audit={{ .Values.ilm.policies.auditLogs.cold.minAge }}, container={{ .Values.ilm.policies.containerLogs.cold.minAge }}"
           echo "  Cold -> Delete: audit={{ .Values.ilm.policies.auditLogs.delete.minAge }}, container={{ .Values.ilm.policies.containerLogs.delete.minAge }}"
+          {{- if .Values.snapshots.enabled }}
+          echo "  Wait for snapshot before delete: {{ .Values.ilm.policies.auditLogs.delete.waitForSnapshot }}"
+          {{- end }}
 
         env:
         - name: ES_USER

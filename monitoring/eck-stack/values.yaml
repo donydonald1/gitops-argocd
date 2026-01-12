@@ -102,7 +102,7 @@ ilm:
         replicas: 0 # No replicas in cold
       delete:
         minAge: "1h" # Delete after 1 hour total
-        waitForSnapshot: "none" # Set to snapshot policy name if using SLM
+        waitForSnapshot: "logs-snapshots" # Wait for SLM snapshot before delete
 
     # Container Logs ILM Policy
     containerLogs:
@@ -120,7 +120,7 @@ ilm:
         replicas: 0 # No replicas in cold
       delete:
         minAge: "1h" # Delete after 1 hour total
-        waitForSnapshot: "none" # Set to snapshot policy name if using SLM
+        waitForSnapshot: "logs-snapshots" # Wait for SLM snapshot before delete
 
   # Index Templates Configuration
   indexTemplates:
@@ -132,6 +132,30 @@ ilm:
       shards: 1
       replicas: 1
       refreshInterval: "5s"
+
+########################################
+# S3/MinIO Snapshot Configuration
+########################################
+snapshots:
+  enabled: true
+  # S3/MinIO repository settings
+  s3:
+    endpoint: "http://minio.minio.svc:9000"
+    bucket: "elasticsearch-snapshots"
+    basePath: "snapshots"
+    # Secret containing S3 credentials (will be created in elastic-system namespace)
+    secretName: elasticsearch-s3-credentials
+    accessKey: elasticsearch
+    # The secret key is fetched from minio-users secret
+  # Snapshot Lifecycle Management (SLM) policy
+  slm:
+    name: "logs-snapshots"
+    schedule: "0 */30 * * * ?"  # Every 30 minutes (for testing)
+    # schedule: "0 0 1 * * ?"   # Production: Daily at 1 AM
+    retention:
+      expireAfter: "7d"         # Keep snapshots for 7 days
+      minCount: 2               # Keep at least 2 snapshots
+      maxCount: 50              # Keep at most 50 snapshots
 
 ########################################
 # Kibana Spaces, Roles, and Role Mappings
@@ -226,6 +250,9 @@ eck-stack:
       # disableElasticUser: true
       roles:
       - secretName: elasticsearch-admin
+    # S3 repository credentials for snapshots to MinIO
+    secureSettings:
+    - secretName: elasticsearch-s3-credentials
     ingress:
       enabled: true
       className: nginx
