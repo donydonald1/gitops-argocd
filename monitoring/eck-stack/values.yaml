@@ -352,11 +352,12 @@ eck-stack:
           - name: elasticsearch
             resources:
               # ECK requires memory request = limit for ResourcesAwareManagement
+              # Increased from 3Gi to 6Gi to prevent OOMKilled under heavy indexing
               limits:
-                memory: 3Gi
+                memory: 6Gi
                 cpu: 2
               requests:
-                memory: 3Gi
+                memory: 6Gi
                 cpu: 2
             volumeMounts:
             - name: certs
@@ -681,6 +682,9 @@ eck-stack:
   eck-logstash:
     enabled: true
     version: 8.19.9
+    # JVM options for Logstash - must be set here for ECK to apply them
+    # 4GB heap with maxOrder=14 to handle large Filebeat batches (up to 128MB)
+    javaOpts: "-Xms4g -Xmx4g -Dio.netty.allocator.maxOrder=14"
     config:
       log.level: info
       queue.type: persisted
@@ -716,8 +720,10 @@ eck-stack:
         containers:
         - name: logstash
           resources:
+            # Memory limit should be ~1.5x heap size to account for off-heap usage
+            # JVM heap is 4GB, so limit is 6GB
             requests:
-              memory: 4Gi
+              memory: 6Gi
               cpu: 2
             limits:
               memory: 6Gi
@@ -730,10 +736,6 @@ eck-stack:
               secretKeyRef:
                 name: elasticsearch-es-elastic-user
                 key: elastic
-          # Set JVM heap to 4GB (should be ~75% of memory limit)
-          # maxOrder=14 supports batches up to 128MB (needed for large Filebeat batches)
-          - name: LS_JAVA_OPTS
-            value: "-Xms4g -Xmx4g -Dio.netty.allocator.maxOrder=14"
           volumeMounts:
           - mountPath: /usr/share/logstash/pq
             name: pq
