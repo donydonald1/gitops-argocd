@@ -3,10 +3,10 @@ velero:
   annotations:
     reloader.stakater.com/auto: "true"
 
-  # Override kubectl image for CRD upgrade job (1.34 doesn't exist yet)
+  # Override kubectl image for CRD upgrade job (bitnami deprecated, use bitnamilegacy)
   kubectl:
     image:
-      repository: bitnami/kubectl
+      repository: bitnamilegacy/kubectl
       tag: "1.31"
 
   resources:
