@@ -91,6 +91,42 @@ metadata:
     app.kubernetes.io/name: argocd-image-updater-config
     app.kubernetes.io/part-of: argocd-image-updater
   name: argocd-image-updater-config
+data:
+  # Use Kubernetes API instead of ArgoCD API for better performance
+  applications_api: argocd
+  # ArgoCD server configuration
+  argocd.server_addr: argocd-server.argocd.svc.cluster.local:443
+  argocd.insecure: "true"
+  argocd.plaintext: "false"
+  argocd.grpc_web: "true"
+  # Logging
+  log.level: info
+  # Git commit settings
+  git.user: argocd-image-updater
+  git.email: image-updater@argocd.local
+  git.commit-sign-off: "true"
+  # Kubernetes events
+  kube.events: "true"
+  # Registry configuration
+  registries.conf: |
+    registries:
+    - name: Harbor
+      api_url: https://harbor.ops.techsecom.io
+      prefix: harbor.ops.techsecom.io
+      insecure: false
+      default: true
+    - name: Docker Hub
+      api_url: https://registry-1.docker.io
+      prefix: docker.io
+      insecure: false
+    - name: GitHub Container Registry
+      api_url: https://ghcr.io
+      prefix: ghcr.io
+      insecure: false
+    - name: Quay
+      api_url: https://quay.io
+      prefix: quay.io
+      insecure: false
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -210,7 +246,14 @@ spec:
               name: argocd-image-updater-config
               optional: true
         image: quay.io/argoprojlabs/argocd-image-updater:v0.15.2
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
         livenessProbe:
           httpGet:
             path: /healthz
