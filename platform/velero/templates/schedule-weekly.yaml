@@ -1,0 +1,20 @@
+# Weekly backup schedule - runs every Tuesday at 2:30 AM
+# Retention: 30 days (720 hours)
+# Use label: backup/retain: weekly
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: retain-weekly
+  namespace: velero
+spec:
+  schedule: "30 2 * * 2"  # Every Tuesday at 2:30 AM
+  template:
+    includedNamespaces:
+      - "*"
+    orLabelSelectors:
+      - matchLabels:
+          backup/retain: weekly
+    snapshotVolumes: true
+    storageLocation: default
+    ttl: 720h0m0s  # 30 days
+  useOwnerReferencesInBackup: true

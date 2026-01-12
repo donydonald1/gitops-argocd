@@ -27,9 +27,16 @@ spec:
       #   helm:
       #     values:
       #     - values.yaml
-      # - name: velero
-      #   namespace: velero
-      #   serverSideApply: true
+
+      - name: velero
+        namespace: velero
+        serverSideApply: true
+        wave: "1"  # Deploy after storage (MinIO) is ready
+        imageList: "velero=velero/velero, velero-aws=velero/velero-plugin-for-aws"
+        helm:
+          values:
+          - values.yaml
+
       # - name: sonar
       #   namespace: sonar
       - name: gitlab-redis-main

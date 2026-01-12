@@ -1,4 +1,8 @@
 velero:
+  # Enable Stakater Reloader for automatic restart on secret changes
+  annotations:
+    reloader.stakater.com/auto: "true"
+
   resources:
     # https://velero.io/docs/v1.10/performance-guidance/#case-3-1062510k-files-781-directories-1000mb-per-file-total-10376gb-content
     requests:
@@ -16,17 +20,9 @@ velero:
     volumeMounts:
     - name: plugins
       mountPath: "/target"
-  - image: vsphereveleroplugin/velero-plugin-for-vsphere:v1.6.0
-    imagePullPolicy: IfNotPresent
-    name: velero-plugin-for-vsphere
-    resources: {}
-    terminationMessagePath: /dev/termination-log
-    terminationMessagePolicy: File
-    volumeMounts:
-    - mountPath: /target
-      name: plugins
+  # CSI plugin for volume snapshots (if needed in future)
   # - name: velero-plugin-for-csi
-  #   image: velero/velero-plugin-for-csi:v0.6.0
+  #   image: velero/velero-plugin-for-csi:v0.7.1
   #   imagePullPolicy: IfNotPresent
   #   volumeMounts:
   #   - mountPath: /target
@@ -46,13 +42,14 @@ velero:
         region: minio
         s3ForcePathStyle: true
         s3Url: http://minio.minio.svc:9000
-        publicUrl: https://s3.dev.techsecoms.com
+        publicUrl: https://s3.ops.techsecom.io
 
     uploaderType: restic
     fsBackupTimeout: 32h
     defaultItemOperationTimeout: 32h
     garbageCollectionFrequency: 24h
-    logLevel: debug
+    # Production log level
+    logLevel: info
   serviceAccount:
     server:
       create: true

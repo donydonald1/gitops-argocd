@@ -1,0 +1,20 @@
+# Monthly backup schedule - runs on the 1st of each month at 3:00 AM
+# Retention: 365 days (1 year)
+# Use label: backup/retain: monthly
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: retain-monthly
+  namespace: velero
+spec:
+  schedule: "0 3 1 * *"  # 1st of every month at 3:00 AM
+  template:
+    includedNamespaces:
+      - "*"
+    orLabelSelectors:
+      - matchLabels:
+          backup/retain: monthly
+    snapshotVolumes: true
+    storageLocation: default
+    ttl: 8760h0m0s  # 365 days
+  useOwnerReferencesInBackup: true

@@ -1,0 +1,20 @@
+# Daily backup schedule - runs every day at 2:00 AM
+# Retention: 7 days (168 hours)
+# Use label: backup/retain: daily
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: retain-daily
+  namespace: velero
+spec:
+  schedule: "0 2 * * *"  # Every day at 2:00 AM
+  template:
+    includedNamespaces:
+      - "*"
+    orLabelSelectors:
+      - matchLabels:
+          backup/retain: daily
+    snapshotVolumes: true
+    storageLocation: default
+    ttl: 168h0m0s  # 7 days
+  useOwnerReferencesInBackup: true

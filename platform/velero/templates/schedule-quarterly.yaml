@@ -1,0 +1,20 @@
+# Quarterly backup schedule - runs on 1st of Jan, Apr, Jul, Oct at 3:30 AM
+# Retention: 180 days (4320 hours)
+# Use label: backup/retain: quarterly
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: retain-quarterly
+  namespace: velero
+spec:
+  schedule: "30 3 1 1,4,7,10 *"  # 1st of Jan, Apr, Jul, Oct at 3:30 AM
+  template:
+    includedNamespaces:
+      - "*"
+    orLabelSelectors:
+      - matchLabels:
+          backup/retain: quarterly
+    snapshotVolumes: true
+    storageLocation: default
+    ttl: 4320h0m0s  # 180 days (6 months)
+  useOwnerReferencesInBackup: true
