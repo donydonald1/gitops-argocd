@@ -81,20 +81,6 @@ keycloakx:
     console:
       enabled: false
 
-# Custom console ingress configuration (keycloak.ops.techsecom.io)
-consoleIngress:
-  enabled: true
-  ingressClassName: "nginx"
-  hostname: keycloak.ops.techsecom.io
-  annotations:
-    nginx.ingress.kubernetes.io/proxy-buffer-size: 256k
-    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
-    cert-manager.io/cluster-issuer: letsencrypt-prod
-  tls:
-  - secretName: keycloak-tls-secret
-    hosts:
-    - keycloak.ops.techsecom.io
-
   # Production resources
   resources:
     limits:
@@ -152,6 +138,20 @@ consoleIngress:
     enabled: true
     labels:
       release: kps
+
+# Custom console ingress configuration (keycloak.ops.techsecom.io)
+consoleIngress:
+  enabled: true
+  ingressClassName: "nginx"
+  hostname: keycloak.ops.techsecom.io
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-buffer-size: 256k
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  tls:
+  - secretName: keycloak-tls-secret
+    hosts:
+    - keycloak.ops.techsecom.io
 
 # Disable embedded PostgreSQL - using external CNPG
 pgo:
