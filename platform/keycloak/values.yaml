@@ -20,20 +20,21 @@ keycloakx:
   http:
     relativePath: "/"
 
+  # HTTP and proxy settings (used by chart, not in extraEnv to avoid duplicates)
+  proxy:
+    enabled: true
+    mode: xforwarded
+
   # Additional environment variables for Keycloak
   extraEnv: |
     - name: KC_HOSTNAME
       value: "keycloak.ops.techsecom.io"
     - name: KC_HOSTNAME_ADMIN
       value: "keycloak.ops.techsecom.io"
-    - name: KC_HTTP_ENABLED
-      value: "true"
     - name: KC_HOSTNAME_STRICT
       value: "false"
     - name: KC_HOSTNAME_STRICT_HTTPS
       value: "false"
-    - name: KC_PROXY_HEADERS
-      value: "xforwarded"
     - name: KC_SPI_EVENTS_LISTENER_JBOSS_LOGGING_SUCCESS_LEVEL
       value: "info"
     - name: KEYCLOAK_ADMIN
