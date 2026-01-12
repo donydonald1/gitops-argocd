@@ -872,9 +872,10 @@ eck-stack:
                       event.set("success", code.to_i < 400)
                       # Human readable status
                       status_text = case code.to_i
+                      when 101 then "Switching Protocols"
                       when 200 then "OK"
                       when 201 then "Created"
-                      when 204 then "Deleted"
+                      when 204 then "No Content"
                       when 400 then "Bad Request"
                       when 401 then "Unauthorized"
                       when 403 then "Forbidden"
