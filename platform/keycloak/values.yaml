@@ -16,6 +16,7 @@ keycloakx:
   - "/opt/keycloak/bin/kc.sh"
   - "--verbose"
   - "start"
+  - "--import-realm"
 
   http:
     relativePath: "/"
@@ -45,6 +46,46 @@ keycloakx:
         secretKeyRef:
           name: keycloak-admin-creds
           key: password
+    - name: OIDC_CLIENT_ID
+      valueFrom:
+        secretKeyRef:
+          name: keycloak-oidc-creds
+          key: clientId
+    - name: OIDC_CLIENT_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: keycloak-oidc-creds
+          key: clientSecret
+    - name: OIDC_ISSUER
+      valueFrom:
+        secretKeyRef:
+          name: keycloak-oidc-creds
+          key: issuer
+    - name: OIDC_AUTH_ENDPOINT
+      valueFrom:
+        secretKeyRef:
+          name: keycloak-oidc-creds
+          key: authEndpoint
+    - name: OIDC_TOKEN_ENDPOINT
+      valueFrom:
+        secretKeyRef:
+          name: keycloak-oidc-creds
+          key: tokenEndpoint
+    - name: OIDC_USERINFO_ENDPOINT
+      valueFrom:
+        secretKeyRef:
+          name: keycloak-oidc-creds
+          key: userInfoEndpoint
+    - name: OIDC_JWKS_URI
+      valueFrom:
+        secretKeyRef:
+          name: keycloak-oidc-creds
+          key: jwksUri
+    - name: OIDC_END_SESSION_ENDPOINT
+      valueFrom:
+        secretKeyRef:
+          name: keycloak-oidc-creds
+          key: endSessionEndpoint
     - name: JAVA_OPTS_APPEND
       value: >-
         -XX:+UseContainerSupport
@@ -53,6 +94,18 @@ keycloakx:
         -Djgroups.dns.query={{ include "keycloak.fullname" . }}-headless
         -Dkeycloak.connectionsHttpClient.default.expect-continue-enabled=true
         -Dkeycloak.connectionsHttpClient.default.reuse-connections=false
+
+  # Volume mounts for realm import
+  extraVolumeMounts: |
+    - name: realm-config
+      mountPath: /opt/keycloak/data/import
+      readOnly: true
+
+  # Volumes for realm import ConfigMap
+  extraVolumes: |
+    - name: realm-config
+      configMap:
+        name: keycloak-realm-config
 
   # Pod annotations for Stakater Reloader
   podAnnotations:
