@@ -147,6 +147,14 @@ managedRoles:
   passwordSecret:
     name: reportportal-user-secret
 
+- name: keycloak
+  ensure: present
+  login: true
+  createrole: true
+  bypassrls: true
+  passwordSecret:
+    name: keycloak-user-secret
+
 pooler:
   maxDbConnections: 2000
   maxClientConn: 2000

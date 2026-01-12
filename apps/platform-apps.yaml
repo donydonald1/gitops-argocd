@@ -8,8 +8,14 @@ spec:
   generators:
   - list:
       elements:
-      # - name: keycloak
-      #   namespace: security
+      - name: keycloak
+        namespace: keycloak
+        serverSideApply: true
+        wave: "2"  # Deploy after CNPG database is ready
+        imageList: "keycloak=quay.io/keycloak/keycloak"
+        helm:
+          values:
+          - values.yaml
 
       - name: harbor-ha
         namespace: harbor
