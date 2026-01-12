@@ -58,7 +58,7 @@ keycloakx:
   podAnnotations:
     reloader.stakater.com/auto: "true"
 
-  # Ingress configuration - single ingress for all Keycloak paths
+  # Ingress configuration - API endpoints on keycloak-api.ops.techsecom.io
   ingress:
     enabled: true
     annotations:
@@ -66,20 +66,34 @@ keycloakx:
       nginx.ingress.kubernetes.io/proxy-body-size: "10m"
       cert-manager.io/cluster-issuer: letsencrypt-prod
     ingressClassName: "nginx"
-    hostname: keycloak.ops.techsecom.io
+    hostname: keycloak-api.ops.techsecom.io
     servicePort: http
     rules:
-    - host: keycloak.ops.techsecom.io
+    - host: keycloak-api.ops.techsecom.io
       paths:
       - path: /
         pathType: Prefix
     tls:
-    - secretName: keycloak-tls-secret
+    - secretName: keycloak-api-tls-secret
       hosts:
-      - keycloak.ops.techsecom.io
-    # Disable separate console ingress - using single ingress
+      - keycloak-api.ops.techsecom.io
+    # Admin console ingress on keycloak.ops.techsecom.io (all paths)
     console:
-      enabled: false
+      enabled: true
+      ingressClassName: "nginx"
+      annotations:
+        nginx.ingress.kubernetes.io/proxy-buffer-size: 256k
+        nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+      rules:
+      - host: keycloak.ops.techsecom.io
+        paths:
+        - path: /
+          pathType: Prefix
+      tls:
+      - secretName: keycloak-tls-secret
+        hosts:
+        - keycloak.ops.techsecom.io
 
   # Production resources
   resources:
