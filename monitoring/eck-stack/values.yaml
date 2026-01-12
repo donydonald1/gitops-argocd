@@ -853,24 +853,40 @@ eck-stack:
                   uri = audit["requestURI"]
                   event.set("request_uri", uri) if uri
 
+                  # Audit stage (RequestReceived vs ResponseComplete)
+                  stage = audit["stage"]
+                  event.set("stage", stage) if stage
+
                   # Response status
+                  status_text = nil
                   if audit["responseStatus"]
                     code = audit["responseStatus"]["code"]
                     if code
                       event.set("status_code", code.to_i)
                       event.set("success", code.to_i < 400)
                       # Human readable status
-                      case code.to_i
-                      when 200..299 then event.set("status", "OK")
-                      when 400 then event.set("status", "Bad Request")
-                      when 401 then event.set("status", "Unauthorized")
-                      when 403 then event.set("status", "Forbidden")
-                      when 404 then event.set("status", "Not Found")
-                      when 409 then event.set("status", "Conflict")
-                      when 422 then event.set("status", "Invalid")
-                      when 500..599 then event.set("status", "Server Error")
-                      else event.set("status", code.to_s)
+                      status_text = case code.to_i
+                      when 200 then "OK"
+                      when 201 then "Created"
+                      when 204 then "Deleted"
+                      when 400 then "Bad Request"
+                      when 401 then "Unauthorized"
+                      when 403 then "Forbidden"
+                      when 404 then "Not Found"
+                      when 409 then "Conflict"
+                      when 422 then "Invalid"
+                      when 429 then "Rate Limited"
+                      when 200..299 then "OK"
+                      when 500..599 then "Server Error"
+                      else code.to_s
                       end
+                      event.set("status", status_text)
+                    end
+                  else
+                    # No response yet - mark as pending if RequestReceived stage
+                    if stage == "RequestReceived"
+                      status_text = "Pending"
+                      event.set("status", "Pending")
                     end
                   end
 
@@ -885,7 +901,7 @@ eck-stack:
                   user_display = event.get("user") || "unknown"
                   action_display = verb.upcase
                   target_display = event.get("target") || event.get("request_uri") || "unknown"
-                  status_display = event.get("status") || "unknown"
+                  status_display = status_text || "-"
 
                   summary = "#{user_display} #{action_display} #{target_display} -> #{status_display}"
                   event.set("summary", summary)
