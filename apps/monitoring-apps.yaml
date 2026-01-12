@@ -111,6 +111,27 @@ spec:
         kind: "*"
         jqPathExpressions:
         - .spec.template.spec.hostUsers
+      # ECK managed resources - ignore operator-managed fields
+      - group: elasticsearch.k8s.elastic.co
+        kind: Elasticsearch
+        jqPathExpressions:
+        - .metadata.annotations
+        - .status
+      - group: kibana.k8s.elastic.co
+        kind: Kibana
+        jqPathExpressions:
+        - .metadata.annotations
+        - .status
+      - group: logstash.k8s.elastic.co
+        kind: Logstash
+        jqPathExpressions:
+        - .metadata.annotations
+        - .status
+      - group: beat.k8s.elastic.co
+        kind: Beat
+        jqPathExpressions:
+        - .metadata.annotations
+        - .status
       syncPolicy:
         automated:
           prune: true
