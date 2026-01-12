@@ -145,6 +145,8 @@ reportportal:
     endpoint: elasticsearch-es-http.elastic-system.svc.cluster.local
     port: 9200
     ssl: true
+    sslVerify: false
+    # Using SSL with verification disabled for internal cluster communication
     # User/password come from secret
 
   # Disable embedded OpenSearch - using external Elasticsearch
