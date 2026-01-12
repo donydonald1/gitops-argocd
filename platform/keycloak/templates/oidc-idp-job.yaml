@@ -20,6 +20,8 @@ spec:
         env:
         - name: KEYCLOAK_URL
           value: "http://keycloakx-http.{{ .Release.Namespace }}.svc.cluster.local"
+        - name: KEYCLOAK_HEALTH_URL
+          value: "http://keycloakx-http.{{ .Release.Namespace }}.svc.cluster.local:9000"
         - name: ADMIN_USER
           valueFrom:
             secretKeyRef:
@@ -76,7 +78,7 @@ spec:
         - |
           set -e
           echo "Waiting for Keycloak to be ready..."
-          until curl -sf "${KEYCLOAK_URL}/health/ready"; do
+          until curl -sf "${KEYCLOAK_HEALTH_URL}/health/ready"; do
             echo "Keycloak not ready, waiting..."
             sleep 5
           done
