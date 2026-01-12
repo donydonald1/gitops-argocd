@@ -15,14 +15,15 @@ velero:
   initContainers:
   - name: velero-plugin-for-aws
     # https://github.com/vmware-tanzu/velero-plugin-for-aws#compatibility
-    image: velero/velero-plugin-for-aws:v1.11.1
+    # v1.12.x is compatible with Velero v1.16.x (chart 11.3.2)
+    image: velero/velero-plugin-for-aws:v1.12.0
     imagePullPolicy: IfNotPresent
     volumeMounts:
     - name: plugins
       mountPath: "/target"
   # CSI plugin for volume snapshots (if needed in future)
   # - name: velero-plugin-for-csi
-  #   image: velero/velero-plugin-for-csi:v0.7.1
+  #   image: velero/velero-plugin-for-csi:v0.8.0
   #   imagePullPolicy: IfNotPresent
   #   volumeMounts:
   #   - mountPath: /target
