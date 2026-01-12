@@ -1,0 +1,30 @@
+{{- if .Values.consoleIngress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: keycloakx-console
+  labels:
+    app.kubernetes.io/name: keycloakx
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  {{- with .Values.consoleIngress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  ingressClassName: {{ .Values.consoleIngress.ingressClassName }}
+  {{- if .Values.consoleIngress.tls }}
+  tls:
+    {{- toYaml .Values.consoleIngress.tls | nindent 4 }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.consoleIngress.hostname }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: keycloakx-http
+                port:
+                  name: http
+{{- end }}
