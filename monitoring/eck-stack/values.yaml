@@ -779,6 +779,12 @@ eck-stack:
               skip_on_invalid_json => true
             }
 
+            # Drop RequestReceived stage - only keep ResponseStarted/ResponseComplete
+            # This eliminates duplicate entries for each API call
+            if [audit_raw][stage] == "RequestReceived" {
+              drop { }
+            }
+
             if [audit_raw] {
               # Extract and transform audit fields for human readability
               ruby {
@@ -881,12 +887,6 @@ eck-stack:
                       else code.to_s
                       end
                       event.set("status", status_text)
-                    end
-                  else
-                    # No response yet - mark as pending if RequestReceived stage
-                    if stage == "RequestReceived"
-                      status_text = "Pending"
-                      event.set("status", "Pending")
                     end
                   end
 
