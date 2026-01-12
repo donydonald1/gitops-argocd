@@ -116,8 +116,11 @@ spec:
       annotations:
         argocd.argoproj.io/manifest-generate-paths: "."
         argocd.argoproj.io/sync-wave: '{{ default "0" (dig "wave" "" .) }}'
+        # ArgoCD Image Updater - set imageList in element to enable
+        argocd-image-updater.argoproj.io/image-list: '{{ dig "imageList" "" . }}'
+        argocd-image-updater.argoproj.io/write-back-method: git
+        argocd-image-updater.argoproj.io/git-branch: main
         # notifications.argoproj.io/subscribe.on-sync-succeeded.telegram: "-1001726711150"
-        # argocd.argoproj.io/compare-options: '{{ printf "%s=%s" "ServerSideDiff" (dig "serverSideDiff" "false" . | toString) }}'
     spec:
       project: platform
       source:
