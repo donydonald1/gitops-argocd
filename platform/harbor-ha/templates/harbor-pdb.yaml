@@ -1,0 +1,50 @@
+---
+# Pod Disruption Budgets for Harbor HA components
+# Ensures high availability during voluntary disruptions (upgrades, node drains)
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: harbor-core-pdb
+  namespace: {{ .Release.Namespace }}
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: harbor
+      component: core
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: harbor-jobservice-pdb
+  namespace: {{ .Release.Namespace }}
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: harbor
+      component: jobservice
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: harbor-registry-pdb
+  namespace: {{ .Release.Namespace }}
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: harbor
+      component: registry
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: harbor-portal-pdb
+  namespace: {{ .Release.Namespace }}
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: harbor
+      component: portal

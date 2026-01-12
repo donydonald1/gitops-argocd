@@ -127,12 +127,19 @@ harbor:
   existingSecretAdminPassword: harbor
   existingSecretAdminPasswordKey: HARBOR_ADMIN_PASSWORD
   existingSecretSecretKey: harbor
+
+  # Stakater Reloader - automatically reload pods when secrets change
   core:
     replicas: 3
+    podAnnotations:
+      reloader.stakater.com/auto: "true"
     resources:
       requests:
-        cpu: 0.05
-        memory: 150Mi
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 1
+        memory: 1Gi
     extraEnvVars:
     - name: OIDC_CLIENT_ID
       valueFrom:
@@ -168,16 +175,23 @@ harbor:
   jobservice:
     replicas: 3
     secret: ""
+    podAnnotations:
+      reloader.stakater.com/auto: "true"
     jobLoggers:
     - database
     resources:
       requests:
-        cpu: 0.5
-        memory: 300Mi
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 1
+        memory: 1Gi
 
   registry:
     replicas: 3
     secret: ""
+    podAnnotations:
+      reloader.stakater.com/auto: "true"
     credentials:
       # username is defined in existingSecret below, but this value also used by jobservice, so let's align it
       username: harbor_registry_user
@@ -190,8 +204,19 @@ harbor:
     registry:
       resources:
         requests:
-          cpu: 0.5
-          memory: 300Mi
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 2
+          memory: 2Gi
+    controller:
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 1
+          memory: 512Mi
     # trivy:
     #   # enabled the flag to enable Trivy scanner
     #   enabled: true
@@ -243,26 +268,9 @@ harbor:
     - jobservice
     - clair
 
-  # Use recreate strategy to avoid registry volume stuck in mounting status
+  # Use RollingUpdate for HA - Recreate causes downtime
   updateStrategy:
-    type: Recreate
-  clair:
-    enabled: true
-    clair:
-      image:
-        repository: goharbor/clair-photon
-      # resources:
-      #  requests:
-      #    memory: 256Mi
-      #    cpu: 100m
-    adapter:
-      image:
-        repository: goharbor/clair-adapter-photon
-      # resources:
-      #  requests:
-      #    memory: 256Mi
-      #    cpu: 100m
-    replicas: 3
+    type: RollingUpdate
 
   persistence:
     enabled: true
@@ -278,6 +286,32 @@ harbor:
 
   portal:
     replicas: 3
+    podAnnotations:
+      reloader.stakater.com/auto: "true"
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 500m
+        memory: 256Mi
+
+  trivy:
+    enabled: true
+    podAnnotations:
+      reloader.stakater.com/auto: "true"
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        cpu: 2
+        memory: 2Gi
+    # Trivy vulnerability database update
+    skipUpdate: false
+    # Offline mode - use when not connected to internet
+    offlineScan: false
+
   notary:
     enabled: true
 
@@ -294,18 +328,31 @@ harbor:
     external:
       sentinelMasterSet: "mymaster"
       addr: "redis-headless.harbor.svc.cluster.local:26379"
-      # https://github.com/goharbor/harbor-helm/issues/1352
-      # existingSecret: "redis-creds"
-      # username: "default"
-      password: "Techsecoms-@rke2"
-      # password: "<path:secret/data/grafana#api_url>"
+      # Use external secret for Redis password
+      existingSecret: "redis-creds"
+      username: ""
 
   cache:
     enabled: true
+    expireHours: 24
+
+  exporter:
+    podAnnotations:
+      reloader.stakater.com/auto: "true"
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 500m
+        memory: 256Mi
+
   metrics:
     enabled: true
     serviceMonitor:
       enabled: true
+      additionalLabels:
+        release: prometheus
     # oidc:
     #   enabled: true
 
