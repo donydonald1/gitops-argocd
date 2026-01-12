@@ -114,6 +114,8 @@ spec:
       # ECK managed resources - ignore operator-managed fields and defaults
       - group: elasticsearch.k8s.elastic.co
         kind: Elasticsearch
+        managedFieldsManagers:
+        - elastic-operator
         jqPathExpressions:
         - .metadata.annotations
         - .status
@@ -123,6 +125,8 @@ spec:
         - .spec.nodeSets[].volumeClaimTemplates[].status
       - group: kibana.k8s.elastic.co
         kind: Kibana
+        managedFieldsManagers:
+        - elastic-operator
         jqPathExpressions:
         - .metadata.annotations
         - .status
@@ -132,6 +136,8 @@ spec:
         - .spec.enterpriseSearchRef
       - group: logstash.k8s.elastic.co
         kind: Logstash
+        managedFieldsManagers:
+        - elastic-operator
         jqPathExpressions:
         - .metadata.annotations
         - .status
@@ -139,6 +145,8 @@ spec:
         - .spec.podTemplate.metadata
       - group: beat.k8s.elastic.co
         kind: Beat
+        managedFieldsManagers:
+        - elastic-operator
         jqPathExpressions:
         - .metadata.annotations
         - .status
