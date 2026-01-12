@@ -164,7 +164,7 @@ spec:
 
           MAPPER_CONFIG='{
             "name": "admin-role-mapper",
-            "identityProviderMapper": "hardcoded-role-idp-mapper",
+            "identityProviderMapper": "oidc-hardcoded-role-idp-mapper",
             "identityProviderAlias": "techsecoms-oidc",
             "config": {
               "syncMode": "INHERIT",
