@@ -1,111 +1,195 @@
 reportportal:
+  # Enable ArgoCD compatibility
+  global:
+    argocd:
+      enabled: true
+    pdb:
+      create: true
+      maxUnavailable: "1"
+
+  # Service configurations with production resources
   serviceindex:
     resources:
       requests:
-        cpu: 50m
+        cpu: 150m
+        memory: 128Mi
+      limits:
+        cpu: 300m
+        memory: 256Mi
+    podAnnotations:
+      reloader.stakater.com/auto: "true"
+
+  serviceui:
+    replicaCount: 2
+    resources:
+      requests:
+        cpu: 100m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 128Mi
+    podAnnotations:
+      reloader.stakater.com/auto: "true"
+
+  serviceapi:
+    replicaCount: 2
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+    podAnnotations:
+      reloader.stakater.com/auto: "true"
+
   uat:
     resources:
       requests:
-        cpu: 50m
-  serviceui:
-    resources:
-      requests:
-        cpu: 50m
-  serviceapi:
-    resources:
-      requests:
-        cpu: 50m
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 200m
+        memory: 512Mi
+    podAnnotations:
+      reloader.stakater.com/auto: "true"
+    # Superadmin password from secret
+    superadminInitPasswd:
+      secretName: reportportal-superadmin-creds
+      passwordKeyName: password
+
   serviceanalyzer:
     resources:
       requests:
-        cpu: 50m
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    podAnnotations:
+      reloader.stakater.com/auto: "true"
+
   serviceanalyzertrain:
     resources:
       requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    podAnnotations:
+      reloader.stakater.com/auto: "true"
+
+  # Metrics collection job
+  metricsgatherer:
+    resources:
+      requests:
         cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 100m
+        memory: 128Mi
 
-  rabbitmq:
-    SecretName: "reportportal-rabbitmq-creds"
-    endpoint:
-      address: report-portal-rabbitmq.report-portal.svc.cluster.local
-      user: user
-      apiuser: user
+  # Jobs service
+  servicejobs:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    podAnnotations:
+      reloader.stakater.com/auto: "true"
 
+  # Ingress configuration
+  ingress:
+    enable: true
+    usedomainname: true
+    class: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      nginx.ingress.kubernetes.io/proxy-body-size: "128m"
+      nginx.ingress.kubernetes.io/proxy-connect-timeout: "300"
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+      nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    hosts:
+      - reportportal.ops.techsecom.io
+    tls:
+      - hosts:
+          - reportportal.ops.techsecom.io
+        secretName: reportportal-tls
+
+  # External PostgreSQL - CNPG Cluster
+  database:
+    secretName: reportportal-postgresql-creds
+    endpoint: cnpg-cluster-pooler-rw.cnpg-system.svc.cluster.local
+    port: 5432
+    user: reportportal
+    dbName: reportportal
+    # Password comes from secret
+
+  # Disable embedded PostgreSQL - using external CNPG
   postgresql:
-    SecretName: "reportportal-postgresql-creds"
-    endpoint:
-      address: reportportal-primary.report-portal.svc.cluster.local
+    install: false
 
-  elasticsearch:
-    endpoint: opensearch-cluster-master.report-portal.svc.cluster.local:9200
+  # External Elasticsearch - ECK Stack
+  searchengine:
+    secretName: reportportal-elasticsearch-creds
+    endpoint: elasticsearch-es-http.elastic-system.svc.cluster.local
+    port: 9200
+    ssl: true
+    # User/password come from secret
 
+  # Disable embedded OpenSearch - using external Elasticsearch
+  opensearch:
+    install: false
+
+  # External MinIO S3 Storage
   storage:
     type: minio
-    secretName: "reportportal-minio-creds"
-    accesskeyName: "root-user"
-    secretkeyName: "root-password"
-    endpoint: http://report-portal-minio.report-portal.svc.cluster.local:9000
-    endpointshort: report-portal-minio.report-portal.svc.cluster.local:9000
+    secretName: reportportal-minio-creds
+    accesskeyName: "access-key"
+    secretkeyName: "secret-key"
+    endpoint: minio.minio.svc.cluster.local
+    port: 9000
+    ssl: false
+    bucket:
+      type: single
+      bucketDefaultName: "reportportal"
 
-  ingress:
-    # IF YOU HAVE SOME DOMAIN NAME SET INGRESS.USEDOMAINNAME to true and redefine url
-    usedomainname: true
-    hosts:
-    - report-portal.dev.techsecoms.com
+  # Disable embedded MinIO - using external MinIO
+  minio:
+    install: false
 
-minio:
-  auth:
-    existingSecret: reportportal-minio-creds
-  persistence:
-    size: 1Gi
-
-rabbitmq:
-  auth:
-    existingPasswordSecret: reportportal-rabbitmq-creds
-    existingErlangSecret: reportportal-rabbitmq-creds
-  persistence:
-    size: 1Gi
-
-opensearch:
-  singleNode: true
-  startupProbe:
-    initialDelaySeconds: 45
-  extraEnvs:
-  - name: DISABLE_INSTALL_DEMO_CONFIG
-    value: "true"
-  - name: DISABLE_SECURITY_PLUGIN
-    value: "true"
-  resources:
-    requests:
-      cpu: "100m"
-      memory: "2Gi"
-
-  persistence:
-    size: 3Gi
-
-# Enable SAML authentication via Keycloak.
-# Note: Enabling SAML authentication also requires the keycloak-operator to process Keycloak resources.
-# For detailed instructions on setting up SAML authentication for report-portal, refer to:
-# https://docs.kuberocketci.io/docs/operator-guide/project-management-and-reporting/reportportal-keycloak
-saml:
-  enabled: false
-
-# Configure components of the External Secrets Operator (ESO).
-eso:
-  # -- Install components of the ESO.
-  enabled: true
-  # -- Defines provider type. One of `aws` or `generic`.
-  type: "aws"
-  # -- Defines Secret Store name.
-  secretStoreName: "aws-parameterstore"
-  # -- Value name in AWS ParameterStore, AWS SecretsManager or other Secret Store.
-  secretName: "/infra/core/addons/reportportal"
-  # -- Role ARN for the ExternalSecretOperator to assume.
-  roleArn: arn:aws:iam::012345678910:role/AWSIRSA_Shared_ExternalSecretOperatorAccess
-  # Defines Secret Store configuration. Used when eso.type is set to "generic".
-  generic:
-    secretStore:
-      # -- Defines SecretStore provider configuration.
-      providerConfig: {}
-      #  gcpsm:
-      #    projectID: "alphabet-123"
+  # RabbitMQ - use embedded with external secret
+  rabbitmq:
+    install: true
+    image:
+      repository: bitnamilegacy/rabbitmq
+      tag: 4.1.2-debian-12-r1
+    auth:
+      existingPasswordSecretName: reportportal-rabbitmq-creds
+      existingSecretPasswordKey: password
+      existingErlangSecretName: reportportal-rabbitmq-creds
+      existingSecretErlangKey: erlang-cookie
+    extraPlugins: >
+      rabbitmq_auth_backend_ldap
+      rabbitmq_consistent_hash_exchange
+      rabbitmq_shovel
+      rabbitmq_shovel_management
+    extraConfiguration: |-
+      max_message_size = 134217728
+    persistence:
+      enabled: true
+      size: 10Gi
+      storageClass: nfs-csi
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        cpu: 500m
+        memory: 1Gi
+    podAnnotations:
+      reloader.stakater.com/auto: "true"

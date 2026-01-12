@@ -100,6 +100,11 @@ minio:
     existingSecretKey: harborPassword
     policy: readwrite
 
+  - accessKey: reportportal
+    existingSecret: minio-users
+    existingSecretKey: reportportalPassword
+    policy: readwrite
+
   - accessKey: terraform-state
     existingSecret: minio-users
     existingSecretKey: terraform-statePassword
@@ -399,6 +404,12 @@ minio:
     versioning: true
     # set objectlocking for
     # bucket [true|false] NOTE: versioning is enabled by default if you use locking
+    objectlocking: false
+
+  - name: reportportal
+    policy: none
+    purge: false
+    versioning: true
     objectlocking: false
 
   - name: terraform-state
