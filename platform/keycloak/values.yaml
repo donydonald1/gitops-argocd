@@ -30,13 +30,9 @@ keycloakx:
   # Additional environment variables for Keycloak
   extraEnv: |
     - name: KC_HOSTNAME
-      value: "keycloak.ops.techsecom.io"
+      value: "https://keycloak.ops.techsecom.io"
     - name: KC_HOSTNAME_ADMIN
-      value: "keycloak.ops.techsecom.io"
-    - name: KC_HOSTNAME_STRICT
-      value: "false"
-    - name: KC_HOSTNAME_STRICT_HTTPS
-      value: "false"
+      value: "https://keycloak.ops.techsecom.io"
     - name: KC_SPI_EVENTS_LISTENER_JBOSS_LOGGING_SUCCESS_LEVEL
       value: "info"
     - name: KEYCLOAK_ADMIN
