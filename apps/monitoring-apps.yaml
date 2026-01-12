@@ -111,27 +111,40 @@ spec:
         kind: "*"
         jqPathExpressions:
         - .spec.template.spec.hostUsers
-      # ECK managed resources - ignore operator-managed fields
+      # ECK managed resources - ignore operator-managed fields and defaults
       - group: elasticsearch.k8s.elastic.co
         kind: Elasticsearch
         jqPathExpressions:
         - .metadata.annotations
         - .status
+        - .spec.http.service
+        - .spec.monitoring
+        - .spec.nodeSets[].podTemplate.metadata
+        - .spec.nodeSets[].volumeClaimTemplates[].status
       - group: kibana.k8s.elastic.co
         kind: Kibana
         jqPathExpressions:
         - .metadata.annotations
         - .status
+        - .spec.http.service
+        - .spec.monitoring
+        - .spec.podTemplate.metadata
+        - .spec.enterpriseSearchRef
       - group: logstash.k8s.elastic.co
         kind: Logstash
         jqPathExpressions:
         - .metadata.annotations
         - .status
+        - .spec.monitoring
+        - .spec.podTemplate.metadata
       - group: beat.k8s.elastic.co
         kind: Beat
         jqPathExpressions:
         - .metadata.annotations
         - .status
+        - .spec.monitoring
+        - .spec.deployment.podTemplate.metadata
+        - .spec.daemonSet.podTemplate.metadata
       syncPolicy:
         automated:
           prune: true
