@@ -717,10 +717,10 @@ eck-stack:
         - name: logstash
           resources:
             requests:
-              memory: 2Gi
+              memory: 4Gi
               cpu: 2
             limits:
-              memory: 4Gi
+              memory: 6Gi
               cpu: 2
           env:
           - name: ES_USER
@@ -730,8 +730,10 @@ eck-stack:
               secretKeyRef:
                 name: elasticsearch-es-elastic-user
                 key: elastic
-          # - name: LS_JAVA_OPTS
-          #   value: "-Xms3g -Xmx3g -Dio.netty.allocator.maxOrder=13"
+          # Set JVM heap to 4GB (should be ~75% of memory limit)
+          # Also increase netty allocator for large batches from Filebeat
+          - name: LS_JAVA_OPTS
+            value: "-Xms4g -Xmx4g -Dio.netty.allocator.maxOrder=13"
           volumeMounts:
           - mountPath: /usr/share/logstash/pq
             name: pq
