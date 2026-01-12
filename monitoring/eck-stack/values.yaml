@@ -756,12 +756,10 @@ eck-stack:
       path.dead_letter_queue: /usr/share/logstash/dlq
       config.reload.automatic: true
       config.reload.interval: 30s
-      # dead_letter_queue.max_bytes: 5333mb
       dead_letter_queue.storage_policy: drop_older
       dead_letter_queue.max_bytes: 5gb
       dead_letter_queue.retain.age: 10m
       pipeline.ecs_compatibility: disabled
-      # pipeline.workers: 1
       config.string: |
         input {
           beats {
@@ -770,65 +768,218 @@ eck-stack:
         }
 
         filter {
+          #===========================================
+          # AUDIT LOGS PROCESSING
+          #===========================================
           if "audit" in [tags] {
+            # Parse the JSON audit log message
             json {
               source => "message"
-              target => "auditdata"
+              target => "audit"
               skip_on_invalid_json => true
-              remove_field => [ "[auditdata][annotations]", "[auditdata][apiVersion]", "[auditdata][kind]", "[auditdata][level]", "[auditdata][responseStatus][message]", "[auditdata][stage]", "[auditdata][stageTimestamp]", "[auditdata][userAgent]" ]
             }
+
+            if [audit] {
+              # Extract key audit fields to top level for easy querying
+              mutate {
+                add_field => {
+                  "audit_id" => "%{[audit][auditID]}"
+                  "audit_verb" => "%{[audit][verb]}"
+                  "audit_user" => "%{[audit][user][username]}"
+                  "audit_resource" => "%{[audit][objectRef][resource]}"
+                  "audit_namespace" => "%{[audit][objectRef][namespace]}"
+                  "audit_name" => "%{[audit][objectRef][name]}"
+                  "audit_api_version" => "%{[audit][objectRef][apiVersion]}"
+                  "audit_request_uri" => "%{[audit][requestURI]}"
+                }
+              }
+
+              # Extract response code if present
+              if [audit][responseStatus][code] {
+                mutate {
+                  add_field => { "audit_response_code" => "%{[audit][responseStatus][code]}" }
+                }
+                mutate {
+                  convert => { "audit_response_code" => "integer" }
+                }
+              }
+
+              # Categorize audit action
+              if [audit][verb] == "create" {
+                mutate { add_field => { "audit_action" => "CREATE" } }
+              } else if [audit][verb] == "delete" {
+                mutate { add_field => { "audit_action" => "DELETE" } }
+              } else if [audit][verb] == "update" or [audit][verb] == "patch" {
+                mutate { add_field => { "audit_action" => "UPDATE" } }
+              } else if [audit][verb] == "get" or [audit][verb] == "list" or [audit][verb] == "watch" {
+                mutate { add_field => { "audit_action" => "READ" } }
+              } else {
+                mutate { add_field => { "audit_action" => "OTHER" } }
+              }
+
+              # Remove verbose/unnecessary nested fields
+              mutate {
+                remove_field => [
+                  "[audit][annotations]",
+                  "[audit][apiVersion]",
+                  "[audit][kind]",
+                  "[audit][level]",
+                  "[audit][stage]",
+                  "[audit][stageTimestamp]",
+                  "[audit][userAgent]",
+                  "[audit][user][extra]",
+                  "[audit][responseStatus][message]",
+                  "message"
+                ]
+              }
+            }
+
             mutate {
               add_field => { "[@metadata][target_index]" => "audit-logs" }
             }
-          } else if "audit" not in [tags] {
-            grok {
-              match => { "message" => "%{SYSLOG5424LINE}" }
-            }
-            if [syslog5424_sd] {
-              mutate {
-                gsub => [ "syslog5424_sd", "[\[\]]", "" ]
-              }
-              kv {
-                source => "syslog5424_sd"
-                field_split => " "
-                value_split => "="
-                target => "kv_data"
-                remove_field => [ "syslog5424_sd" ]
-              }
-            }
-            ruby {
-              code => '
-                event.to_hash.each { |k, v|
-                  event.remove(k)
-                  newE = k.sub(/app\..*\/(\w+)/, "k8_\\1")
-                  event.set(newE, v)
-                }
-              '
-            }
-            if [istio.io/rev] {
-              mutate {
-                rename => { "istio.io/rev" =>  "istio_k8_rev" }
-              }
-            }
+          }
+
+          #===========================================
+          # CONTAINER LOGS PROCESSING
+          #===========================================
+          else {
+            # Extract Kubernetes metadata to top-level fields
             if [kubernetes] {
               mutate {
                 add_field => {
-                  "container_name" => "%{[kubernetes][container][name]}"
                   "namespace" => "%{[kubernetes][namespace]}"
                   "pod" => "%{[kubernetes][pod][name]}"
+                  "container" => "%{[kubernetes][container][name]}"
+                  "node" => "%{[kubernetes][node][name]}"
                 }
-                replace => { "host" => "%{[kubernetes][node][name]}" }
+              }
+
+              # Extract app name from labels if available
+              if [kubernetes][labels][app] {
+                mutate { add_field => { "app" => "%{[kubernetes][labels][app]}" } }
+              } else if [kubernetes][labels][app_kubernetes_io/name] {
+                mutate { add_field => { "app" => "%{[kubernetes][labels][app_kubernetes_io/name]}" } }
+              } else {
+                mutate { add_field => { "app" => "%{[kubernetes][container][name]}" } }
               }
             }
+
+            # Try to parse JSON logs (many apps output structured JSON)
+            if [message] =~ /^\s*\{/ {
+              json {
+                source => "message"
+                target => "json_log"
+                skip_on_invalid_json => true
+              }
+
+              if [json_log] {
+                # Extract common JSON log fields
+                if [json_log][level] {
+                  mutate { add_field => { "log_level" => "%{[json_log][level]}" } }
+                } else if [json_log][severity] {
+                  mutate { add_field => { "log_level" => "%{[json_log][severity]}" } }
+                } else if [json_log][lvl] {
+                  mutate { add_field => { "log_level" => "%{[json_log][lvl]}" } }
+                }
+
+                if [json_log][msg] {
+                  mutate { add_field => { "log_message" => "%{[json_log][msg]}" } }
+                } else if [json_log][message] {
+                  mutate { add_field => { "log_message" => "%{[json_log][message]}" } }
+                }
+
+                if [json_log][error] {
+                  mutate { add_field => { "error_message" => "%{[json_log][error]}" } }
+                } else if [json_log][err] {
+                  mutate { add_field => { "error_message" => "%{[json_log][err]}" } }
+                }
+
+                if [json_log][stack_trace] {
+                  mutate { add_field => { "stack_trace" => "%{[json_log][stack_trace]}" } }
+                } else if [json_log][stacktrace] {
+                  mutate { add_field => { "stack_trace" => "%{[json_log][stacktrace]}" } }
+                }
+              }
+            }
+
+            # Extract log level from message if not already set
+            if ![log_level] {
+              grok {
+                match => { "message" => "(?i)(?<log_level>FATAL|ERROR|WARN(?:ING)?|INFO|DEBUG|TRACE)" }
+                tag_on_failure => []
+              }
+            }
+
+            # Normalize log levels to uppercase
+            if [log_level] {
+              mutate {
+                uppercase => [ "log_level" ]
+              }
+              # Normalize WARNING to WARN
+              if [log_level] == "WARNING" {
+                mutate { replace => { "log_level" => "WARN" } }
+              }
+            } else {
+              mutate { add_field => { "log_level" => "INFO" } }
+            }
+
+            # Categorize log severity for alerting
+            if [log_level] == "FATAL" or [log_level] == "ERROR" {
+              mutate { add_field => { "log_severity" => "error" } }
+            } else if [log_level] == "WARN" {
+              mutate { add_field => { "log_severity" => "warning" } }
+            } else {
+              mutate { add_field => { "log_severity" => "info" } }
+            }
+
+            # Clean up - remove verbose nested fields
+            mutate {
+              remove_field => [
+                "[kubernetes][namespace_labels]",
+                "[kubernetes][namespace_uid]",
+                "[kubernetes][node][labels]",
+                "[kubernetes][node][uid]",
+                "[kubernetes][node][hostname]",
+                "[kubernetes][pod][ip]",
+                "[kubernetes][pod][uid]",
+                "[kubernetes][labels]",
+                "[kubernetes][replicaset]",
+                "[kubernetes][statefulset]",
+                "[kubernetes][daemonset]",
+                "[kubernetes][deployment]",
+                "[container][runtime]",
+                "[container][id]",
+                "[container][image]",
+                "[event]",
+                "[service]",
+                "[ecs]",
+                "[agent]",
+                "[input]",
+                "[log][offset]",
+                "[log][file]",
+                "_grokparsefailure"
+              ]
+            }
+
+            # Remove json_log after extraction to reduce document size
+            mutate {
+              remove_field => [ "json_log" ]
+            }
+
             mutate {
               add_field => { "[@metadata][target_index]" => "container-logs" }
             }
+          }
+
+          # Remove common unnecessary fields from all logs
+          mutate {
+            remove_field => [ "@version", "host" ]
           }
         }
 
         output {
           if [@metadata][target_index] == "container-logs" {
-              elasticsearch {
+            elasticsearch {
               hosts => [ "https://elasticsearch-es-http.elastic-system.svc:9200" ]
               user => "${ES_USER}"
               password => "${ES_PASSWORD}"
