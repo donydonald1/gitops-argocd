@@ -267,11 +267,12 @@ eck-stack:
           containers:
           - name: elasticsearch
             resources:
+              # ECK requires memory request = limit for ResourcesAwareManagement
               limits:
                 memory: 2Gi
                 cpu: 2
               requests:
-                memory: 1.5Gi
+                memory: 2Gi
                 cpu: 2
             volumeMounts:
             - name: certs
@@ -315,11 +316,12 @@ eck-stack:
           containers:
           - name: elasticsearch
             resources:
+              # ECK requires memory request = limit for ResourcesAwareManagement
               limits:
                 memory: 3Gi
                 cpu: 2
               requests:
-                memory: 2Gi
+                memory: 3Gi
                 cpu: 2
             volumeMounts:
             - name: certs
@@ -362,11 +364,12 @@ eck-stack:
           containers:
           - name: elasticsearch
             resources:
+              # ECK requires memory request = limit for ResourcesAwareManagement
               limits:
                 memory: 3Gi
                 cpu: 2
               requests:
-                memory: 2Gi
+                memory: 3Gi
                 cpu: 2
             volumeMounts:
             - name: certs
@@ -409,11 +412,12 @@ eck-stack:
           containers:
           - name: elasticsearch
             resources:
+              # ECK requires memory request = limit for ResourcesAwareManagement
               limits:
                 memory: 3Gi
                 cpu: 2
               requests:
-                memory: 2Gi
+                memory: 3Gi
                 cpu: 2
             volumeMounts:
             - name: certs
