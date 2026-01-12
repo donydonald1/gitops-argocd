@@ -717,13 +717,13 @@ eck-stack:
         containers:
         - name: logstash
           resources:
-            # Memory limit should be ~1.5x heap size to account for off-heap usage
-            # JVM heap is 4GB, so limit is 6GB
+            # Memory limit should be ~2x heap size to account for off-heap usage
+            # JVM heap is 4GB, limit is 8GB for complex filters with JSON parsing
             requests:
-              memory: 6Gi
+              memory: 8Gi
               cpu: 2
             limits:
-              memory: 6Gi
+              memory: 8Gi
               cpu: 2
           env:
           - name: ES_USER
