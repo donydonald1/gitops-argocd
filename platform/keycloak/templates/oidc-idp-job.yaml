@@ -1,0 +1,148 @@
+{{- if .Values.oidcIdp.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: keycloak-oidc-idp-setup
+  labels:
+    app.kubernetes.io/name: keycloakx
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: oidc-setup
+        image: curlimages/curl:latest
+        env:
+        - name: KEYCLOAK_URL
+          value: "http://keycloakx-http.{{ .Release.Namespace }}.svc.cluster.local"
+        - name: ADMIN_USER
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-admin-creds
+              key: username
+        - name: ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-admin-creds
+              key: password
+        - name: OIDC_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-oidc-creds
+              key: clientId
+        - name: OIDC_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-oidc-creds
+              key: clientSecret
+        - name: OIDC_ISSUER
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-oidc-creds
+              key: issuer
+        - name: OIDC_AUTH_ENDPOINT
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-oidc-creds
+              key: authEndpoint
+        - name: OIDC_TOKEN_ENDPOINT
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-oidc-creds
+              key: tokenEndpoint
+        - name: OIDC_USERINFO_ENDPOINT
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-oidc-creds
+              key: userInfoEndpoint
+        - name: OIDC_JWKS_URI
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-oidc-creds
+              key: jwksUri
+        - name: OIDC_END_SESSION_ENDPOINT
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-oidc-creds
+              key: endSessionEndpoint
+        command:
+        - /bin/sh
+        - -c
+        - |
+          set -e
+          echo "Waiting for Keycloak to be ready..."
+          until curl -sf "${KEYCLOAK_URL}/health/ready"; do
+            echo "Keycloak not ready, waiting..."
+            sleep 5
+          done
+          echo "Keycloak is ready"
+
+          echo "Getting admin token..."
+          TOKEN=$(curl -sf -X POST "${KEYCLOAK_URL}/realms/master/protocol/openid-connect/token" \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            -d "username=${ADMIN_USER}" \
+            -d "password=${ADMIN_PASSWORD}" \
+            -d "grant_type=password" \
+            -d "client_id=admin-cli" | sed 's/.*"access_token":"\([^"]*\)".*/\1/')
+
+          if [ -z "$TOKEN" ]; then
+            echo "Failed to get admin token"
+            exit 1
+          fi
+
+          echo "Checking if IDP exists..."
+          IDP_EXISTS=$(curl -sf -o /dev/null -w "%{http_code}" \
+            "${KEYCLOAK_URL}/admin/realms/master/identity-provider/instances/techsecoms-oidc" \
+            -H "Authorization: Bearer ${TOKEN}")
+
+          IDP_CONFIG='{
+            "alias": "techsecoms-oidc",
+            "displayName": "Techsecoms SSO",
+            "providerId": "oidc",
+            "enabled": true,
+            "trustEmail": true,
+            "storeToken": true,
+            "addReadTokenRoleOnCreate": false,
+            "firstBrokerLoginFlowAlias": "first broker login",
+            "config": {
+              "clientId": "'"${OIDC_CLIENT_ID}"'",
+              "clientSecret": "'"${OIDC_CLIENT_SECRET}"'",
+              "issuer": "'"${OIDC_ISSUER}"'",
+              "authorizationUrl": "'"${OIDC_AUTH_ENDPOINT}"'",
+              "tokenUrl": "'"${OIDC_TOKEN_ENDPOINT}"'",
+              "userInfoUrl": "'"${OIDC_USERINFO_ENDPOINT}"'",
+              "jwksUrl": "'"${OIDC_JWKS_URI}"'",
+              "logoutUrl": "'"${OIDC_END_SESSION_ENDPOINT}"'",
+              "validateSignature": "true",
+              "useJwksUrl": "true",
+              "pkceEnabled": "true",
+              "pkceMethod": "S256",
+              "syncMode": "IMPORT",
+              "clientAuthMethod": "client_secret_basic",
+              "defaultScope": "openid profile email"
+            }
+          }'
+
+          if [ "$IDP_EXISTS" = "200" ]; then
+            echo "IDP already exists, updating..."
+            curl -sf -X PUT "${KEYCLOAK_URL}/admin/realms/master/identity-provider/instances/techsecoms-oidc" \
+              -H "Authorization: Bearer ${TOKEN}" \
+              -H "Content-Type: application/json" \
+              -d "${IDP_CONFIG}"
+            echo "IDP updated successfully"
+          else
+            echo "Creating new IDP..."
+            curl -sf -X POST "${KEYCLOAK_URL}/admin/realms/master/identity-provider/instances" \
+              -H "Authorization: Bearer ${TOKEN}" \
+              -H "Content-Type: application/json" \
+              -d "${IDP_CONFIG}"
+            echo "IDP created successfully"
+          fi
+
+          echo "OIDC Identity Provider setup complete!"
+{{- end }}
