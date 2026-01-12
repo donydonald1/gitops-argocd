@@ -682,9 +682,6 @@ eck-stack:
   eck-logstash:
     enabled: true
     version: 8.19.9
-    # JVM options for Logstash - must be set here for ECK to apply them
-    # 4GB heap with maxOrder=14 to handle large Filebeat batches (up to 128MB)
-    javaOpts: "-Xms4g -Xmx4g -Dio.netty.allocator.maxOrder=14"
     config:
       log.level: info
       queue.type: persisted
@@ -736,6 +733,9 @@ eck-stack:
               secretKeyRef:
                 name: elasticsearch-es-elastic-user
                 key: elastic
+          # JVM options: 4GB heap with maxOrder=14 to handle large Filebeat batches
+          - name: LS_JAVA_OPTS
+            value: "-Xms4g -Xmx4g -Dio.netty.allocator.maxOrder=14"
           volumeMounts:
           - mountPath: /usr/share/logstash/pq
             name: pq
