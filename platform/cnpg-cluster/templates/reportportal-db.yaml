@@ -1,0 +1,9 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: reportportal-db
+spec:
+  name: reportportal
+  owner: reportportal
+  cluster:
+    name: cnpg-cluster

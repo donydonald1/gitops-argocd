@@ -139,6 +139,14 @@ managedRoles:
   passwordSecret:
     name: praefect-user-secret
 
+- name: reportportal
+  ensure: present
+  login: true
+  createrole: true
+  bypassrls: true
+  passwordSecret:
+    name: reportportal-user-secret
+
 pooler:
   maxDbConnections: 2000
   maxClientConn: 2000
