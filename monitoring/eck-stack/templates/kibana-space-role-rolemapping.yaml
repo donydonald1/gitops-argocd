@@ -8,12 +8,14 @@ metadata:
     app.kubernetes.io/name: elasticsearch-ilm-setup
     app.kubernetes.io/instance: {{ .Release.Name }}
   annotations:
-    "helm.sh/hook": post-install,post-upgrade
-    "helm.sh/hook-weight": "10"
-    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+    # ArgoCD sync wave - run after Elasticsearch and Kibana are deployed
+    argocd.argoproj.io/sync-wave: "10"
+    # ArgoCD hook - run as a post-sync hook
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
 spec:
-  ttlSecondsAfterFinished: 300
-  backoffLimit: 5
+  ttlSecondsAfterFinished: 600
+  backoffLimit: 10
   template:
     metadata:
       labels:
