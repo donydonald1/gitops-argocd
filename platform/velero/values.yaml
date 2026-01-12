@@ -51,7 +51,8 @@ velero:
         s3Url: http://minio.minio.svc:9000
         publicUrl: https://s3.ops.techsecom.io
 
-    uploaderType: restic
+    # In Velero 1.14+, restic was replaced with kopia as the default uploader
+    # uploaderType is now auto-detected, no need to set it
     fsBackupTimeout: 32h
     defaultItemOperationTimeout: 32h
     garbageCollectionFrequency: 24h
