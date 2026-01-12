@@ -92,13 +92,8 @@ metadata:
     app.kubernetes.io/part-of: argocd-image-updater
   name: argocd-image-updater-config
 data:
-  # Use Kubernetes API instead of ArgoCD API for better performance
-  applications_api: argocd
-  # ArgoCD server configuration
-  argocd.server_addr: argocd-server.argocd.svc.cluster.local:443
-  argocd.insecure: "true"
-  argocd.plaintext: "false"
-  argocd.grpc_web: "true"
+  # Use Kubernetes API directly - simpler and doesn't require ArgoCD token
+  applications_api: k8s
   # Logging
   log.level: info
   # Git commit settings
