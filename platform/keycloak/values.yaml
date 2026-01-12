@@ -116,9 +116,11 @@ consoleIngress:
   database:
     vendor: postgres
     existingSecret: keycloak-db-creds
+    existingSecretKey: password
     hostname: cnpg-cluster-pooler-rw.cnpg-system.svc.cluster.local
     port: 5432
     database: keycloak
+    username: keycloak
 
   # Autoscaling configuration
   autoscaling:
