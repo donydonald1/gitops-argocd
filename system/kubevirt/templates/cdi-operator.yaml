@@ -200,6 +200,7 @@ spec:
             - name: PULL_POLICY
               value: IfNotPresent
             - name: MONITORING_NAMESPACE
+              value: {{ .Values.namespace | default "kubevirt" }}
           resources:
             requests:
               cpu: 100m
