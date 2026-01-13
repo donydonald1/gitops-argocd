@@ -1,31 +1,29 @@
 defectdojo:
   tag: 2.34.1
   fullnameOverride: defectdojo
-  host: defectdojo.example.com
-  site_url: https://defectdojo.techsecoms.com
-    - defectdojo-django.defectdojo
+  host: defectdojo.ops.techsecom.io
+  site_url: https://defectdojo.ops.techsecom.io
 
   initializer:
     run: true
+
   django:
     ingress:
-      enabled: true # change to 'false' for OpenShift
+      enabled: true
       activateTLS: false
     uwsgi:
       livenessProbe:
-        # Enable liveness checks on uwsgi container. Those values are use on nginx readiness checks as well.
-        # default value is 120, so in our case 20 is just fine
         initialDelaySeconds: 20
     mediaPersistentVolume:
       persistentVolumeClaim:
         size: 2Gi
 
+  # External PostgreSQL - CNPG Cluster
   postgresql:
-    # Crunch PostgresCluster is used as the External Postgresql database
     enabled: false
-    postgresServer: "defectdojo-primary.defectdojo.svc"
+    postgresServer: "cnpg-cluster-pooler-rw.cnpg-system.svc.cluster.local"
     auth:
-      existingSecret: defectdojo-pguser-defectdojo
+      existingSecret: defectdojo-postgresql
       secretKeys:
         adminPasswordKey: password
         userPasswordKey: password
@@ -33,42 +31,52 @@ defectdojo:
   rabbitmq:
     persistence:
       size: 1Gi
+    existingSecret: defectdojo-rabbitmq-specific
 
-  # SSO Enablement. for additional options, please consult https://defectdojo.github.io/django-DefectDojo/integrations/social-authentication/#keycloak
-  # Keycloak integration also requires DD_SOCIAL_AUTH_KEYCLOAK_SECRET to be defined, we recommend to create secret with name `defectdojo-extrasecrets`
-  # and define key: DD_SOCIAL_AUTH_KEYCLOAK_SECRET with value from your Keycloak ClientId Secret
-  # the below options are public and ok to be defined in extraConfigs
+  # Keycloak OIDC Configuration
+  # https://defectdojo.github.io/django-DefectDojo/integrations/social-authentication/#keycloak
   extraConfigs:
+    # Security cookies
     DD_SESSION_COOKIE_SECURE: 'True'
     DD_CSRF_COOKIE_SECURE: 'True'
     DD_SECURE_SSL_REDIRECT: 'False'
+    # Keycloak OIDC settings
     DD_SOCIAL_AUTH_KEYCLOAK_OAUTH2_ENABLED: 'True'
     DD_SOCIAL_AUTH_KEYCLOAK_KEY: 'defectdojo'
-    # Keycloak realm public key received from: <realm_name> -> realm settings -> keys -> RS256 -> Public key
-    DD_SOCIAL_AUTH_KEYCLOAK_PUBLIC_KEY: '<RS256_KEY>'
-    DD_SOCIAL_AUTH_KEYCLOAK_SECRET: "defectdojo-extrasecrets"
-    DD_SOCIAL_AUTH_KEYCLOAK_AUTHORIZATION_URL: 'https://keycloak.example.com/auth/realms/shared/protocol/openid-connect/auth'
-    DD_SOCIAL_AUTH_KEYCLOAK_ACCESS_TOKEN_URL: 'https://keycloak.example.com/auth/realms/shared/protocol/openid-connect/token'
+    DD_SOCIAL_AUTH_KEYCLOAK_AUTHORIZATION_URL: 'https://keycloak.ops.techsecom.io/realms/master/protocol/openid-connect/auth'
+    DD_SOCIAL_AUTH_KEYCLOAK_ACCESS_TOKEN_URL: 'https://keycloak.ops.techsecom.io/realms/master/protocol/openid-connect/token'
+    # Database configuration for CNPG
+    DD_DATABASE_ENGINE: 'django.db.backends.postgresql'
+    DD_DATABASE_NAME: 'defectdojo'
+    DD_DATABASE_USER: 'defectdojo'
+    DD_DATABASE_HOST: 'cnpg-cluster-pooler-rw.cnpg-system.svc.cluster.local'
+    DD_DATABASE_PORT: '5432'
 
+  # Extra secrets (DD_SOCIAL_AUTH_KEYCLOAK_SECRET) managed via ExternalSecrets
+  # The chart expects 'defectdojo-extrasecrets' secret which is created by our ExternalSecret
+
+# Keycloak OIDC Client Configuration
 oidc:
-  enabled: false
-
-# Configure components of the External Secrets Operator (ESO).
-eso:
-  # -- Install components of the ESO.
   enabled: true
-  # -- Defines provider type. One of `aws` or `generic`.
-  type: "generic"
-  # -- Defines Secret Store name.
-  secretStoreName: "aws-parameterstore"
-  # -- Value name in AWS ParameterStore, AWS SecretsManager or other Secret Store.
-  secretName: "/infra/core/addons//defectdojo"
-  # -- Role ARN for the ExternalSecretOperator to assume.
-  roleArn: arn:aws:iam::012345678910:role/AWSIRSA_Shared_ExternalSecretOperatorAccess
-  # Defines Secret Store configuration. Used when eso.type is set to "generic".
-  generic:
-    secretStore:
-      # -- Defines SecretStore provider configuration.
-      providerConfig: {}
-      #  gcpsm:
-      #    projectID: "alphabet-123"
+  clientId: defectdojo
+  # Redirect URIs for DefectDojo
+  redirectUris:
+    - "https://defectdojo.ops.techsecom.io/*"
+  webOrigins:
+    - "https://defectdojo.ops.techsecom.io"
+
+# External Secrets Operator Configuration
+eso:
+  enabled: true
+  # Using Vault ClusterSecretStore (no local SecretStore needed)
+
+# Vault secret keys required:
+# - defectdojo/adminPassword: DefectDojo admin password
+# - defectdojo/secretKey: Django secret key
+# - defectdojo/credentialAesKey: AES 256 encryption key
+# - defectdojo/metricsPassword: Metrics HTTP auth password
+# - defectdojo/oidcClientSecret: Keycloak OIDC client secret
+# - defectdojo/dbUsername: Database username (defectdojo)
+# - defectdojo/dbPassword: Database password
+# - defectdojo/rabbitmqPassword: RabbitMQ password
+# - defectdojo/rabbitmqErlangCookie: RabbitMQ Erlang cookie

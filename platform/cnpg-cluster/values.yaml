@@ -155,6 +155,14 @@ managedRoles:
   passwordSecret:
     name: keycloak-user-secret
 
+- name: defectdojo
+  ensure: present
+  login: true
+  createrole: true
+  bypassrls: true
+  passwordSecret:
+    name: defectdojo-user-secret
+
 pooler:
   maxDbConnections: 2000
   maxClientConn: 2000

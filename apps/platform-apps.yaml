@@ -55,6 +55,15 @@ spec:
           values:
           - values.yaml
 
+      - name: defectdojo
+        namespace: defectdojo
+        serverSideApply: true
+        wave: "3"  # Deploy after databases (CNPG), Keycloak, and storage are ready
+        imageList: "defectdojo=defectdojo/defectdojo-django"
+        helm:
+          values:
+          - values.yaml
+
       - name: gitlab-redis-main
         wave: "1"  # Deploy Redis before GitLab
         namespace: gitlab
