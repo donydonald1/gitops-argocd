@@ -1,0 +1,97 @@
+# KubeVirt Operator Installation Job
+# Downloads and applies the official KubeVirt operator manifest
+# This ensures we use the officially supported operator with all CRDs and RBAC
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kubevirt-installer
+  namespace: {{ .Values.namespace }}
+  labels:
+    app.kubernetes.io/name: kubevirt
+    app.kubernetes.io/component: installer
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kubevirt-installer
+  labels:
+    app.kubernetes.io/name: kubevirt
+    app.kubernetes.io/component: installer
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+  - kind: ServiceAccount
+    name: kubevirt-installer
+    namespace: {{ .Values.namespace }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kubevirt-operator-installer-{{ .Values.kubevirt.version | replace "." "-" }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app.kubernetes.io/name: kubevirt
+    app.kubernetes.io/component: installer
+    app.kubernetes.io/version: {{ .Values.kubevirt.version }}
+spec:
+  ttlSecondsAfterFinished: 600
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: kubevirt
+        app.kubernetes.io/component: installer
+    spec:
+      serviceAccountName: kubevirt-installer
+      restartPolicy: OnFailure
+      containers:
+        - name: installer
+          image: bitnami/kubectl:1.31
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              echo "========================================"
+              echo "Installing KubeVirt {{ .Values.kubevirt.version }}"
+              echo "========================================"
+
+              # Apply the official KubeVirt operator manifest
+              echo "Applying KubeVirt operator manifest..."
+              kubectl apply -f https://github.com/kubevirt/kubevirt/releases/download/{{ .Values.kubevirt.version }}/kubevirt-operator.yaml --server-side --force-conflicts
+
+              echo "========================================"
+              echo "KubeVirt operator installed successfully"
+              echo "========================================"
+
+              # Wait for the operator to be ready
+              echo "Waiting for virt-operator deployment..."
+              kubectl rollout status deployment/virt-operator -n kubevirt --timeout=300s || true
+
+              echo "Installation complete!"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            runAsUser: 1000
+            seccompProfile:
+              type: RuntimeDefault
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

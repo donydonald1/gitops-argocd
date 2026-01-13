@@ -1,0 +1,73 @@
+{{- if .Values.cdi.enabled }}
+# CDI (Containerized Data Importer) Operator Installation Job
+# Downloads and applies the official CDI operator manifest
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cdi-operator-installer-{{ .Values.cdi.version | replace "." "-" }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app.kubernetes.io/name: cdi
+    app.kubernetes.io/component: installer
+    app.kubernetes.io/version: {{ .Values.cdi.version }}
+spec:
+  ttlSecondsAfterFinished: 600
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: cdi
+        app.kubernetes.io/component: installer
+    spec:
+      serviceAccountName: kubevirt-installer
+      restartPolicy: OnFailure
+      containers:
+        - name: installer
+          image: bitnami/kubectl:1.31
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              echo "========================================"
+              echo "Installing CDI {{ .Values.cdi.version }}"
+              echo "========================================"
+
+              # Apply the official CDI operator manifest
+              echo "Applying CDI operator manifest..."
+              kubectl apply -f https://github.com/kubevirt/containerized-data-importer/releases/download/{{ .Values.cdi.version }}/cdi-operator.yaml --server-side --force-conflicts
+
+              echo "========================================"
+              echo "CDI operator installed successfully"
+              echo "========================================"
+
+              # Wait for the operator to be ready
+              echo "Waiting for cdi-operator deployment..."
+              kubectl rollout status deployment/cdi-operator -n cdi --timeout=300s || true
+
+              echo "Installation complete!"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            runAsUser: 1000
+            seccompProfile:
+              type: RuntimeDefault
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}
