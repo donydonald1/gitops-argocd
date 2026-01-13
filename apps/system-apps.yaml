@@ -127,6 +127,11 @@ spec:
         serverSideApply: true
         wave: "0"
         imageList: "virt-operator=quay.io/kubevirt/virt-operator, cdi-operator=quay.io/kubevirt/cdi-operator"
+
+      - name: kubevirt-manager
+        namespace: kubevirt-manager
+        serverSideApply: true
+        imageList: "kubevirt-manager=docker.io/kubevirtmanager/kubevirt-manager"
         # - name: ghost
         # - name: go-healthcheck
 
