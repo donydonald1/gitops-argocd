@@ -40,7 +40,21 @@ spec:
     commonInstancetypesDeployment:
       enabled: {{ .Values.kubevirt.configuration.commonInstancetypesDeployment.enabled | default true }}
     {{- end }}
-  customizeComponents: {}
+  # Customize component resources to meet LimitRange requirements (min CPU 100m)
+  customizeComponents:
+    patches:
+      - resourceType: Deployment
+        resourceName: virt-api
+        patch: '[{"op": "replace", "path": "/spec/template/spec/containers/0/resources/requests/cpu", "value": "100m"}]'
+        type: json
+      - resourceType: Deployment
+        resourceName: virt-controller
+        patch: '[{"op": "replace", "path": "/spec/template/spec/containers/0/resources/requests/cpu", "value": "100m"}]'
+        type: json
+      - resourceType: DaemonSet
+        resourceName: virt-handler
+        patch: '[{"op": "replace", "path": "/spec/template/spec/containers/0/resources/requests/cpu", "value": "100m"}]'
+        type: json
   imagePullPolicy: IfNotPresent
   workloadUpdateStrategy:
     workloadUpdateMethods:
