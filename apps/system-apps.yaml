@@ -121,6 +121,12 @@ spec:
         serverSideApply: true
         wave: "-1"  # Deploy operator before clusters
         imageList: "cnpg=ghcr.io/cloudnative-pg/cloudnative-pg"
+
+      - name: kubevirt
+        namespace: kubevirt
+        serverSideApply: true
+        wave: "0"
+        imageList: "virt-operator=quay.io/kubevirt/virt-operator, cdi-operator=quay.io/kubevirt/cdi-operator"
         # - name: ghost
         # - name: go-healthcheck
 

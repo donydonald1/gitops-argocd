@@ -1,0 +1,47 @@
+# CRDs are installed by the operators themselves
+# This file ensures ArgoCD knows about them for health checks
+
+# Note: The virt-operator and cdi-operator will install their own CRDs
+# We create placeholder annotations for ArgoCD sync tracking
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kubevirt-crds-info
+  namespace: {{ .Values.namespace }}
+  labels:
+    app.kubernetes.io/name: kubevirt
+    app.kubernetes.io/component: crds
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+data:
+  info: |
+    KubeVirt CRDs are managed by virt-operator.
+    CDI CRDs are managed by cdi-operator.
+
+    Expected CRDs:
+    - virtualmachines.kubevirt.io
+    - virtualmachineinstances.kubevirt.io
+    - virtualmachineinstancemigrations.kubevirt.io
+    - virtualmachineinstancepresets.kubevirt.io
+    - virtualmachineinstancereplicasets.kubevirt.io
+    - virtualmachinepools.pool.kubevirt.io
+    - virtualmachinesnapshots.snapshot.kubevirt.io
+    - virtualmachinesnapshotcontents.snapshot.kubevirt.io
+    - virtualmachineexports.export.kubevirt.io
+    - virtualmachineclones.clone.kubevirt.io
+    - virtualmachineinstancetypes.instancetype.kubevirt.io
+    - virtualmachineclusterinstancetypes.instancetype.kubevirt.io
+    - virtualmachinepreferences.instancetype.kubevirt.io
+    - virtualmachineclusterpreferences.instancetype.kubevirt.io
+    - migrationpolicies.migrations.kubevirt.io
+    - kubevirts.kubevirt.io
+    - datavolumes.cdi.kubevirt.io
+    - datasources.cdi.kubevirt.io
+    - dataimportcrons.cdi.kubevirt.io
+    - cdis.cdi.kubevirt.io
+    - storageprofiles.cdi.kubevirt.io
+    - objecttransfers.cdi.kubevirt.io
+    - volumeimportsources.cdi.kubevirt.io
+    - volumeuploadsources.cdi.kubevirt.io
+    - volumeclonesources.cdi.kubevirt.io

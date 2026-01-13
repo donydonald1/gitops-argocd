@@ -1,0 +1,105 @@
+# KubeVirt Helm Chart Values
+
+# KubeVirt version to install
+kubevirt:
+  version: "v1.4.0"
+
+  # KubeVirt CR configuration
+  configuration:
+    # Developer configuration (for clusters without hardware virtualization)
+    developerConfiguration:
+      # Enable software emulation if no hardware virtualization available
+      useEmulation: false
+      # Feature gates to enable
+      featureGates:
+        - LiveMigration
+        - Snapshot
+        - HotplugVolumes
+        - GPU
+        - HostDevices
+        - Macvtap
+        - ExpandDisks
+        - VMExport
+        - BlockVolume
+        - VMPersistentState
+
+    # Network configuration
+    network:
+      # Default network interface binding
+      defaultNetworkInterface: bridge
+      # Permit slirp interface for user-mode networking
+      permitSlirpInterface: true
+      # Permit bridge interface
+      permitBridgeInterfaceOnPodNetwork: true
+
+    # Migrations configuration
+    migrations:
+      # Allow auto converge for live migration
+      allowAutoConverge: true
+      # Parallel migrations per cluster
+      parallelMigrationsPerCluster: 5
+      # Parallel outbound migrations per node
+      parallelOutboundMigrationsPerNode: 2
+      # Bandwidth per migration (0 = unlimited)
+      bandwidthPerMigration: "0"
+      # Completion timeout per GiB
+      completionTimeoutPerGiB: 800
+      # Progress timeout
+      progressTimeout: 150
+
+    # SMBios configuration (optional)
+    smbios: {}
+
+# Containerized Data Importer (CDI) - for importing VM images
+cdi:
+  enabled: true
+  version: "v1.60.3"
+
+  # CDI configuration
+  configuration:
+    # Scratch space storage class (uses default if not set)
+    scratchSpaceStorageClass: ""
+    # Upload proxy URL format
+    uploadProxyURLOverride: ""
+    # Pod resource requirements
+    podResourceRequirements:
+      limits:
+        cpu: "4"
+        memory: "4Gi"
+      requests:
+        cpu: "100m"
+        memory: "60Mi"
+    # Filesystem overhead for PVCs
+    filesystemOverhead:
+      global: "0.055"
+
+# Namespace for KubeVirt installation
+namespace: kubevirt
+
+# Create namespace
+createNamespace: true
+
+# Node selector for KubeVirt components
+nodeSelector: {}
+
+# Tolerations for KubeVirt components
+tolerations: []
+
+# Resource limits for virt-operator
+virtOperator:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 150Mi
+    limits:
+      cpu: 500m
+      memory: 500Mi
+
+# Monitoring configuration
+monitoring:
+  enabled: true
+  # ServiceMonitor for Prometheus
+  serviceMonitor:
+    enabled: true
+    labels:
+      release: kps

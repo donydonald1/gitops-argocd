@@ -1,0 +1,51 @@
+{{- if and .Values.monitoring.enabled .Values.monitoring.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: kubevirt
+  namespace: {{ .Values.namespace }}
+  labels:
+    app.kubernetes.io/name: kubevirt
+    app.kubernetes.io/component: monitoring
+    {{- with .Values.monitoring.serviceMonitor.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  namespaceSelector:
+    matchNames:
+      - {{ .Values.namespace }}
+  selector:
+    matchLabels:
+      prometheus.kubevirt.io: "true"
+  endpoints:
+    - port: metrics
+      scheme: https
+      tlsConfig:
+        insecureSkipVerify: true
+      honorLabels: true
+---
+{{- if .Values.cdi.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: cdi
+  namespace: cdi
+  labels:
+    app.kubernetes.io/name: cdi
+    app.kubernetes.io/component: monitoring
+    {{- with .Values.monitoring.serviceMonitor.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  namespaceSelector:
+    matchNames:
+      - cdi
+  selector:
+    matchLabels:
+      prometheus.cdi.kubevirt.io: "true"
+  endpoints:
+    - port: metrics
+      scheme: http
+      honorLabels: true
+{{- end }}
+{{- end }}

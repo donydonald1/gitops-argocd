@@ -1,0 +1,31 @@
+{{- if .Values.cdi.enabled }}
+# CDI Custom Resource - configures the CDI installation
+apiVersion: cdi.kubevirt.io/v1beta1
+kind: CDI
+metadata:
+  name: cdi
+  namespace: cdi
+  labels:
+    app.kubernetes.io/name: cdi
+    app.kubernetes.io/component: cdi
+spec:
+  config:
+    {{- if .Values.cdi.configuration.scratchSpaceStorageClass }}
+    scratchSpaceStorageClass: {{ .Values.cdi.configuration.scratchSpaceStorageClass }}
+    {{- end }}
+    {{- if .Values.cdi.configuration.uploadProxyURLOverride }}
+    uploadProxyURLOverride: {{ .Values.cdi.configuration.uploadProxyURLOverride }}
+    {{- end }}
+    podResourceRequirements:
+      {{- toYaml .Values.cdi.configuration.podResourceRequirements | nindent 6 }}
+    filesystemOverhead:
+      global: {{ .Values.cdi.configuration.filesystemOverhead.global | quote }}
+  imagePullPolicy: IfNotPresent
+  infra:
+    tolerations:
+      - key: CriticalAddonsOnly
+        operator: Exists
+  workload:
+    nodeSelector:
+      kubernetes.io/os: linux
+{{- end }}

@@ -1,0 +1,17 @@
+apiVersion: v2
+name: kubevirt
+description: KubeVirt - Run Virtual Machines on Kubernetes
+type: application
+version: 1.0.0
+appVersion: "1.4.0"
+keywords:
+  - kubevirt
+  - virtualization
+  - vm
+  - virtual-machine
+home: https://kubevirt.io
+sources:
+  - https://github.com/kubevirt/kubevirt
+  - https://github.com/kubevirt/containerized-data-importer
+maintainers:
+  - name: Techsecom

@@ -1,0 +1,235 @@
+# KubeVirt Operator - fetched from upstream release
+# This is managed via ArgoCD raw manifest sync
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kubevirt-operator
+  namespace: {{ .Values.namespace }}
+  labels:
+    app.kubernetes.io/name: kubevirt
+    app.kubernetes.io/component: operator
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kubevirt-operator
+  labels:
+    app.kubernetes.io/name: kubevirt
+    app.kubernetes.io/component: operator
+rules:
+  - apiGroups: ["kubevirt.io"]
+    resources: ["*"]
+    verbs: ["*"]
+  - apiGroups: ["cdi.kubevirt.io"]
+    resources: ["*"]
+    verbs: ["*"]
+  - apiGroups: ["snapshot.kubevirt.io"]
+    resources: ["*"]
+    verbs: ["*"]
+  - apiGroups: ["export.kubevirt.io"]
+    resources: ["*"]
+    verbs: ["*"]
+  - apiGroups: ["clone.kubevirt.io"]
+    resources: ["*"]
+    verbs: ["*"]
+  - apiGroups: ["instancetype.kubevirt.io"]
+    resources: ["*"]
+    verbs: ["*"]
+  - apiGroups: ["migrations.kubevirt.io"]
+    resources: ["*"]
+    verbs: ["*"]
+  - apiGroups: ["pool.kubevirt.io"]
+    resources: ["*"]
+    verbs: ["*"]
+  - apiGroups: [""]
+    resources:
+      - pods
+      - pods/exec
+      - pods/log
+      - pods/status
+      - configmaps
+      - endpoints
+      - secrets
+      - services
+      - serviceaccounts
+      - persistentvolumeclaims
+      - events
+      - nodes
+      - namespaces
+    verbs: ["*"]
+  - apiGroups: [""]
+    resources:
+      - persistentvolumes
+    verbs: ["get", "list", "watch", "patch", "update"]
+  - apiGroups: ["apps"]
+    resources:
+      - deployments
+      - daemonsets
+      - replicasets
+      - statefulsets
+    verbs: ["*"]
+  - apiGroups: ["batch"]
+    resources:
+      - jobs
+      - cronjobs
+    verbs: ["*"]
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    resources:
+      - clusterroles
+      - clusterrolebindings
+      - roles
+      - rolebindings
+    verbs: ["*"]
+  - apiGroups: ["apiextensions.k8s.io"]
+    resources:
+      - customresourcedefinitions
+    verbs: ["*"]
+  - apiGroups: ["admissionregistration.k8s.io"]
+    resources:
+      - validatingwebhookconfigurations
+      - mutatingwebhookconfigurations
+    verbs: ["*"]
+  - apiGroups: ["apiregistration.k8s.io"]
+    resources:
+      - apiservices
+    verbs: ["*"]
+  - apiGroups: ["policy"]
+    resources:
+      - poddisruptionbudgets
+    verbs: ["*"]
+  - apiGroups: ["monitoring.coreos.com"]
+    resources:
+      - servicemonitors
+      - prometheusrules
+    verbs: ["*"]
+  - apiGroups: ["networking.k8s.io"]
+    resources:
+      - networkpolicies
+    verbs: ["*"]
+  - apiGroups: ["storage.k8s.io"]
+    resources:
+      - storageclasses
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["coordination.k8s.io"]
+    resources:
+      - leases
+    verbs: ["*"]
+  - apiGroups: ["security.openshift.io"]
+    resources:
+      - securitycontextconstraints
+    verbs: ["*"]
+  - apiGroups: ["route.openshift.io"]
+    resources:
+      - routes
+    verbs: ["*"]
+  - apiGroups: ["k8s.cni.cncf.io"]
+    resources:
+      - network-attachment-definitions
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kubevirt-operator
+  labels:
+    app.kubernetes.io/name: kubevirt
+    app.kubernetes.io/component: operator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kubevirt-operator
+subjects:
+  - kind: ServiceAccount
+    name: kubevirt-operator
+    namespace: {{ .Values.namespace }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: virt-operator
+  namespace: {{ .Values.namespace }}
+  labels:
+    app.kubernetes.io/name: kubevirt
+    app.kubernetes.io/component: operator
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      kubevirt.io: virt-operator
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        kubevirt.io: virt-operator
+        prometheus.kubevirt.io: "true"
+    spec:
+      serviceAccountName: kubevirt-operator
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: virt-operator
+          image: quay.io/kubevirt/virt-operator:{{ .Values.kubevirt.version }}
+          imagePullPolicy: IfNotPresent
+          args:
+            - --port
+            - "8443"
+            - -v
+            - "2"
+          ports:
+            - containerPort: 8443
+              name: metrics
+              protocol: TCP
+            - containerPort: 8444
+              name: webhooks
+              protocol: TCP
+          env:
+            - name: OPERATOR_IMAGE
+              value: quay.io/kubevirt/virt-operator:{{ .Values.kubevirt.version }}
+            - name: WATCH_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          resources:
+            {{- toYaml .Values.virtOperator.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: 8443
+              scheme: HTTPS
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8443
+              scheme: HTTPS
+            initialDelaySeconds: 15
+            periodSeconds: 20
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    kubevirt.io: virt-operator
+                topologyKey: kubernetes.io/hostname
+      priorityClassName: system-cluster-critical

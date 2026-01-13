@@ -1,0 +1,40 @@
+# KubeVirt Custom Resource - configures the KubeVirt installation
+apiVersion: kubevirt.io/v1
+kind: KubeVirt
+metadata:
+  name: kubevirt
+  namespace: {{ .Values.namespace }}
+  labels:
+    app.kubernetes.io/name: kubevirt
+    app.kubernetes.io/component: kubevirt
+spec:
+  certificateRotateStrategy: {}
+  configuration:
+    developerConfiguration:
+      {{- if .Values.kubevirt.configuration.developerConfiguration.useEmulation }}
+      useEmulation: true
+      {{- end }}
+      featureGates:
+        {{- range .Values.kubevirt.configuration.developerConfiguration.featureGates }}
+        - {{ . }}
+        {{- end }}
+    network:
+      defaultNetworkInterface: {{ .Values.kubevirt.configuration.network.defaultNetworkInterface }}
+      permitSlirpInterface: {{ .Values.kubevirt.configuration.network.permitSlirpInterface }}
+      permitBridgeInterfaceOnPodNetwork: {{ .Values.kubevirt.configuration.network.permitBridgeInterfaceOnPodNetwork }}
+    migrations:
+      allowAutoConverge: {{ .Values.kubevirt.configuration.migrations.allowAutoConverge }}
+      parallelMigrationsPerCluster: {{ .Values.kubevirt.configuration.migrations.parallelMigrationsPerCluster }}
+      parallelOutboundMigrationsPerNode: {{ .Values.kubevirt.configuration.migrations.parallelOutboundMigrationsPerNode }}
+      bandwidthPerMigration: {{ .Values.kubevirt.configuration.migrations.bandwidthPerMigration | quote }}
+      completionTimeoutPerGiB: {{ .Values.kubevirt.configuration.migrations.completionTimeoutPerGiB }}
+      progressTimeout: {{ .Values.kubevirt.configuration.migrations.progressTimeout }}
+    {{- with .Values.kubevirt.configuration.smbios }}
+    smbios:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+  customizeComponents: {}
+  imagePullPolicy: IfNotPresent
+  workloadUpdateStrategy:
+    workloadUpdateMethods:
+      - LiveMigrate
