@@ -33,7 +33,7 @@ subjects:
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: kubevirt-operator-installer-{{ .Values.kubevirt.version | replace "." "-" }}
+  name: kubevirt-operator-installer-{{ .Values.kubevirt.version | replace "." "-" }}-v2
   namespace: {{ .Values.namespace }}
   labels:
     app.kubernetes.io/name: kubevirt
@@ -42,7 +42,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "-5"
     argocd.argoproj.io/hook: Sync
-    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
 spec:
   ttlSecondsAfterFinished: 600
   backoffLimit: 3

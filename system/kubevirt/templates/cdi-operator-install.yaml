@@ -4,7 +4,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: cdi-operator-installer-{{ .Values.cdi.version | replace "." "-" }}
+  name: cdi-operator-installer-{{ .Values.cdi.version | replace "." "-" }}-v2
   namespace: {{ .Values.namespace }}
   labels:
     app.kubernetes.io/name: cdi
@@ -13,7 +13,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "-4"
     argocd.argoproj.io/hook: Sync
-    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
 spec:
   ttlSecondsAfterFinished: 600
   backoffLimit: 3
