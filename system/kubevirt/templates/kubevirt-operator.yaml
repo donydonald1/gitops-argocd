@@ -88,6 +88,8 @@ rules:
     resources:
       - validatingwebhookconfigurations
       - mutatingwebhookconfigurations
+      - validatingadmissionpolicies
+      - validatingadmissionpolicybindings
     verbs: ["*"]
   - apiGroups: ["apiregistration.k8s.io"]
     resources:
