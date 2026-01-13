@@ -1,19 +1,25 @@
 defectdojo:
-  tag: 2.34.1
   fullnameOverride: defectdojo
   host: defectdojo.ops.techsecom.io
-  site_url: https://defectdojo.ops.techsecom.io
+  siteUrl: https://defectdojo.ops.techsecom.io
 
-  initializer:
-    run: true
+  # Avoid ArgoCD hook issues
+  disableHooks: true
 
+  # Security context
+  securityContext:
+    enabled: true
+
+  # Django/Nginx configuration
   django:
     ingress:
       enabled: true
       activateTLS: false
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-prod
     uwsgi:
       livenessProbe:
-        initialDelaySeconds: 20
+        initialDelaySeconds: 30
     mediaPersistentVolume:
       persistentVolumeClaim:
         size: 2Gi
@@ -21,20 +27,17 @@ defectdojo:
   # External PostgreSQL - CNPG Cluster
   postgresql:
     enabled: false
-    postgresServer: "cnpg-cluster-pooler-rw.cnpg-system.svc.cluster.local"
-    auth:
-      existingSecret: defectdojo-postgresql
-      secretKeys:
-        adminPasswordKey: password
-        userPasswordKey: password
+  postgresServer: "cnpg-cluster-pooler-rw.cnpg-system.svc.cluster.local"
+  postgresPort: "5432"
 
-  rabbitmq:
-    persistence:
-      size: 1Gi
-    existingSecret: defectdojo-rabbitmq-specific
+  # Valkey (Redis-compatible) for Celery broker
+  valkey:
+    enabled: true
+    auth:
+      existingSecret: defectdojo-valkey-specific
+      existingSecretPasswordKey: valkey-password
 
   # Keycloak OIDC Configuration
-  # https://defectdojo.github.io/django-DefectDojo/integrations/social-authentication/#keycloak
   extraConfigs:
     # Security cookies
     DD_SESSION_COOKIE_SECURE: 'True'
@@ -45,21 +48,16 @@ defectdojo:
     DD_SOCIAL_AUTH_KEYCLOAK_KEY: 'defectdojo'
     DD_SOCIAL_AUTH_KEYCLOAK_AUTHORIZATION_URL: 'https://keycloak.ops.techsecom.io/realms/master/protocol/openid-connect/auth'
     DD_SOCIAL_AUTH_KEYCLOAK_ACCESS_TOKEN_URL: 'https://keycloak.ops.techsecom.io/realms/master/protocol/openid-connect/token'
-    # Database configuration for CNPG
-    DD_DATABASE_ENGINE: 'django.db.backends.postgresql'
-    DD_DATABASE_NAME: 'defectdojo'
-    DD_DATABASE_USER: 'defectdojo'
-    DD_DATABASE_HOST: 'cnpg-cluster-pooler-rw.cnpg-system.svc.cluster.local'
-    DD_DATABASE_PORT: '5432'
 
-  # Extra secrets (DD_SOCIAL_AUTH_KEYCLOAK_SECRET) managed via ExternalSecrets
-  # The chart expects 'defectdojo-extrasecrets' secret which is created by our ExternalSecret
+  # Create secrets from ExternalSecrets
+  createSecret: false
+  createValkeySecret: false
+  createPostgresqlSecret: false
 
 # Keycloak OIDC Client Configuration
 oidc:
   enabled: true
   clientId: defectdojo
-  # Redirect URIs for DefectDojo
   redirectUris:
     - "https://defectdojo.ops.techsecom.io/*"
   webOrigins:
@@ -68,15 +66,13 @@ oidc:
 # External Secrets Operator Configuration
 eso:
   enabled: true
-  # Using Vault ClusterSecretStore (no local SecretStore needed)
 
-# Vault secret keys required:
-# - defectdojo/adminPassword: DefectDojo admin password
-# - defectdojo/secretKey: Django secret key
-# - defectdojo/credentialAesKey: AES 256 encryption key
-# - defectdojo/metricsPassword: Metrics HTTP auth password
-# - defectdojo/oidcClientSecret: Keycloak OIDC client secret
-# - defectdojo/dbUsername: Database username (defectdojo)
-# - defectdojo/dbPassword: Database password
-# - defectdojo/rabbitmqPassword: RabbitMQ password
-# - defectdojo/rabbitmqErlangCookie: RabbitMQ Erlang cookie
+# Vault secret keys required (path: secret/defectdojo):
+# - adminPassword: DefectDojo admin password
+# - secretKey: Django secret key
+# - credentialAesKey: AES 256 encryption key
+# - metricsPassword: Metrics HTTP auth password
+# - oidcClientSecret: Keycloak OIDC client secret
+# - dbUsername: Database username (defectdojo)
+# - dbPassword: Database password
+# - valkeyPassword: Valkey (Redis) password

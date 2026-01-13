@@ -1,0 +1,6 @@
+dependencies:
+- name: defectdojo
+  repository: https://raw.githubusercontent.com/DefectDojo/django-DefectDojo/helm-charts
+  version: 1.9.7
+digest: sha256:b6a5aa7fcac46645b3f3c0c3776fef96d7c81211af9e492b7fd0a3190ab4337b
+generated: "2026-01-12T19:35:09.202393-06:00"

@@ -15,7 +15,6 @@ spec:
   public: false
   standardFlowEnabled: true
   implicitFlowEnabled: false
-  serviceAccountsEnabled: false
   # Redirect URIs
   {{- with .Values.oidc.redirectUris }}
   redirectUris:
