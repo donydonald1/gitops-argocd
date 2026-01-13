@@ -8,6 +8,8 @@ metadata:
   labels:
     app.kubernetes.io/name: cdi
     app.kubernetes.io/component: cdi
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
 spec:
   config:
     {{- if .Values.cdi.configuration.scratchSpaceStorageClass }}

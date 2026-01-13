@@ -10,6 +10,10 @@ metadata:
     app.kubernetes.io/name: cdi
     app.kubernetes.io/component: installer
     app.kubernetes.io/version: {{ .Values.cdi.version }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-4"
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
 spec:
   ttlSecondsAfterFinished: 600
   backoffLimit: 3
