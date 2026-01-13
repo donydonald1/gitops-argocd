@@ -1,0 +1,113 @@
+# KubeVirt Manager Helm Chart Values
+
+# Image configuration
+image:
+  registry: docker.io
+  repository: kubevirtmanager/kubevirt-manager
+  tag: "1.5.3"
+  pullPolicy: IfNotPresent
+
+# Image pull secrets
+imagePullSecrets: []
+
+# Number of replicas
+replicaCount: 1
+
+# Service account configuration
+serviceAccount:
+  create: true
+  name: kubevirt-manager
+  annotations: {}
+
+# Namespace configuration
+namespace: kubevirt-manager
+createNamespace: true
+
+# Pod security context
+podSecurityContext:
+  runAsUser: 10000
+  runAsGroup: 30000
+  fsGroup: 30000
+
+# Container security context
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 10000
+  capabilities:
+    drop:
+      - ALL
+
+# Resource limits - adjusted for LimitRange compliance (min 100m CPU)
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 8080
+  targetPort: 8080
+  annotations: {}
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    # WebSocket support for VNC console
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "3600"
+  hosts:
+    - host: kubevirt.ops.techsecom.io
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: kubevirt-manager-tls
+      hosts:
+        - kubevirt.ops.techsecom.io
+
+# Node selector
+nodeSelector: {}
+
+# Tolerations
+tolerations: []
+
+# Affinity
+affinity: {}
+
+# Priority classes for VMs
+priorityClasses:
+  enabled: true
+  vmStandard:
+    # VMs that should not be preempted
+    value: 999999999
+    preemptionPolicy: Never
+  vmPreemptible:
+    # VMs that are allowed to be preempted
+    value: 1000000
+    preemptionPolicy: PreemptLowerPriority
+
+# OAuth configuration (optional)
+oauth:
+  enabled: false
+  # OAuth configuration will be mounted from ConfigMap
+  config: {}
+
+# Basic authentication (optional)
+auth:
+  enabled: false
+  # Create a secret with htpasswd format
+  # htpasswd: ""
+
+# Prometheus configuration (optional)
+prometheus:
+  enabled: false
+  url: ""

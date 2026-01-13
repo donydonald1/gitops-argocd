@@ -1,0 +1,97 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: images.kubevirt-manager.io
+  labels:
+    app: kubevirt-manager
+    app.kubernetes.io/name: kubevirt-manager
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-5"
+spec:
+  group: kubevirt-manager.io
+  names:
+    kind: Image
+    listKind: ImageList
+    plural: images
+    singular: image
+    shortNames:
+      - img
+  scope: Namespaced
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      additionalPrinterColumns:
+        - name: Type
+          type: string
+          jsonPath: .spec.type
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp
+      schema:
+        openAPIV3Schema:
+          description: Image is the Schema for managing VM images
+          type: object
+          required:
+            - spec
+          properties:
+            apiVersion:
+              type: string
+            kind:
+              type: string
+            metadata:
+              type: object
+            spec:
+              type: object
+              required:
+                - type
+                - readableName
+              x-kubernetes-validations:
+                - rule: "self.type == 'http' || self.type == 'gcs' || self.type == 's3' || self.type == 'registry' || self.type == 'pvc'"
+                  message: "type must be one of: http, gcs, s3, registry, pvc"
+              properties:
+                type:
+                  type: string
+                  description: Type of image source (http, gcs, s3, registry, pvc)
+                readableName:
+                  type: string
+                  description: Human-readable name for the image
+                http:
+                  type: object
+                  description: HTTP source configuration
+                  properties:
+                    url:
+                      type: string
+                      description: URL to download the image from
+                gcs:
+                  type: object
+                  description: Google Cloud Storage source configuration
+                  properties:
+                    url:
+                      type: string
+                      description: GCS URL for the image
+                s3:
+                  type: object
+                  description: Amazon S3 source configuration
+                  properties:
+                    url:
+                      type: string
+                      description: S3 URL for the image
+                registry:
+                  type: object
+                  description: Container registry source configuration
+                  properties:
+                    url:
+                      type: string
+                      description: Container registry URL for the image
+                pvc:
+                  type: object
+                  description: PersistentVolumeClaim source configuration
+                  properties:
+                    name:
+                      type: string
+                      description: Name of the source PVC
+                    namespace:
+                      type: string
+                      description: Namespace of the source PVC

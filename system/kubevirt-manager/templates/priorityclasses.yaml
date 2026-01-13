@@ -1,0 +1,28 @@
+{{- if .Values.priorityClasses.enabled }}
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: vm-standard
+  labels:
+    app: kubevirt-manager
+    app.kubernetes.io/name: kubevirt-manager
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    kubevirt-manager.io/managed: "true"
+description: Priority class for VMs which should not be preempted
+preemptionPolicy: {{ .Values.priorityClasses.vmStandard.preemptionPolicy }}
+value: {{ .Values.priorityClasses.vmStandard.value | int }}
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: vm-preemptible
+  labels:
+    app: kubevirt-manager
+    app.kubernetes.io/name: kubevirt-manager
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    kubevirt-manager.io/managed: "true"
+description: Priority class for VMs which are allowed to be preempted
+preemptionPolicy: {{ .Values.priorityClasses.vmPreemptible.preemptionPolicy }}
+value: {{ .Values.priorityClasses.vmPreemptible.value | int }}
+{{- end }}
