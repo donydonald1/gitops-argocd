@@ -9,4 +9,21 @@ metadata:
     pod-security.kubernetes.io/enforce: privileged
     pod-security.kubernetes.io/audit: privileged
     pod-security.kubernetes.io/warn: privileged
+  annotations:
+    argocd.argoproj.io/sync-wave: "-20"
+{{- end }}
+{{- if .Values.cdi.enabled }}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cdi
+  labels:
+    app.kubernetes.io/name: cdi
+    app.kubernetes.io/component: namespace
+    pod-security.kubernetes.io/enforce: privileged
+    pod-security.kubernetes.io/audit: privileged
+    pod-security.kubernetes.io/warn: privileged
+  annotations:
+    argocd.argoproj.io/sync-wave: "-20"
 {{- end }}
