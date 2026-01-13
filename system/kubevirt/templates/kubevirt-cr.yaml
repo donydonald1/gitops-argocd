@@ -55,6 +55,10 @@ spec:
         resourceName: virt-handler
         patch: '[{"op": "replace", "path": "/spec/template/spec/containers/0/resources/requests/cpu", "value": "100m"}]'
         type: json
+      - resourceType: Deployment
+        resourceName: virt-exportproxy
+        patch: '[{"op": "replace", "path": "/spec/template/spec/containers/0/resources/requests/cpu", "value": "100m"}]'
+        type: json
   imagePullPolicy: IfNotPresent
   workloadUpdateStrategy:
     workloadUpdateMethods:
