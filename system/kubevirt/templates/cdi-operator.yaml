@@ -174,8 +174,6 @@ spec:
         - name: cdi-operator
           image: quay.io/kubevirt/cdi-operator:{{ .Values.cdi.version }}
           imagePullPolicy: IfNotPresent
-          args:
-            - -v=1
           ports:
             - containerPort: 8080
               name: metrics
