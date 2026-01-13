@@ -1,0 +1,11 @@
+{{- if .Values.edpOperator.enabled }}
+# ClusterKeycloakRealm resource for EDP Keycloak Operator
+# This allows KeycloakClient resources to reference this realm
+apiVersion: v1.edp.epam.com/v1alpha1
+kind: ClusterKeycloakRealm
+metadata:
+  name: {{ .Values.edpOperator.clusterKeycloakRealm.name }}
+spec:
+  clusterKeycloakRef: {{ .Values.edpOperator.clusterKeycloak.name }}
+  realmName: {{ .Values.edpOperator.clusterKeycloakRealm.realmName }}
+{{- end }}

@@ -1,0 +1,12 @@
+{{- if .Values.edpOperator.enabled }}
+# ClusterKeycloak resource for EDP Keycloak Operator
+# This allows the operator to manage Keycloak clients and realms
+apiVersion: v1.edp.epam.com/v1alpha1
+kind: ClusterKeycloak
+metadata:
+  name: {{ .Values.edpOperator.clusterKeycloak.name }}
+spec:
+  url: {{ .Values.edpOperator.clusterKeycloak.url }}
+  adminType: {{ .Values.edpOperator.clusterKeycloak.adminType }}
+  secret: {{ .Values.edpOperator.clusterKeycloak.secret }}
+{{- end }}
