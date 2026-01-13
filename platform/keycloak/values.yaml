@@ -175,7 +175,7 @@ edpOperator:
   clusterKeycloak:
     name: main
     url: https://keycloak.ops.techsecom.io
-    adminType: serviceAccount
+    adminType: user
     secret: keycloak-admin-creds
   clusterKeycloakRealm:
     name: main
