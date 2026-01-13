@@ -37,13 +37,6 @@ spec:
               echo "Installing CDI {{ .Values.cdi.version }}"
               echo "========================================"
 
-              # Clean up any conflicting resources from previous installation
-              echo "Cleaning up any conflicting resources..."
-              kubectl delete clusterrolebinding cdi-operator --ignore-not-found=true
-              kubectl delete deployment cdi-operator -n cdi --ignore-not-found=true
-              kubectl delete clusterrole cdi-operator --ignore-not-found=true
-              kubectl delete serviceaccount cdi-operator -n cdi --ignore-not-found=true
-
               # Apply the official CDI operator manifest
               echo "Applying CDI operator manifest..."
               kubectl apply -f https://github.com/kubevirt/containerized-data-importer/releases/download/{{ .Values.cdi.version }}/cdi-operator.yaml --server-side --force-conflicts
