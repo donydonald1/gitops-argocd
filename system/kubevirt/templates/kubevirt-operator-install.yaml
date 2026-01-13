@@ -66,6 +66,13 @@ spec:
               echo "Installing KubeVirt {{ .Values.kubevirt.version }}"
               echo "========================================"
 
+              # Clean up any conflicting resources from previous installation
+              echo "Cleaning up any conflicting resources..."
+              kubectl delete deployment virt-operator -n kubevirt --ignore-not-found=true
+              kubectl delete clusterrolebinding kubevirt-operator --ignore-not-found=true
+              kubectl delete clusterrole kubevirt-operator --ignore-not-found=true
+              kubectl delete serviceaccount kubevirt-operator -n kubevirt --ignore-not-found=true
+
               # Apply the official KubeVirt operator manifest
               echo "Applying KubeVirt operator manifest..."
               kubectl apply -f https://github.com/kubevirt/kubevirt/releases/download/{{ .Values.kubevirt.version }}/kubevirt-operator.yaml --server-side --force-conflicts
@@ -73,6 +80,11 @@ spec:
               echo "========================================"
               echo "KubeVirt operator installed successfully"
               echo "========================================"
+
+              # Patch the deployment to meet LimitRange requirements (min CPU 100m)
+              echo "Patching virt-operator for LimitRange compliance..."
+              kubectl patch deployment virt-operator -n kubevirt --type='json' \
+                -p='[{"op": "replace", "path": "/spec/template/spec/containers/0/resources/requests/cpu", "value": "100m"}]' || true
 
               # Wait for the operator to be ready
               echo "Waiting for virt-operator deployment..."

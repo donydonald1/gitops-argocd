@@ -37,6 +37,13 @@ spec:
               echo "Installing CDI {{ .Values.cdi.version }}"
               echo "========================================"
 
+              # Clean up any conflicting resources from previous installation
+              echo "Cleaning up any conflicting resources..."
+              kubectl delete clusterrolebinding cdi-operator --ignore-not-found=true
+              kubectl delete deployment cdi-operator -n cdi --ignore-not-found=true
+              kubectl delete clusterrole cdi-operator --ignore-not-found=true
+              kubectl delete serviceaccount cdi-operator -n cdi --ignore-not-found=true
+
               # Apply the official CDI operator manifest
               echo "Applying CDI operator manifest..."
               kubectl apply -f https://github.com/kubevirt/containerized-data-importer/releases/download/{{ .Values.cdi.version }}/cdi-operator.yaml --server-side --force-conflicts
@@ -44,6 +51,11 @@ spec:
               echo "========================================"
               echo "CDI operator installed successfully"
               echo "========================================"
+
+              # Patch the deployment to meet LimitRange requirements (min CPU 100m) if needed
+              echo "Patching cdi-operator for LimitRange compliance..."
+              kubectl patch deployment cdi-operator -n cdi --type='json' \
+                -p='[{"op": "replace", "path": "/spec/template/spec/containers/0/resources/requests/cpu", "value": "100m"}]' || true
 
               # Wait for the operator to be ready
               echo "Waiting for cdi-operator deployment..."
