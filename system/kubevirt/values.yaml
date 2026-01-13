@@ -2,7 +2,7 @@
 
 # KubeVirt version to install
 kubevirt:
-  version: "v1.4.0"
+  version: "v1.7.0"
 
   # KubeVirt CR configuration
   configuration:
@@ -50,10 +50,16 @@ kubevirt:
     # SMBios configuration (optional)
     smbios: {}
 
+    # Common instancetypes and preferences deployment
+    # Deploys VirtualMachineClusterInstancetypes and VirtualMachineClusterPreferences
+    # Default: enabled (since KubeVirt v1.4.0)
+    commonInstancetypesDeployment:
+      enabled: true
+
 # Containerized Data Importer (CDI) - for importing VM images
 cdi:
   enabled: true
-  version: "v1.60.3"
+  version: "v1.64.0"
 
   # CDI configuration
   configuration:

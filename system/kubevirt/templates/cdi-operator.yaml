@@ -189,6 +189,8 @@ spec:
               value: quay.io/kubevirt/cdi-importer:{{ .Values.cdi.version }}
             - name: CLONER_IMAGE
               value: quay.io/kubevirt/cdi-cloner:{{ .Values.cdi.version }}
+            - name: OVIRT_POPULATOR_IMAGE
+              value: quay.io/kubevirt/cdi-importer:{{ .Values.cdi.version }}
             - name: APISERVER_IMAGE
               value: quay.io/kubevirt/cdi-apiserver:{{ .Values.cdi.version }}
             - name: UPLOAD_SERVER_IMAGE

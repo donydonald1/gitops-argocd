@@ -33,6 +33,11 @@ spec:
     smbios:
       {{- toYaml . | nindent 6 }}
     {{- end }}
+    # Deploy common-instancetypes (VirtualMachineClusterInstancetypes and VirtualMachineClusterPreferences)
+    {{- if .Values.kubevirt.configuration.commonInstancetypesDeployment }}
+    commonInstancetypesDeployment:
+      enabled: {{ .Values.kubevirt.configuration.commonInstancetypesDeployment.enabled | default true }}
+    {{- end }}
   customizeComponents: {}
   imagePullPolicy: IfNotPresent
   workloadUpdateStrategy:
