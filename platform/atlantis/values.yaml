@@ -68,16 +68,8 @@ atlantis:
     # Hide previous plan comments to reduce clutter
     ATLANTIS_HIDE_PREV_PLAN_COMMENTS: "true"
 
-  # Environment variables from secrets
-  environmentSecrets:
-    - name: ATLANTIS_GITLAB_TOKEN
-      secretKeyRef:
-        name: atlantis-vcs-secret
-        key: gitlab_token
-    - name: ATLANTIS_GITLAB_WEBHOOK_SECRET
-      secretKeyRef:
-        name: atlantis-vcs-secret
-        key: gitlab_webhook_secret
+  # Note: ATLANTIS_GITLAB_TOKEN and ATLANTIS_GITLAB_WEBHOOK_SECRET are automatically
+  # set by the upstream chart when vcsSecretName is configured (see above)
 
   # Service account
   serviceAccount:
