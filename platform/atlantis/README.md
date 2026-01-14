@@ -38,12 +38,18 @@ Store the following secrets in Vault at `/atlantis/`:
 |-----|-------------|
 | `gitlab_token` | GitLab Personal Access Token with `api` scope |
 | `gitlab_webhook_secret` | Random string for webhook validation |
+| `aws_access_key_id` | MinIO/S3 access key for state backend |
+| `aws_secret_access_key` | MinIO/S3 secret key for state backend |
+| `vault_token` | Vault token for Terraform providers (kubeconfig access) |
 
 Example Vault commands:
 ```bash
 vault kv put secret/atlantis \
   gitlab_token="glpat-xxxxxxxxxxxx" \
-  gitlab_webhook_secret="$(openssl rand -hex 32)"
+  gitlab_webhook_secret="$(openssl rand -hex 32)" \
+  aws_access_key_id="minio-access-key" \
+  aws_secret_access_key="minio-secret-key" \
+  vault_token="hvs.your-vault-token"
 ```
 
 ## GitLab Setup

@@ -98,6 +98,11 @@ atlantis:
       secretKeyRef:
         name: atlantis-vcs-secret
         key: aws_secret_access_key
+    # Vault token for Terraform providers (accessing kubeconfig secrets)
+    - name: VAULT_TOKEN
+      secretKeyRef:
+        name: atlantis-vcs-secret
+        key: vault_token
 
   # Service account
   serviceAccount:
