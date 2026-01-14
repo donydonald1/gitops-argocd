@@ -162,6 +162,15 @@ spec:
           values:
           - values.yaml
 
+      - name: n8n
+        namespace: n8n
+        serverSideApply: true
+        wave: "2" # Deploy after CNPG database is ready
+        imageList: "n8n=n8nio/n8n"
+        helm:
+          values:
+          - values.yaml
+
   template:
     metadata:
       name: "{{ .name }}"

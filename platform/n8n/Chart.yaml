@@ -1,0 +1,25 @@
+apiVersion: v2
+name: n8n
+description: A Helm chart for n8n - Workflow Automation Tool
+type: application
+version: 2.0.1
+appVersion: "2.3.5"
+
+keywords:
+  - n8n
+  - workflow
+  - automation
+  - integration
+  - low-code
+
+home: https://n8n.io
+icon: https://n8n.io/favicon.ico
+sources:
+  - https://github.com/n8n-io/n8n
+maintainers:
+  - name: Techsecom
+
+dependencies:
+  - name: n8n
+    version: 2.0.1
+    repository: oci://8gears.container-registry.com/library
