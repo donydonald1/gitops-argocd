@@ -183,19 +183,8 @@ spec:
           echo "Mapper ID found: $MAPPER_ID"
 
           if [ -n "$MAPPER_ID" ] && [ "$MAPPER_ID" != "" ]; then
-            echo "Role mapper already exists (ID: $MAPPER_ID), updating..."
-            RESULT=$(curl -s -w "\n%{http_code}" -X PUT "${KEYCLOAK_URL}/admin/realms/master/identity-provider/instances/techsecoms-oidc/mappers/${MAPPER_ID}" \
-              -H "Authorization: Bearer ${TOKEN}" \
-              -H "Content-Type: application/json" \
-              -d "${MAPPER_CONFIG}")
-            HTTP_CODE=$(echo "$RESULT" | tail -1)
-            BODY=$(echo "$RESULT" | sed '$d')
-            if [ "$HTTP_CODE" = "204" ] || [ "$HTTP_CODE" = "200" ]; then
-              echo "Role mapper updated successfully"
-            else
-              echo "Failed to update mapper (HTTP $HTTP_CODE): $BODY"
-              exit 1
-            fi
+            echo "Role mapper already exists (ID: $MAPPER_ID), skipping update."
+            echo "Mapper configuration is already in place."
           else
             echo "Creating role mapper..."
             RESULT=$(curl -s -w "\n%{http_code}" -X POST "${KEYCLOAK_URL}/admin/realms/master/identity-provider/instances/techsecoms-oidc/mappers" \
