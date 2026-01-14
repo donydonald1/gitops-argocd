@@ -1,43 +1,68 @@
-# atlantis
+# Atlantis
 
-![Version: 5.8.0](https://img.shields.io/badge/Version-5.8.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v0.30.0](https://img.shields.io/badge/AppVersion-v0.30.0-informational?style=flat-square)
+![Version: 5.25.0](https://img.shields.io/badge/Version-5.25.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v0.39.0](https://img.shields.io/badge/AppVersion-v0.39.0-informational?style=flat-square)
 
-A Helm chart for Atlantis https://www.runatlantis.io
+Terraform Pull Request Automation for GitLab - https://www.runatlantis.io
 
-**Homepage:** <https://www.runatlantis.io>
+## Overview
 
-## Maintainers
+Atlantis is a self-hosted application that listens for GitLab webhooks and runs `terraform plan` and `terraform apply` commands on your Terraform repositories. This enables GitOps workflows for infrastructure changes.
 
-| Name            | Email | Url |
-| --------------- | ----- | --- |
-| lkysow          |       |     |
-| jamengual       |       |     |
-| chenrui333      |       |     |
-| nitrocode       |       |     |
-| genpage         |       |     |
-| gmartinez-sisti |       |     |
+## How It Works
+
+```
+1. Developer opens MR with Terraform changes
+2. GitLab sends webhook to Atlantis
+3. Atlantis runs `terraform plan` automatically
+4. Plan output posted as MR comment
+5. Reviewer comments `atlantis apply` to approve
+6. Atlantis runs `terraform apply` and updates MR
+```
+
+## Configuration
+
+| Key | Description | Default |
+|-----|-------------|---------|
+| `atlantis.gitlab.user` | GitLab username for Atlantis | `atlantis` |
+| `atlantis.gitlab.hostname` | GitLab hostname | `gitlab.ops.techsecom.io` |
+| `atlantis.ingress.host` | Ingress hostname | `atlantis.ops.techsecom.io` |
+| `atlantis.orgAllowlist` | Allowed repositories | `gitlab.ops.techsecom.io/*` |
+| `atlantis.defaultTFVersion` | Default Terraform version | `1.10.0` |
+| `eso.vaultPath` | Vault path for secrets | `/atlantis/` |
+
+## Vault Secrets Required
+
+Store the following secrets in Vault at `/atlantis/`:
+
+| Key | Description |
+|-----|-------------|
+| `gitlab_token` | GitLab Personal Access Token with `api` scope |
+| `gitlab_webhook_secret` | Random string for webhook validation |
+
+Example Vault commands:
+```bash
+vault kv put secret/atlantis \
+  gitlab_token="glpat-xxxxxxxxxxxx" \
+  gitlab_webhook_secret="$(openssl rand -hex 32)"
+```
+
+## GitLab Setup
+
+1. **Create GitLab User**: Create a user named `atlantis` (or use existing)
+2. **Generate Token**: Create a Personal Access Token with `api` scope
+3. **Configure Webhook**: In each repository, add webhook:
+   - URL: `https://atlantis.ops.techsecom.io/events`
+   - Secret Token: Same as `gitlab_webhook_secret` in Vault
+   - Triggers: Push events, Merge request events, Comments
+
+## Features
+
+- **Parallel Plans**: Multiple projects can plan simultaneously
+- **Automerge**: Automatically merge MR after successful apply
+- **Custom Workflows**: Repositories can override default workflow
+- **Apply Requirements**: Requires approval and mergeable status
 
 ## Source Code
 
 - <https://github.com/runatlantis/atlantis>
-
-## Values
-
-| Key                                    | Type   | Default                                                                                            | Description                                                                 |
-| -------------------------------------- | ------ | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| atlantis.bitbucket.user                | string | `"auto_example"`                                                                                   |                                                                             |
-| atlantis.defaultTFVersion              | string | `"1.5.7"`                                                                                          |                                                                             |
-| atlantis.image.repository              | string | `"epamedp/atlantis"`                                                                               |                                                                             |
-| atlantis.image.tag                     | string | `"0.1.1"`                                                                                          | If not set appVersion field from Chart.yaml is used                         |
-| atlantis.ingress.host                  | string | `"atlantis.example.com"`                                                                           |                                                                             |
-| atlantis.ingress.path                  | string | `"/"`                                                                                              |                                                                             |
-| atlantis.orgAllowlist                  | string | `"bitbucket.org/organization/*"`                                                                   |                                                                             |
-| atlantis.repoConfig                    | string | `"---\nrepos:\n- id: /.*/\n  allowed_overrides: [\"workflow\"]\n  allow_custom_workflows: true\n"` |                                                                             |
-| atlantis.serviceAccount.annotations    | object | `{}`                                                                                               |                                                                             |
-| atlantis.vcsSecretName                 | string | `"atlantis-webhook"`                                                                               |                                                                             |
-| eso.enabled                            | bool   | `true`                                                                                             | Install components of the ESO.                                              |
-| eso.generic.secretStore.providerConfig | object | `{}`                                                                                               | Defines SecretStore provider configuration.                                 |
-| eso.roleArn                            | string | `"arn:aws:iam::012345678910:role/AWSIRSA_Shared_ExternalSecretOperatorAccess"`                     | Role ARN for the ExternalSecretOperator to assume.                          |
-| eso.secretName                         | string | `"/infra/core/addons/atlantis"`                                                                    | Value name in AWS ParameterStore, AWS SecretsManager or other Secret Store. |
-| eso.secretStoreName                    | string | `"aws-parameterstore"`                                                                             | Defines Secret Store name.                                                  |
-| eso.type                               | string | `"aws"`                                                                                            | Defines provider type. One of `aws` or `generic`.                           |
+- <https://www.runatlantis.io/docs/>

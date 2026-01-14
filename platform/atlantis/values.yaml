@@ -1,52 +1,124 @@
+# Atlantis - Terraform Pull Request Automation for GitLab
+# Documentation: https://www.runatlantis.io/docs/
+
 atlantis:
-  vcsSecretName: atlantis-webhook
+  # Secret containing GitLab credentials (created via External Secrets)
+  vcsSecretName: atlantis-vcs-secret
 
-  bitbucket:
-    user: auto_example
+  # GitLab configuration
+  gitlab:
+    user: atlantis
+    hostname: gitlab.ops.techsecom.io
 
+  # Ingress configuration
   ingress:
+    enabled: true
+    ingressClassName: nginx
     path: /
-    host: atlantis.example.com
+    pathType: Prefix
+    host: atlantis.ops.techsecom.io
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    tls:
+      - secretName: atlantis-tls
+        hosts:
+          - atlantis.ops.techsecom.io
 
+  # Image configuration - using official Atlantis image
   image:
-    repository: epamedp/atlantis
-    # -- If not set appVersion field from Chart.yaml is used
-    tag: "0.1.1"
-  orgAllowlist: bitbucket.org/organization/*
+    repository: ghcr.io/runatlantis/atlantis
+    tag: ""  # Uses appVersion from Chart.yaml (v0.39.0)
+    pullPolicy: IfNotPresent
 
-  defaultTFVersion: "1.5.7"
+  # GitLab organization/group allowlist
+  # Format: gitlab.hostname/owner/repo or gitlab.hostname/owner/* for all repos in a group
+  orgAllowlist: gitlab.ops.techsecom.io/*
+
+  # Default Terraform version
+  defaultTFVersion: "1.10.0"
+
+  # OpenTofu support (optional - uncomment to use OpenTofu instead of Terraform)
+  # environment:
+  #   ATLANTIS_TOFU_VERSION: "1.9.0"
+
+  # Repository configuration
   repoConfig: |
     ---
     repos:
     - id: /.*/
-      allowed_overrides: ["workflow"]
+      allowed_overrides:
+        - workflow
+        - apply_requirements
+        - delete_source_branch_on_merge
       allow_custom_workflows: true
+      apply_requirements:
+        - approved
+        - mergeable
+      # Auto-merge after successful apply
+      delete_source_branch_on_merge: true
 
+  # Additional environment variables
+  environment:
+    # Enable parallel plan/apply
+    ATLANTIS_PARALLEL_PLAN: "true"
+    ATLANTIS_PARALLEL_APPLY: "true"
+    # Automerge after successful apply
+    ATLANTIS_AUTOMERGE: "true"
+    # Hide previous plan comments to reduce clutter
+    ATLANTIS_HIDE_PREV_PLAN_COMMENTS: "true"
+
+  # Environment variables from secrets
+  environmentSecrets:
+    - name: ATLANTIS_GITLAB_TOKEN
+      secretKeyRef:
+        name: atlantis-vcs-secret
+        key: gitlab_token
+    - name: ATLANTIS_GITLAB_WEBHOOK_SECRET
+      secretKeyRef:
+        name: atlantis-vcs-secret
+        key: gitlab_webhook_secret
+
+  # Service account
   serviceAccount:
+    create: true
     annotations: {}
-    # annotations:
-    #   annotation1: value
-    #   annotation2: value
-    # IRSA example:
-    # annotations:
-    #   eks.amazonaws.com/role-arn: role-arn
 
-# Configure components of the External Secrets Operator (ESO).
+  # Resource limits - adjusted for LimitRange compliance (min 100m CPU)
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 1
+      memory: 1Gi
+
+  # Persistence for Atlantis data (plans, locks)
+  dataStorage: 5Gi
+  storageClassName: longhorn
+
+  # Liveness and readiness probes
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 60
+    timeoutSeconds: 10
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+
+  # Pod security context
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false
+    runAsNonRoot: true
+
+# External Secrets Operator configuration for Vault integration
 eso:
-  # -- Install components of the ESO.
+  # Enable External Secrets
   enabled: true
-  # -- Defines provider type. One of `aws` or `generic`.
-  type: "aws"
-  # -- Defines Secret Store name.
-  secretStoreName: "aws-parameterstore"
-  # -- Value name in AWS ParameterStore, AWS SecretsManager or other Secret Store.
-  secretName: "/infra/core/addons/atlantis"
-  # -- Role ARN for the ExternalSecretOperator to assume.
-  roleArn: arn:aws:iam::012345678910:role/AWSIRSA_Shared_ExternalSecretOperatorAccess
-  # Defines Secret Store configuration. Used when eso.type is set to "generic".
-  generic:
-    secretStore:
-      # -- Defines SecretStore provider configuration.
-      providerConfig: {}
-      #  gcpsm:
-      #    projectID: "alphabet-123"
+  # Path in Vault where Atlantis secrets are stored
+  # Expected keys: gitlab_token, gitlab_webhook_secret
+  vaultPath: /atlantis/
