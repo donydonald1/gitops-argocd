@@ -46,14 +46,14 @@ spec:
       # - name: sonar
       #   namespace: sonar
 
-      - name: report-portal
-        namespace: report-portal
-        serverSideApply: true
-        wave: "3" # Deploy after databases (CNPG), storage (MinIO), and Elasticsearch are ready
-        imageList: "service-index=reportportal/service-index, service-ui=reportportal/service-ui, service-api=reportportal/service-api, service-analyzer=reportportal/service-analyzer"
-        helm:
-          values:
-          - values.yaml
+      # - name: report-portal
+      #   namespace: report-portal
+      #   serverSideApply: true
+      #   wave: "3" # Deploy after databases (CNPG), storage (MinIO), and Elasticsearch are ready
+      #   imageList: "service-index=reportportal/service-index, service-ui=reportportal/service-ui, service-api=reportportal/service-api, service-analyzer=reportportal/service-analyzer"
+      #   helm:
+      #     values:
+      #     - values.yaml
 
       # - name: defectdojo
       #   namespace: defectdojo
