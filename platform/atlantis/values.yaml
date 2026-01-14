@@ -66,8 +66,6 @@ atlantis:
         - mergeable
       # Auto-merge after successful apply
       delete_source_branch_on_merge: true
-      # Checkout merge commit for accurate plans
-      checkout_strategy: merge
 
   # Additional environment variables - Production settings
   environment:
