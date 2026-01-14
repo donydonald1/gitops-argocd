@@ -174,7 +174,13 @@ spec:
             -H "Authorization: Bearer ${TOKEN}")
           echo "Existing mappers: $MAPPERS"
 
-          MAPPER_ID=$(echo "$MAPPERS" | grep -o '"name":"admin-role-mapper"[^}]*"id":"[^"]*"' | sed 's/.*"id":"//;s/".*//' || echo "")
+          # Extract mapper ID - handle JSON where id may come before or after name
+          MAPPER_ID=""
+          if echo "$MAPPERS" | grep -q '"name":"admin-role-mapper"'; then
+            # Mapper exists, extract the id from the object containing admin-role-mapper
+            MAPPER_ID=$(echo "$MAPPERS" | sed 's/},{/}\n{/g' | grep '"name":"admin-role-mapper"' | grep -o '"id":"[^"]*"' | head -1 | sed 's/"id":"//;s/"//')
+          fi
+          echo "Mapper ID found: $MAPPER_ID"
 
           if [ -n "$MAPPER_ID" ] && [ "$MAPPER_ID" != "" ]; then
             echo "Role mapper already exists (ID: $MAPPER_ID), updating..."
