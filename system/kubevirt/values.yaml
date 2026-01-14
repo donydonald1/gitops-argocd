@@ -67,6 +67,14 @@ cdi:
   enabled: true
   version: "v1.64.0"
 
+  # CDI Feature Gates
+  featureGates:
+    # Respect WaitForFirstConsumer storage class binding mode
+    # Important for topology-aware volume provisioning (e.g., Longhorn)
+    - HonorWaitForFirstConsumer
+    # Allow CDI to adopt existing PVCs into DataVolumes
+    - DataVolumeClaimAdoption
+
   # CDI configuration
   configuration:
     # Scratch space storage class (uses default if not set)

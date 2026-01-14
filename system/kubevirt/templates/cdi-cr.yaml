@@ -12,6 +12,10 @@ metadata:
     argocd.argoproj.io/sync-wave: "5"
 spec:
   config:
+    {{- if .Values.cdi.featureGates }}
+    featureGates:
+      {{- toYaml .Values.cdi.featureGates | nindent 6 }}
+    {{- end }}
     {{- if .Values.cdi.configuration.scratchSpaceStorageClass }}
     scratchSpaceStorageClass: {{ .Values.cdi.configuration.scratchSpaceStorageClass }}
     {{- end }}
