@@ -117,7 +117,9 @@ n8n:
 
     # Liveness probe
     livenessProbe:
-      enabled: true
+      httpGet:
+        path: /healthz
+        port: http
       initialDelaySeconds: 30
       periodSeconds: 30
       timeoutSeconds: 10
@@ -125,7 +127,9 @@ n8n:
 
     # Readiness probe
     readinessProbe:
-      enabled: true
+      httpGet:
+        path: /healthz
+        port: http
       initialDelaySeconds: 10
       periodSeconds: 10
       timeoutSeconds: 5
