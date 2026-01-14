@@ -150,21 +150,17 @@ spec:
           echo ""
           echo "Configuring role mapper for admin access..."
 
-          MAPPER_EXISTS=$(curl -sf -o /dev/null -w "%{http_code}" \
-            "${KEYCLOAK_URL}/admin/realms/master/identity-provider/instances/techsecoms-oidc/mappers" \
+          # Get admin role to verify it exists
+          echo "Verifying admin role exists..."
+          ADMIN_ROLE=$(curl -s "${KEYCLOAK_URL}/admin/realms/master/roles/admin" \
             -H "Authorization: Bearer ${TOKEN}")
+          echo "Admin role: $ADMIN_ROLE"
 
-          # Get existing mappers
-          EXISTING_MAPPER=$(curl -sf "${KEYCLOAK_URL}/admin/realms/master/identity-provider/instances/techsecoms-oidc/mappers" \
-            -H "Authorization: Bearer ${TOKEN}" | grep -o '"id":"[^"]*"' | head -1 | sed 's/"id":"//;s/"//')
-
-          # Get admin role ID
-          ADMIN_ROLE_ID=$(curl -sf "${KEYCLOAK_URL}/admin/realms/master/roles/admin" \
-            -H "Authorization: Bearer ${TOKEN}" | sed 's/.*"id":"\([^"]*\)".*/\1/')
-
+          # Mapper configuration for hardcoded realm role
+          # Using hardcoded-role-idp-mapper which assigns a realm role to all users from this IDP
           MAPPER_CONFIG='{
             "name": "admin-role-mapper",
-            "identityProviderMapper": "oidc-hardcoded-role-idp-mapper",
+            "identityProviderMapper": "hardcoded-role-idp-mapper",
             "identityProviderAlias": "techsecoms-oidc",
             "config": {
               "syncMode": "INHERIT",
@@ -173,23 +169,41 @@ spec:
           }'
 
           # Check if admin-role-mapper exists
-          MAPPER_ID=$(curl -sf "${KEYCLOAK_URL}/admin/realms/master/identity-provider/instances/techsecoms-oidc/mappers" \
-            -H "Authorization: Bearer ${TOKEN}" | grep -o '"name":"admin-role-mapper"[^}]*"id":"[^"]*"' | sed 's/.*"id":"//;s/".*//' || echo "")
+          echo "Checking existing mappers..."
+          MAPPERS=$(curl -s "${KEYCLOAK_URL}/admin/realms/master/identity-provider/instances/techsecoms-oidc/mappers" \
+            -H "Authorization: Bearer ${TOKEN}")
+          echo "Existing mappers: $MAPPERS"
+
+          MAPPER_ID=$(echo "$MAPPERS" | grep -o '"name":"admin-role-mapper"[^}]*"id":"[^"]*"' | sed 's/.*"id":"//;s/".*//' || echo "")
 
           if [ -n "$MAPPER_ID" ] && [ "$MAPPER_ID" != "" ]; then
             echo "Role mapper already exists (ID: $MAPPER_ID), updating..."
-            curl -sf -X PUT "${KEYCLOAK_URL}/admin/realms/master/identity-provider/instances/techsecoms-oidc/mappers/${MAPPER_ID}" \
+            RESULT=$(curl -s -w "\n%{http_code}" -X PUT "${KEYCLOAK_URL}/admin/realms/master/identity-provider/instances/techsecoms-oidc/mappers/${MAPPER_ID}" \
               -H "Authorization: Bearer ${TOKEN}" \
               -H "Content-Type: application/json" \
-              -d "${MAPPER_CONFIG}"
-            echo "Role mapper updated"
+              -d "${MAPPER_CONFIG}")
+            HTTP_CODE=$(echo "$RESULT" | tail -1)
+            BODY=$(echo "$RESULT" | sed '$d')
+            if [ "$HTTP_CODE" = "204" ] || [ "$HTTP_CODE" = "200" ]; then
+              echo "Role mapper updated successfully"
+            else
+              echo "Failed to update mapper (HTTP $HTTP_CODE): $BODY"
+              exit 1
+            fi
           else
             echo "Creating role mapper..."
-            curl -sf -X POST "${KEYCLOAK_URL}/admin/realms/master/identity-provider/instances/techsecoms-oidc/mappers" \
+            RESULT=$(curl -s -w "\n%{http_code}" -X POST "${KEYCLOAK_URL}/admin/realms/master/identity-provider/instances/techsecoms-oidc/mappers" \
               -H "Authorization: Bearer ${TOKEN}" \
               -H "Content-Type: application/json" \
-              -d "${MAPPER_CONFIG}"
-            echo "Role mapper created"
+              -d "${MAPPER_CONFIG}")
+            HTTP_CODE=$(echo "$RESULT" | tail -1)
+            BODY=$(echo "$RESULT" | sed '$d')
+            if [ "$HTTP_CODE" = "201" ] || [ "$HTTP_CODE" = "200" ]; then
+              echo "Role mapper created successfully"
+            else
+              echo "Failed to create mapper (HTTP $HTTP_CODE): $BODY"
+              exit 1
+            fi
           fi
 
           echo ""
