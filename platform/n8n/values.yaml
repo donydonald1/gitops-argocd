@@ -183,4 +183,4 @@ valkey:
 # External Secrets Operator configuration
 eso:
   enabled: true
-  vaultPath: /n8n/
+  vaultPath: n8n
