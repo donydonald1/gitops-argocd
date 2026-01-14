@@ -22,7 +22,8 @@ spec:
         key: {{ .Values.eso.vaultPath }}
         property: gitlab_token
     # GitLab Webhook Secret for validating incoming webhooks
-    - secretKey: gitlab_webhook_secret
+    # Note: upstream Atlantis chart expects key name "gitlab_secret"
+    - secretKey: gitlab_secret
       remoteRef:
         key: {{ .Values.eso.vaultPath }}
         property: gitlab_webhook_secret
