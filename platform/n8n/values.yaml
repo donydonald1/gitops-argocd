@@ -90,8 +90,6 @@ n8n:
       enabled: true
       type: dynamic
       storageClass: longhorn
-      accessModes:
-        - ReadWriteOnce
       size: 10Gi
 
     # Replica count (main instance - controller)
