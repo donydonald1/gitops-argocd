@@ -11,7 +11,7 @@ spec:
       - name: keycloak
         namespace: keycloak
         serverSideApply: true
-        wave: "2"  # Deploy after CNPG database is ready
+        wave: "2" # Deploy after CNPG database is ready
         imageList: "keycloak=quay.io/keycloak/keycloak"
         helm:
           values:
@@ -21,7 +21,7 @@ spec:
         namespace: harbor
         serverSideApply: true
         SkipCRDs: true
-        wave: "2"  # Deploy after databases and storage are ready
+        wave: "2" # Deploy after databases and storage are ready
         imageList: "harbor-core=goharbor/harbor-core, harbor-portal=goharbor/harbor-portal, harbor-jobservice=goharbor/harbor-jobservice, harbor-registry=goharbor/registry-photon, harbor-trivy=goharbor/trivy-adapter-photon"
         helm:
           values:
@@ -37,7 +37,7 @@ spec:
       - name: velero
         namespace: velero
         serverSideApply: true
-        wave: "1"  # Deploy after storage (MinIO) is ready
+        wave: "1" # Deploy after storage (MinIO) is ready
         imageList: "velero=velero/velero, velero-aws=velero/velero-plugin-for-aws"
         helm:
           values:
@@ -49,23 +49,23 @@ spec:
       - name: report-portal
         namespace: report-portal
         serverSideApply: true
-        wave: "3"  # Deploy after databases (CNPG), storage (MinIO), and Elasticsearch are ready
+        wave: "3" # Deploy after databases (CNPG), storage (MinIO), and Elasticsearch are ready
         imageList: "service-index=reportportal/service-index, service-ui=reportportal/service-ui, service-api=reportportal/service-api, service-analyzer=reportportal/service-analyzer"
         helm:
           values:
           - values.yaml
 
-      - name: defectdojo
-        namespace: defectdojo
-        serverSideApply: true
-        wave: "3"  # Deploy after databases (CNPG), Keycloak, and storage are ready
-        imageList: "defectdojo=defectdojo/defectdojo-django"
-        helm:
-          values:
-          - values.yaml
+      # - name: defectdojo
+      #   namespace: defectdojo
+      #   serverSideApply: true
+      #   wave: "3"  # Deploy after databases (CNPG), Keycloak, and storage are ready
+      #   imageList: "defectdojo=defectdojo/defectdojo-django"
+      #   helm:
+      #     values:
+      #     - values.yaml
 
       - name: gitlab-redis-main
-        wave: "1"  # Deploy Redis before GitLab
+        wave: "1" # Deploy Redis before GitLab
         namespace: gitlab
         serverSideApply: true
         imageList: "redis=bitnami/redis"
@@ -74,7 +74,7 @@ spec:
           - values.yaml
 
       - name: gitlab-redis-cache
-        wave: "1"  # Deploy Redis before GitLab
+        wave: "1" # Deploy Redis before GitLab
         namespace: gitlab
         serverSideApply: true
         imageList: "redis=bitnami/redis"
@@ -83,7 +83,7 @@ spec:
           - values.yaml
 
       - name: gitlab
-        wave: "2"  # Deploy after databases (CNPG), storage (MinIO), and Redis are ready
+        wave: "2" # Deploy after databases (CNPG), storage (MinIO), and Redis are ready
         namespace: gitlab
         serverSideApply: true
         imageList: "gitlab=gitlab/gitlab-ee"
@@ -94,7 +94,7 @@ spec:
       - name: minio
         namespace: minio
         serverSideApply: true
-        wave: "0"  # Deploy MinIO first (storage for other apps)
+        wave: "0" # Deploy MinIO first (storage for other apps)
         imageList: "minio=minio/minio"
         helm:
           values:
@@ -102,7 +102,7 @@ spec:
 
       - name: cnpg-cluster
         namespace: cnpg-system
-        wave: "0"  # Deploy with minio after CNPG operator (wave -1)
+        wave: "0" # Deploy with minio after CNPG operator (wave -1)
         imageList: "postgresql=ghcr.io/cloudnative-pg/postgresql"
         helm:
           values:
@@ -111,7 +111,7 @@ spec:
 
       - name: clickhouse
         namespace: clickhouse
-        wave: "1"  # Deploy after storage (MinIO) and CNPG operator are ready
+        wave: "1" # Deploy after storage (MinIO) and CNPG operator are ready
         serverSideApply: true
         imageList: "clickhouse=bitnami/clickhouse"
         helm:
@@ -121,7 +121,7 @@ spec:
       - name: wikijs
         namespace: wikijs
         serverSideApply: true
-        wave: "1"  # Deploy after databases and storage are ready
+        wave: "1" # Deploy after databases and storage are ready
         imageList: "wikijs=ghcr.io/requarks/wiki"
 
       # # - name: go-healthcheck
@@ -147,7 +147,7 @@ spec:
       - name: gitlab-agent
         namespace: gitlab
         serverSideApply: true
-        wave: "3"  # Deploy after GitLab is fully ready
+        wave: "3" # Deploy after GitLab is fully ready
         imageList: "gitlab-agent=registry.gitlab.com/gitlab-org/cluster-integration/gitlab-agent"
         helm:
           values:
@@ -156,7 +156,7 @@ spec:
       - name: atlantis
         namespace: atlantis
         serverSideApply: true
-        wave: "3"  # Deploy after GitLab is ready (requires GitLab webhooks)
+        wave: "3" # Deploy after GitLab is ready (requires GitLab webhooks)
         imageList: "atlantis=ghcr.io/runatlantis/atlantis"
         helm:
           values:
