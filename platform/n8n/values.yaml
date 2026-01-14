@@ -69,6 +69,9 @@ n8n:
 
     # Extra environment variables from secrets
     extraEnv:
+      # Override N8N_PORT to avoid conflict with Kubernetes service env var
+      N8N_PORT:
+        value: "5678"
       DB_POSTGRESDB_USER:
         valueFrom:
           secretKeyRef:

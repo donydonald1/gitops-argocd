@@ -163,6 +163,14 @@ managedRoles:
   passwordSecret:
     name: defectdojo-user-secret
 
+- name: n8n
+  ensure: present
+  login: true
+  createrole: true
+  bypassrls: true
+  passwordSecret:
+    name: n8n-user-secret
+
 pooler:
   maxDbConnections: 2000
   maxClientConn: 2000
