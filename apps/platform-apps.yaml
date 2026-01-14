@@ -153,6 +153,15 @@ spec:
           values:
           - values.yaml
 
+      - name: atlantis
+        namespace: atlantis
+        serverSideApply: true
+        wave: "3"  # Deploy after GitLab is ready (requires GitLab webhooks)
+        imageList: "atlantis=ghcr.io/runatlantis/atlantis"
+        helm:
+          values:
+          - values.yaml
+
   template:
     metadata:
       name: "{{ .name }}"
