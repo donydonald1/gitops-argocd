@@ -1,223 +1,133 @@
 # n8n - Workflow Automation Tool
 # Production-Ready HA Configuration
 # Documentation: https://docs.n8n.io/
+# Chart: https://github.com/8gears/n8n-helm-chart
 
-n8n:
-  # Image configuration
-  image:
-    repository: n8nio/n8n
-    tag: "2.3.5"
-    pullPolicy: IfNotPresent
+# Image configuration
+image:
+  repository: n8nio/n8n
+  tag: "2.3.5"
+  pullPolicy: IfNotPresent
 
-  # n8n configuration
+# Ingress configuration
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    # WebSocket support
+    nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
+    nginx.ingress.kubernetes.io/upgrade: "websocket"
+    nginx.ingress.kubernetes.io/connection-upgrade: "true"
+  hosts:
+    - host: n8n.ops.techsecom.io
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: n8n-tls
+      hosts:
+        - n8n.ops.techsecom.io
+
+# Main n8n application configuration
+main:
+  # n8n configuration via environment variables
+  # See https://docs.n8n.io/hosting/configuration/environment-variables/
   config:
-    # Database configuration - PostgreSQL for production
-    database:
+    db:
       type: postgresdb
       postgresdb:
         host: cnpg-cluster-rw.cnpg.svc.cluster.local
         port: 5432
         database: n8n
-        user: n8n
-        # Password from secret
-        existingSecret: n8n-db-creds
-        existingSecretPasswordKey: password
-
-    # Execution settings
     executions:
-      # Prune old executions
       pruneData: "true"
       pruneDataMaxAge: 336  # 14 days in hours
-
-    # Generic settings
     generic:
       timezone: America/Chicago
+    n8n:
+      host: n8n.ops.techsecom.io
+      protocol: https
+      metrics: true
+      diagnostics:
+        enabled: "false"
 
-  # n8n specific settings
-  n8n:
-    # Encryption key for credentials (from secret)
-    encryptionKey:
-      existingSecret: n8n-encryption-key
-      existingSecretKey: encryptionKey
+  # Secrets for n8n (passwords, encryption key)
+  secret: {}
+    # Secrets will come from External Secrets
+    # db:
+    #   postgresdb:
+    #     password: ''
+    # n8n:
+    #   encryption_key: ''
 
-    # Host settings
-    host: n8n.ops.techsecom.io
-    protocol: https
+  # Extra environment variables from secrets
+  extraEnv:
+    DB_POSTGRESDB_USER:
+      valueFrom:
+        secretKeyRef:
+          name: n8n-db-creds
+          key: DB_POSTGRESDB_USER
+    DB_POSTGRESDB_PASSWORD:
+      valueFrom:
+        secretKeyRef:
+          name: n8n-db-creds
+          key: DB_POSTGRESDB_PASSWORD
+    N8N_ENCRYPTION_KEY:
+      valueFrom:
+        secretKeyRef:
+          name: n8n-encryption-key
+          key: N8N_ENCRYPTION_KEY
 
-    # Editor settings
-    editor:
-      baseUrl: https://n8n.ops.techsecom.io
-
-    # Security settings
-    diagnostics:
-      enabled: false
-    versionNotifications:
-      enabled: true
-
-  # Queue mode for HA (requires Redis)
-  scaling:
+  # Persistence for n8n data
+  persistence:
     enabled: true
-    mode: queue
+    type: dynamic
+    storageClass: longhorn
+    accessModes:
+      - ReadWriteOnce
+    size: 10Gi
 
-  # Redis configuration for queue mode
-  redis:
-    enabled: true
-    # Use internal Redis subchart
-    host: ""
-    port: 6379
-    # Or use external Redis
-    # host: redis.ops.techsecom.io
-    # password:
-    #   existingSecret: n8n-redis-creds
-    #   existingSecretKey: password
+  # Replica count (main instance - controller)
+  replicaCount: 1
 
-  # Main n8n instance
-  main:
-    # Only one main instance (controller)
-    replicaCount: 1
-
-    resources:
-      requests:
-        cpu: 250m
-        memory: 512Mi
-      limits:
-        cpu: 2
-        memory: 2Gi
-
-    # Pod disruption budget
-    podDisruptionBudget:
-      enabled: true
-      minAvailable: 1
-
-    # Liveness and readiness probes
-    livenessProbe:
-      enabled: true
-      initialDelaySeconds: 30
-      periodSeconds: 30
-      timeoutSeconds: 10
-      failureThreshold: 5
-    readinessProbe:
-      enabled: true
-      initialDelaySeconds: 10
-      periodSeconds: 10
-      timeoutSeconds: 5
-      failureThreshold: 3
-
-    # Extra environment variables
-    extraEnv:
-      - name: N8N_METRICS
-        value: "true"
-      - name: N8N_METRICS_INCLUDE_DEFAULT_METRICS
-        value: "true"
-      - name: N8N_METRICS_INCLUDE_WORKFLOW_ID_LABEL
-        value: "true"
-      - name: N8N_METRICS_INCLUDE_NODE_TYPE_LABEL
-        value: "true"
-
-  # Worker instances for processing workflows
-  worker:
-    enabled: true
-    replicaCount: 2
-
-    resources:
-      requests:
-        cpu: 250m
-        memory: 512Mi
-      limits:
-        cpu: 2
-        memory: 2Gi
-
-    # Concurrency per worker
-    concurrency: 10
-
-    # Pod disruption budget
-    podDisruptionBudget:
-      enabled: true
-      minAvailable: 1
-
-    # Autoscaling for workers
-    autoscaling:
-      enabled: true
-      minReplicas: 2
-      maxReplicas: 5
-      targetCPUUtilizationPercentage: 70
-      targetMemoryUtilizationPercentage: 80
-
-  # Webhook handler instances
-  webhook:
-    enabled: true
-    replicaCount: 2
-
-    resources:
-      requests:
-        cpu: 100m
-        memory: 256Mi
-      limits:
-        cpu: 1
-        memory: 1Gi
-
-    # Pod disruption budget
-    podDisruptionBudget:
-      enabled: true
-      minAvailable: 1
-
-    # Autoscaling for webhooks
-    autoscaling:
-      enabled: true
-      minReplicas: 2
-      maxReplicas: 5
-      targetCPUUtilizationPercentage: 70
-
-  # Ingress configuration
-  ingress:
-    enabled: true
-    className: nginx
-    annotations:
-      cert-manager.io/cluster-issuer: letsencrypt-prod
-      nginx.ingress.kubernetes.io/ssl-redirect: "true"
-      nginx.ingress.kubernetes.io/proxy-body-size: "100m"
-      nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
-      nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
-      # WebSocket support
-      nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
-      nginx.ingress.kubernetes.io/connection-upgrade: "true"
-    hosts:
-      - host: n8n.ops.techsecom.io
-        paths:
-          - path: /
-            pathType: Prefix
-    tls:
-      - secretName: n8n-tls
-        hosts:
-          - n8n.ops.techsecom.io
-
-  # Service configuration
-  service:
-    type: ClusterIP
-    port: 5678
-    annotations:
-      prometheus.io/scrape: "true"
-      prometheus.io/port: "5678"
-      prometheus.io/path: "/metrics"
+  # Deployment strategy
+  deploymentStrategy:
+    type: Recreate
 
   # Service account
   serviceAccount:
     create: true
     annotations: {}
 
-  # Persistence for n8n data
-  persistence:
+  # Resources
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 2
+      memory: 2Gi
+
+  # Liveness probe
+  livenessProbe:
     enabled: true
-    storageClass: longhorn
-    accessModes:
-      - ReadWriteOnce
-    size: 10Gi
+    initialDelaySeconds: 30
+    periodSeconds: 30
+    timeoutSeconds: 10
+    failureThreshold: 5
 
-  # Node selector
-  nodeSelector: {}
-
-  # Tolerations
-  tolerations: []
+  # Readiness probe
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
 
   # Affinity - spread across nodes for HA
   affinity:
@@ -233,14 +143,44 @@ n8n:
                     - n8n
             topologyKey: kubernetes.io/hostname
 
+  # Node selector
+  nodeSelector: {}
+
+  # Tolerations
+  tolerations: []
+
+# Worker configuration (for queue mode scaling)
+worker:
+  enabled: false  # Enable when using n8n enterprise with queue mode
+  replicaCount: 2
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 2
+      memory: 2Gi
+
+# Webhook handler configuration
+webhook:
+  enabled: false  # Enable when using n8n enterprise with queue mode
+  replicaCount: 2
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 1
+      memory: 1Gi
+
+# Valkey/Redis configuration (for queue mode)
+valkey:
+  enabled: false  # Enable when using queue mode
+  architecture: standalone
+  auth:
+    enabled: false
+
 # External Secrets Operator configuration
 eso:
   enabled: true
   vaultPath: /n8n/
-
-# CNPG database cluster (uses existing cnpg-cluster)
-database:
-  # Database will be created via CNPG
-  enabled: true
-  name: n8n
-  owner: n8n
