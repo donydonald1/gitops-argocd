@@ -1,4 +1,5 @@
 # Atlantis - Terraform Pull Request Automation for GitLab
+# Production-Ready Configuration
 # Documentation: https://www.runatlantis.io/docs/
 
 atlantis:
@@ -20,6 +21,9 @@ atlantis:
     annotations:
       cert-manager.io/cluster-issuer: letsencrypt-prod
       nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      # Rate limiting for security
+      nginx.ingress.kubernetes.io/limit-rps: "10"
+      nginx.ingress.kubernetes.io/limit-connections: "5"
     tls:
       - secretName: atlantis-tls
         hosts:
@@ -38,11 +42,16 @@ atlantis:
   # Default Terraform version
   defaultTFVersion: "1.10.0"
 
-  # OpenTofu support (optional - uncomment to use OpenTofu instead of Terraform)
-  # environment:
-  #   ATLANTIS_TOFU_VERSION: "1.9.0"
+  # Production safety settings
+  disableApplyAll: true
 
-  # Repository configuration
+  # Enable diff markdown format for better readability
+  enableDiffMarkdownFormat: true
+
+  # Hide previous plan comments to reduce clutter
+  hidePrevPlanComments: true
+
+  # Repository configuration - Production settings
   repoConfig: |
     ---
     repos:
@@ -57,16 +66,26 @@ atlantis:
         - mergeable
       # Auto-merge after successful apply
       delete_source_branch_on_merge: true
+      # Checkout merge commit for accurate plans
+      checkout_strategy: merge
 
-  # Additional environment variables
+  # Additional environment variables - Production settings
   environment:
-    # Enable parallel plan/apply
+    # Enable parallel plan/apply for better performance
     ATLANTIS_PARALLEL_PLAN: "true"
     ATLANTIS_PARALLEL_APPLY: "true"
     # Automerge after successful apply
     ATLANTIS_AUTOMERGE: "true"
-    # Hide previous plan comments to reduce clutter
-    ATLANTIS_HIDE_PREV_PLAN_COMMENTS: "true"
+    # Silence VCS status comments (less noise)
+    ATLANTIS_SILENCE_VCS_STATUS_NO_PROJECTS: "true"
+    # Write git credentials for private module access
+    ATLANTIS_WRITE_GIT_CREDS: "true"
+    # Lock on plan to prevent concurrent modifications
+    ATLANTIS_AUTOPLAN_FILE_LIST: "**/*.tf,**/*.tfvars,**/*.tfvars.json"
+    # Emoji reactions for better UX
+    ATLANTIS_EMOJI_REACTION: "true"
+    # Maximum concurrent jobs
+    ATLANTIS_PARALLEL_POOL_SIZE: "5"
 
   # Note: ATLANTIS_GITLAB_TOKEN and ATLANTIS_GITLAB_WEBHOOK_SECRET are automatically
   # set by the upstream chart when vcsSecretName is configured (see above)
@@ -76,36 +95,82 @@ atlantis:
     create: true
     annotations: {}
 
-  # Resource limits - adjusted for LimitRange compliance (min 100m CPU)
+  # Production resource limits
   resources:
     requests:
-      cpu: 100m
-      memory: 256Mi
+      cpu: 250m
+      memory: 512Mi
     limits:
-      cpu: 1
-      memory: 1Gi
+      cpu: 2
+      memory: 2Gi
 
   # Persistence for Atlantis data (plans, locks)
-  dataStorage: 5Gi
+  dataStorage: 10Gi
   storageClassName: longhorn
 
-  # Liveness and readiness probes
+  # StatefulSet configuration for production
+  statefulSet:
+    annotations: {}
+    labels:
+      app.kubernetes.io/part-of: atlantis
+      app.kubernetes.io/component: terraform-automation
+
+  # Pod template configuration
+  podTemplate:
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "4141"
+      prometheus.io/path: "/metrics"
+    labels:
+      app.kubernetes.io/part-of: atlantis
+      app.kubernetes.io/component: terraform-automation
+
+  # Liveness and readiness probes - Production tuned
   livenessProbe:
     enabled: true
     initialDelaySeconds: 30
     periodSeconds: 60
     timeoutSeconds: 10
+    failureThreshold: 5
+    successThreshold: 1
   readinessProbe:
     enabled: true
     initialDelaySeconds: 10
     periodSeconds: 10
     timeoutSeconds: 5
+    failureThreshold: 3
+    successThreshold: 1
 
-  # Pod security context
-  containerSecurityContext:
-    allowPrivilegeEscalation: false
-    readOnlyRootFilesystem: false
-    runAsNonRoot: true
+  # Service configuration
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 4141
+    annotations: {}
+
+  # Node selector for dedicated nodes (optional)
+  nodeSelector: {}
+
+  # Tolerations
+  tolerations: []
+
+  # Affinity rules
+  affinity: {}
+
+  # Topology spread constraints
+  topologySpreadConstraints: []
+
+  # Additional volumes (for custom scripts, etc.)
+  extraVolumes: []
+  extraVolumeMounts: []
+
+  # Init containers (for setup tasks)
+  initContainers: []
+
+  # Common labels applied to all resources
+  commonLabels:
+    app.kubernetes.io/part-of: atlantis
+    environment: production
 
 # External Secrets Operator configuration for Vault integration
 eso:
@@ -114,3 +179,12 @@ eso:
   # Path in Vault where Atlantis secrets are stored
   # Expected keys: gitlab_token, gitlab_webhook_secret
   vaultPath: /atlantis/
+
+# Pod Disruption Budget for high availability
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# Network Policy for production security
+networkPolicy:
+  enabled: true
