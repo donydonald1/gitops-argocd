@@ -27,4 +27,13 @@ spec:
       remoteRef:
         key: {{ .Values.eso.vaultPath }}
         property: gitlab_webhook_secret
+    # AWS/S3 credentials for MinIO backend
+    - secretKey: aws_access_key_id
+      remoteRef:
+        key: {{ .Values.eso.vaultPath }}
+        property: aws_access_key_id
+    - secretKey: aws_secret_access_key
+      remoteRef:
+        key: {{ .Values.eso.vaultPath }}
+        property: aws_secret_access_key
 {{- end }}

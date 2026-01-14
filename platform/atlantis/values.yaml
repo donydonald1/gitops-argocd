@@ -88,6 +88,17 @@ atlantis:
   # Note: ATLANTIS_GITLAB_TOKEN and ATLANTIS_GITLAB_WEBHOOK_SECRET are automatically
   # set by the upstream chart when vcsSecretName is configured (see above)
 
+  # Environment variables from secrets (AWS/S3 credentials for MinIO backend)
+  environmentSecrets:
+    - name: AWS_ACCESS_KEY_ID
+      secretKeyRef:
+        name: atlantis-vcs-secret
+        key: aws_access_key_id
+    - name: AWS_SECRET_ACCESS_KEY
+      secretKeyRef:
+        name: atlantis-vcs-secret
+        key: aws_secret_access_key
+
   # Service account
   serviceAccount:
     create: true
