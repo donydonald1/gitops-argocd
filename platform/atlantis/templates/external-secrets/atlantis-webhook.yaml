@@ -36,9 +36,13 @@ spec:
       remoteRef:
         key: {{ .Values.eso.vaultPath }}
         property: aws_secret_access_key
-    # Vault token for Terraform providers (accessing kubeconfig secrets)
-    - secretKey: vault_token
+    # Vault AppRole credentials for Terraform providers
+    - secretKey: vault_role_id
       remoteRef:
         key: {{ .Values.eso.vaultPath }}
-        property: vault_token
+        property: vault_role_id
+    - secretKey: vault_secret_id
+      remoteRef:
+        key: {{ .Values.eso.vaultPath }}
+        property: vault_secret_id
 {{- end }}
