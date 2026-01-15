@@ -425,6 +425,8 @@ spec:
 
           #######################################
           # Create Snapshot Lifecycle Management (SLM) Policy
+          # partial=true allows snapshots to succeed even with unassigned shards
+          # This prevents delete phase from being blocked during node failures
           #######################################
           echo ""
           echo "=== Creating SLM Policy: {{ .Values.snapshots.slm.name }} ==="
@@ -437,7 +439,8 @@ spec:
             "config": {
               "indices": ["audit-logs-*", "container-logs-*"],
               "ignore_unavailable": true,
-              "include_global_state": false
+              "include_global_state": false,
+              "partial": true
             },
             "retention": {
               "expire_after": "{{ .Values.snapshots.slm.retention.expireAfter }}",

@@ -405,11 +405,12 @@ eck-stack:
           - name: elasticsearch
             resources:
               # ECK requires memory request = limit for ResourcesAwareManagement
+              # Increased from 3Gi to 6Gi to handle shard recovery during ILM migration
               limits:
-                memory: 3Gi
+                memory: 6Gi
                 cpu: 2
               requests:
-                memory: 3Gi
+                memory: 6Gi
                 cpu: 2
             volumeMounts:
             - name: certs
