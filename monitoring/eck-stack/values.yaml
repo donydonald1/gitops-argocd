@@ -1080,6 +1080,9 @@ eck-stack:
               ilm_pattern => "000001"
               ilm_enabled => true
               ilm_policy => "hot_warm_delete-container-logs"
+              # Disable Logstash template management - ILM setup job manages templates
+              # This prevents conflicts with data tier routing settings
+              manage_template => false
               data_stream => auto
               ssl_enabled => true
               ssl_certificate_authorities => ["/etc/logstash/config/certs/ca.crt"]
@@ -1093,6 +1096,9 @@ eck-stack:
               ilm_rollover_alias => "audit-logs"
               ilm_pattern => "000001"
               ilm_policy => "hot_warm_delete-audit-logs"
+              # Disable Logstash template management - ILM setup job manages templates
+              # This prevents conflicts with data tier routing settings
+              manage_template => false
               ssl_enabled => true
               data_stream => auto
               ssl_certificate_authorities => ["/etc/logstash/config/certs/ca.crt"]

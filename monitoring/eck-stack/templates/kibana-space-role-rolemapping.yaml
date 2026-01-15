@@ -51,6 +51,8 @@ spec:
 
           #######################################
           # ILM Policy for Audit Logs
+          # Uses data tier routing (data_warm, data_cold) instead of box_type
+          # This is the recommended approach for Elasticsearch 8.x
           #######################################
           echo ""
           echo "=== Creating ILM Policy: {{ .Values.ilm.policies.auditLogs.name }} ==="
@@ -75,10 +77,10 @@ spec:
                 "warm": {
                   "min_age": "{{ .Values.ilm.policies.auditLogs.warm.minAge }}",
                   "actions": {
+                    "migrate": {
+                      "enabled": true
+                    },
                     "allocate": {
-                      "require": {
-                        "box_type": "warm"
-                      },
                       "number_of_replicas": {{ .Values.ilm.policies.auditLogs.warm.replicas }}
                     },
                     "forcemerge": {
@@ -95,10 +97,10 @@ spec:
                 "cold": {
                   "min_age": "{{ .Values.ilm.policies.auditLogs.cold.minAge }}",
                   "actions": {
+                    "migrate": {
+                      "enabled": true
+                    },
                     "allocate": {
-                      "require": {
-                        "box_type": "cold"
-                      },
                       "number_of_replicas": {{ .Values.ilm.policies.auditLogs.cold.replicas }}
                     },
                     "set_priority": {
@@ -126,6 +128,8 @@ spec:
 
           #######################################
           # ILM Policy for Container Logs
+          # Uses data tier routing (data_warm, data_cold) instead of box_type
+          # This is the recommended approach for Elasticsearch 8.x
           #######################################
           echo ""
           echo "=== Creating ILM Policy: {{ .Values.ilm.policies.containerLogs.name }} ==="
@@ -150,10 +154,10 @@ spec:
                 "warm": {
                   "min_age": "{{ .Values.ilm.policies.containerLogs.warm.minAge }}",
                   "actions": {
+                    "migrate": {
+                      "enabled": true
+                    },
                     "allocate": {
-                      "require": {
-                        "box_type": "warm"
-                      },
                       "number_of_replicas": {{ .Values.ilm.policies.containerLogs.warm.replicas }}
                     },
                     "forcemerge": {
@@ -170,10 +174,10 @@ spec:
                 "cold": {
                   "min_age": "{{ .Values.ilm.policies.containerLogs.cold.minAge }}",
                   "actions": {
+                    "migrate": {
+                      "enabled": true
+                    },
                     "allocate": {
-                      "require": {
-                        "box_type": "cold"
-                      },
                       "number_of_replicas": {{ .Values.ilm.policies.containerLogs.cold.replicas }}
                     },
                     "set_priority": {
@@ -201,6 +205,7 @@ spec:
 
           #######################################
           # Index Template for Audit Logs
+          # Uses data tier routing (data_hot) instead of box_type attribute
           #######################################
           echo ""
           echo "=== Creating Index Template: audit-logs-template ==="
@@ -211,7 +216,7 @@ spec:
             "priority": 200,
             "template": {
               "settings": {
-                "index.routing.allocation.require.box_type": "hot",
+                "index.routing.allocation.include._tier_preference": "data_hot",
                 "index.number_of_replicas": {{ .Values.ilm.indexTemplates.auditLogs.replicas }},
                 "index.number_of_shards": {{ .Values.ilm.indexTemplates.auditLogs.shards }},
                 "index.lifecycle.name": "{{ .Values.ilm.policies.auditLogs.name }}",
@@ -235,6 +240,7 @@ spec:
 
           #######################################
           # Index Template for Container Logs
+          # Uses data tier routing (data_hot) instead of box_type attribute
           #######################################
           echo ""
           echo "=== Creating Index Template: container-logs-template ==="
@@ -245,7 +251,7 @@ spec:
             "priority": 200,
             "template": {
               "settings": {
-                "index.routing.allocation.require.box_type": "hot",
+                "index.routing.allocation.include._tier_preference": "data_hot",
                 "index.number_of_replicas": {{ .Values.ilm.indexTemplates.containerLogs.replicas }},
                 "index.number_of_shards": {{ .Values.ilm.indexTemplates.containerLogs.shards }},
                 "index.lifecycle.name": "{{ .Values.ilm.policies.containerLogs.name }}",
