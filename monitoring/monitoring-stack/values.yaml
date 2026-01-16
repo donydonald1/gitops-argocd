@@ -960,6 +960,10 @@ kube-prometheus-stack:
           - __metrics_path__
           targetLabel: metrics_path
   kube-state-metrics:
+    image:
+      registry: registry.k8s.io
+      repository: kube-state-metrics/kube-state-metrics
+      tag: v2.17.0
     namespaceOverride: ''
     prometheus:
       monitor:
@@ -1680,6 +1684,10 @@ kube-prometheus-stack:
       port: 9090
       url: http://rancher-monitoring-prometheus.cattle-monitoring-system.svc
   prometheus-node-exporter:
+    image:
+      registry: quay.io
+      repository: prometheus/node-exporter
+      tag: v1.9.1
     extraArgs:
     - >-
       --collector.filesystem.mount-points-exclude=^/(dev|proc|sys|var/lib/docker/.+|var/lib/kubelet/.+)($|/)
