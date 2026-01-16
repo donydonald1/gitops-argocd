@@ -154,7 +154,8 @@ rancher-monitoring:
         enabled: true
         label: grafana_dashboard
         labelValue: "1"
-        searchNamespace: cattle-dashboards
+        # Search in both cattle-dashboards (rancher defaults) and cattle-monitoring-system (our custom dashboards)
+        searchNamespace: ALL
         provider:
           allowUiUpdates: false
       datasources:
