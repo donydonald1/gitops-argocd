@@ -336,7 +336,7 @@ data:
                 "type": "loki",
                 "uid": "loki"
               },
-              "expr": "{job=\"rancher-audit\"} | json | verb=~\"$verb\" | resource=~\"$resource\" | line_format \"{{ "{{" }}.user{{ "}}" }} {{ "{{" }}.verb{{ "}}" }} {{ "{{" }}.resource{{ "}}" }}/{{ "{{" }}.resourceName{{ "}}" }} in {{ "{{" }}.resourceNamespace{{ "}}" }} -> {{ "{{" }}.statusCode{{ "}}" }}\"",
+              "expr": "{job=\"rancher-audit\", verb=~\"$verb\", resource=~\"$resource\"}",
               "refId": "A"
             }
           ],
@@ -349,6 +349,7 @@ data:
       "templating": {
         "list": [
           {
+            "allValue": ".+",
             "current": {},
             "datasource": {
               "type": "loki",
@@ -369,6 +370,7 @@ data:
             "type": "query"
           },
           {
+            "allValue": ".+",
             "current": {},
             "datasource": {
               "type": "loki",
