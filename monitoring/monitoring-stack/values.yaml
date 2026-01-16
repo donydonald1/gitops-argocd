@@ -1183,7 +1183,7 @@ promtail:
         timeout: 10s
         tenant_id: ""
 
-    # Custom scrape configs for container and audit logs (like Filebeat)
+    # Use default scrape config with additional static configs for audit logs
     snippets:
       # Add common labels to all logs
       extraRelabelConfigs:
@@ -1191,89 +1191,25 @@ promtail:
           replacement: ops-dc-tx-rke2-mgmt-prod
           target_label: cluster
 
-      # Scrape configs for different log sources
-      scrapeConfigs: |
-        # ─────────────────────────────────────────────────────────────────────────
-        # CONTAINER LOGS - Kubernetes pods (like Filebeat autodiscover)
-        # ─────────────────────────────────────────────────────────────────────────
-        - job_name: kubernetes-pods
-          kubernetes_sd_configs:
-            - role: pod
-          relabel_configs:
-            # Only scrape pods with logs
-            - source_labels: [__meta_kubernetes_pod_annotation_promtail_io_scrape]
-              action: drop
-              regex: 'false'
-            # Use pod namespace as label
-            - source_labels: [__meta_kubernetes_namespace]
-              action: replace
-              target_label: namespace
-            # Use pod name as label
-            - source_labels: [__meta_kubernetes_pod_name]
-              action: replace
-              target_label: pod
-            # Use container name as label
-            - source_labels: [__meta_kubernetes_pod_container_name]
-              action: replace
-              target_label: container
-            # Use node name as label
-            - source_labels: [__meta_kubernetes_pod_node_name]
-              action: replace
-              target_label: node
-            # Extract app name from labels (like Filebeat)
-            - source_labels: [__meta_kubernetes_pod_label_app]
-              action: replace
-              target_label: app
-            - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
-              action: replace
-              target_label: app
-              regex: (.+)
-            # Add log type label
-            - replacement: container
-              target_label: log_type
-            # Set the path to container logs
-            - source_labels: [__meta_kubernetes_pod_uid, __meta_kubernetes_pod_container_name]
-              action: replace
-              target_label: __path__
-              separator: /
-              replacement: /var/log/pods/*$1/$2/*.log
-          pipeline_stages:
-            # Parse CRI/containerd log format
-            - cri: {}
-            # Try to parse JSON structured logs (like Logstash JSON filter)
-            - match:
-                selector: '{log_type="container"}'
-                stages:
-                  - json:
-                      expressions:
-                        level: level
-                        msg: msg
-                        message: message
-                        severity: severity
-                        error: error
-                        stack_trace: stack_trace
-                  - labels:
-                      level:
-            # Extract log level from message if not in JSON
-            - match:
-                selector: '{log_type="container"} !~ "level="'
-                stages:
-                  - regex:
-                      expression: '(?i)(?P<level>FATAL|ERROR|WARN(?:ING)?|INFO|DEBUG|TRACE)'
-                  - labels:
-                      level:
-            # Normalize log levels
-            - template:
-                source: level
-                template: '{{ ToUpper .Value }}'
-            - labeldrop:
-                - filename
-                - stream
+      # Common pipeline stages for all container logs
+      pipelineStages:
+        - cri: {}
+        - json:
+            expressions:
+              level: level
+              msg: msg
+              message: message
+        - labels:
+            level:
+        - regex:
+            expression: '(?i)(?P<extracted_level>FATAL|ERROR|WARN(?:ING)?|INFO|DEBUG|TRACE)'
+        - labels:
+            extracted_level:
 
-        # ─────────────────────────────────────────────────────────────────────────
-        # RANCHER/RKE2 AUDIT LOGS (like Filebeat audit-logs input)
-        # ─────────────────────────────────────────────────────────────────────────
-        - job_name: rancher-audit-logs
+      # Additional scrape configs for audit logs
+      extraScrapeConfigs: |
+        # Rancher/RKE2 Audit Logs
+        - job_name: rancher-audit
           static_configs:
             - targets:
                 - localhost
@@ -1282,62 +1218,27 @@ promtail:
                 log_type: audit
                 __path__: /var/log/rancher/*.log
           pipeline_stages:
-            # Parse JSON audit log format
             - json:
                 expressions:
                   auditID: auditID
                   stage: stage
                   verb: verb
                   user: user.username
-                  userGroups: user.groups
                   resource: objectRef.resource
                   resourceName: objectRef.name
                   resourceNamespace: objectRef.namespace
-                  apiVersion: objectRef.apiVersion
-                  requestURI: requestURI
-                  sourceIP: sourceIPs[0]
                   statusCode: responseStatus.code
-            # Drop RequestReceived stage (like Logstash filter)
             - drop:
                 source: stage
                 expression: 'RequestReceived'
-            # Add extracted fields as labels
             - labels:
                 verb:
                 resource:
                 resourceNamespace:
                 statusCode:
-            # Simplify user names (like Logstash Ruby filter)
-            - template:
-                source: user
-                template: |
-                  {{ if hasPrefix "system:serviceaccount:" .Value }}sa:{{ trimPrefix "system:serviceaccount:" .Value | split ":" | last }}{{ else if hasPrefix "system:" .Value }}{{ trimPrefix "system:" .Value }}{{ else }}{{ .Value }}{{ end }}
-            - labels:
                 user:
-            # Categorize action type
-            - template:
-                source: action_type
-                template: |
-                  {{ $verb := .verb }}{{ if eq $verb "create" }}WRITE{{ else if eq $verb "delete" }}DELETE{{ else if or (eq $verb "update") (eq $verb "patch") }}WRITE{{ else if or (eq $verb "get") (eq $verb "list") (eq $verb "watch") }}READ{{ else }}OTHER{{ end }}
-            - labels:
-                action_type:
-            # Set success based on status code
-            - template:
-                source: success
-                template: '{{ if lt (int .statusCode) 400 }}true{{ else }}false{{ end }}'
-            - labels:
-                success:
-            # Create summary message (like Logstash Ruby filter)
-            - template:
-                source: summary
-                template: '{{ .user }} {{ ToUpper .verb }} {{ .resourceNamespace }}/{{ .resource }}/{{ .resourceName }} -> {{ .statusCode }}'
-            - output:
-                source: summary
-
-        # ─────────────────────────────────────────────────────────────────────────
-        # LINUX AUDIT LOGS (auditd)
-        # ─────────────────────────────────────────────────────────────────────────
-        - job_name: linux-audit-logs
+        # Linux Audit Logs
+        - job_name: linux-audit
           static_configs:
             - targets:
                 - localhost
@@ -1346,16 +1247,12 @@ promtail:
                 log_type: audit
                 __path__: /var/log/audit/audit.log
           pipeline_stages:
-            # Parse auditd format
             - regex:
                 expression: 'type=(?P<audit_type>\w+).*msg=audit\((?P<timestamp>[^:]+):(?P<audit_id>\d+)\).*'
             - labels:
                 audit_type:
-
-        # ─────────────────────────────────────────────────────────────────────────
-        # SYSTEMD JOURNAL LOGS
-        # ─────────────────────────────────────────────────────────────────────────
-        - job_name: journal
+        # Systemd Journal Logs
+        - job_name: systemd-journal
           journal:
             max_age: 12h
             labels:
@@ -1368,11 +1265,6 @@ promtail:
               target_label: 'hostname'
             - source_labels: ['__journal_priority_keyword']
               target_label: 'level'
-          pipeline_stages:
-            - labeldrop:
-                - __journal__systemd_unit
-                - __journal__hostname
-                - __journal_priority_keyword
 
   extraVolumes:
     - name: journal
