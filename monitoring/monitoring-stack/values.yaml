@@ -437,10 +437,11 @@ rancher-monitoring:
 
                 ---
 
-                {{ range $index, $alert := .Alerts }}
-                {{ if $index }}---{{ end }}
+                {{ range $alert := .Alerts }}
 
-                **📋 Alert #{{ add $index 1 }}**
+                ---
+
+                **📋 Alert Details**
 
                 {{ if $alert.Annotations.summary }}
                 > **Summary**: {{ $alert.Annotations.summary }}
