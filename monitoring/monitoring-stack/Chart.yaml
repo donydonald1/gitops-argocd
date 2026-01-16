@@ -12,28 +12,28 @@ dependencies:
   version: "77.12.0"
   repository: "https://prometheus-community.github.io/helm-charts"
 
-- name: thanos
-  version: "15.7.1"
-  repository: "https://charts.bitnami.com/bitnami"
-  alias: thanos
+# - name: thanos
+#   version: "15.7.1"
+#   repository: "https://charts.bitnami.com/bitnami"
+#   alias: thanos
 
-- name: loki
-  version: "6.42.0" # pin to what you test
-  repository: "https://grafana.github.io/helm-charts"
-  alias: loki
+# - name: loki
+#   version: "6.42.0" # pin to what you test
+#   repository: "https://grafana.github.io/helm-charts"
+#   alias: loki
 
-# NEW: Tempo (single-binary chart)
-- name: tempo
-  version: "1.0.0" # pin to what you test
-  repository: "https://grafana.github.io/helm-charts"
-  alias: tempo
+# # NEW: Tempo (single-binary chart)
+# - name: tempo
+#   version: "1.0.0" # pin to what you test
+#   repository: "https://grafana.github.io/helm-charts"
+#   alias: tempo
 
-- name: promtail
-  version: "6.17.0"
-  repository: "https://grafana.github.io/helm-charts"
-  alias: promtail
+# - name: promtail
+#   version: "6.17.0"
+#   repository: "https://grafana.github.io/helm-charts"
+#   alias: promtail
 
-- name: alloy
-  version: "1.3.0"
-  repository: "https://grafana.github.io/helm-charts"
-  alias: alloy
+# - name: alloy
+#   version: "1.3.0"
+#   repository: "https://grafana.github.io/helm-charts"
+#   alias: alloy
