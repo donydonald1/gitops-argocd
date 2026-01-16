@@ -26,6 +26,8 @@ rancher-monitoring:
   # ─────────────────────────────────────────────────────────────────────────────
   grafana:
     enabled: true
+    # IMPORTANT: This must be rancher-monitoring-grafana for Rancher UI integration
+    fullnameOverride: "rancher-monitoring-grafana"
 
     env:
       GF_SERVER_ROOT_URL: https://grafana.ops.techsecom.io
