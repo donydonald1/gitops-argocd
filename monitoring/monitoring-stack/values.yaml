@@ -2025,7 +2025,9 @@ kube-prometheus-stack:
     thanosRulerInstanceNamespaces: []
     thanosRulerInstanceSelector: ''
     tls:
-      enabled: true
+      # Disable TLS for prometheus-operator - requires admission webhook secret
+      # Enable once cert-manager integration is configured
+      enabled: false
       internalPort: 10250
       tlsMinVersion: VersionTLS13
     tolerations: []
