@@ -967,6 +967,12 @@ loki:
       shard_streams:
         enabled: true
       split_queries_by_interval: 1h
+      # Increase max entry size to accommodate large audit logs (5MB)
+      max_line_size: 5242880
+      max_line_size_truncate: true
+      # Increase max streams per user to handle audit log cardinality
+      max_global_streams_per_user: 50000
+      max_streams_per_user: 10000
 
     query_scheduler:
       max_outstanding_requests_per_tenant: 4096
@@ -1209,6 +1215,8 @@ promtail:
       # Additional scrape configs for audit logs
       extraScrapeConfigs: |
         # Rancher/RKE2 Audit Logs
+        # Note: Reduced labels to prevent stream explosion. High-cardinality fields
+        # (user, resourceName, resourceNamespace, statusCode) are kept in log line, not as labels
         - job_name: rancher-audit
           static_configs:
             - targets:
@@ -1220,23 +1228,16 @@ promtail:
           pipeline_stages:
             - json:
                 expressions:
-                  auditID: auditID
                   stage: stage
                   verb: verb
-                  user: user.username
                   resource: objectRef.resource
-                  resourceName: objectRef.name
-                  resourceNamespace: objectRef.namespace
-                  statusCode: responseStatus.code
             - drop:
                 source: stage
                 expression: 'RequestReceived'
+            # Only use low-cardinality labels (verb and resource)
             - labels:
                 verb:
                 resource:
-                resourceNamespace:
-                statusCode:
-                user:
         # Linux Audit Logs
         - job_name: linux-audit
           static_configs:
