@@ -643,42 +643,9 @@ kube-prometheus-stack:
       type: Recreate
     enabled: true
     extraConfigmapMounts: []
-    extraContainerVolumes:
-    - emptyDir: {}
-      name: nginx-home
-    - configMap:
-        items:
-        - key: nginx.conf
-          mode: 438
-          path: nginx.conf
-        name: grafana-nginx-proxy-config
-      name: grafana-nginx
-    extraContainers: |
-      - name: grafana-proxy
-        args:
-        - nginx
-        - -g
-        - daemon off;
-        - -c
-        - /nginx/nginx.conf
-        image: "docker.io/rancher/mirrored-library-nginx:1.27.2-alpine"
-        ports:
-        - containerPort: 8080
-          name: nginx-http
-          protocol: TCP
-        volumeMounts:
-        - mountPath: /nginx
-          name: grafana-nginx
-        - mountPath: /var/cache/nginx
-          name: nginx-home
-        securityContext:
-          runAsUser: 101
-          runAsGroup: 101
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
-          capabilities:
-            drop:
-              - ALL
+    # Nginx proxy removed - Rancher-specific, not supported by upstream chart
+    extraContainerVolumes: []
+    extraContainers: ""
     forceDeployDashboards: false
     forceDeployDatasources: false
     grafana.ini:
@@ -774,8 +741,8 @@ kube-prometheus-stack:
       ipFamilyPolicy: ''
       nodePort: 30950
       port: 80
-      portName: nginx-http
-      targetPort: 8080
+      portName: http
+      targetPort: 3000
       type: ClusterIP
     serviceAccount:
       autoMount: true
