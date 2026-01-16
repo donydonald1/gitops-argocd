@@ -613,6 +613,8 @@ kube-prometheus-stack:
     seLinux:
       enabled: false
   grafana:
+    # Disable secret leak check since we use AVP placeholders
+    assertNoLeakedSecrets: false
     additionalDataSources: []
     env:
       GF_SERVER_ROOT_URL: https://grafana.ops.techsecom.io
@@ -658,7 +660,7 @@ kube-prometheus-stack:
         - daemon off;
         - -c
         - /nginx/nginx.conf
-        image: "{{ template "system_default_registry" . }}{{ .Values.proxy.image.repository }}:{{ .Values.proxy.image.tag }}"
+        image: "docker.io/rancher/mirrored-library-nginx:1.27.2-alpine"
         ports:
         - containerPort: 8080
           name: nginx-http
@@ -1423,7 +1425,7 @@ kube-prometheus-stack:
           - daemon off;
           - -c
           - /nginx/nginx.conf
-          image: "{{ template "system_default_registry" . }}{{ .Values.prometheus.prometheusSpec.proxy.image.repository }}:{{ .Values.prometheus.prometheusSpec.proxy.image.tag }}"
+          image: "docker.io/rancher/mirrored-library-nginx:1.27.2-alpine"
           ports:
           - containerPort: 8081
             name: nginx-http
