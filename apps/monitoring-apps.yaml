@@ -27,10 +27,10 @@ spec:
       #     - "values.yaml"
 
       - name: monitoring-stack
-        namespace: monitoring
+        namespace: cattle-monitoring-system
         serverSideApply: true
-        SkipCRDs: true
-        imageList: "prometheus=quay.io/prometheus/prometheus, alertmanager=quay.io/prometheus/alertmanager, grafana=grafana/grafana"
+        SkipCRDs: false
+        imageList: "prometheus=rancher/mirrored-prometheus-prometheus, alertmanager=rancher/mirrored-prometheus-alertmanager, grafana=rancher/mirrored-grafana-grafana"
         helm:
           valueFiles:
           - "values.yaml"
