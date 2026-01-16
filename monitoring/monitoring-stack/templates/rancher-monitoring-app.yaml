@@ -1,0 +1,19 @@
+# This resource registers the monitoring stack with Rancher's catalog system
+# so that Rancher UI recognizes and displays the monitoring dashboards
+apiVersion: catalog.cattle.io/v1
+kind: App
+metadata:
+  name: rancher-monitoring
+  namespace: cattle-monitoring-system
+  labels:
+    catalog.cattle.io/managed: "true"
+spec:
+  chart:
+    metadata:
+      name: rancher-monitoring
+      version: "105.2.1+up66.7.1-rancher.14"
+  info:
+    status: deployed
+  name: rancher-monitoring
+  namespace: cattle-monitoring-system
+  values: {}
