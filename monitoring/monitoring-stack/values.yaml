@@ -548,6 +548,12 @@ rancher-monitoring:
         {{- end -}}
 
   # ─────────────────────────────────────────────────────────────────────────────
+  # Prometheus Adapter (disable legacy v1beta1 API which is removed in K8s 1.22+)
+  # ─────────────────────────────────────────────────────────────────────────────
+  prometheus-adapter:
+    enabled: false
+
+  # ─────────────────────────────────────────────────────────────────────────────
   # Prometheus Operator Configuration
   # ─────────────────────────────────────────────────────────────────────────────
   prometheusOperator:
@@ -712,7 +718,8 @@ rancher-monitoring:
       kubeApiserverBurnrate: true
       kubeApiserverHistogram: true
       kubeApiserverSlos: true
-      kubeControllerManager: true
+      # Disable kubeControllerManager rules - RKE2 uses different metrics endpoint
+      kubeControllerManager: false
       kubePrometheusGeneral: true
       kubePrometheusNodeRecording: true
       kubeProxy: true
