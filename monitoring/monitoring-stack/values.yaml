@@ -23,7 +23,7 @@ kube-prometheus-stack:
       containers: []
       dnsConfig: {}
       dnsPolicy: ''
-      externalUrl: alertmanager.ops.techsecom.io
+      externalUrl: https://alertmanager.ops.techsecom.io
       forceEnableClusterMode: true
       image:
         pullPolicy: IfNotPresent
