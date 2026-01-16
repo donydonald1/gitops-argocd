@@ -1,0 +1,21 @@
+dependencies:
+- name: rancher-monitoring
+  repository: https://charts.rancher.io
+  version: 105.2.1+up66.7.1-rancher.14
+- name: thanos
+  repository: https://charts.bitnami.com/bitnami
+  version: 15.7.25
+- name: loki
+  repository: https://grafana.github.io/helm-charts
+  version: 6.29.0
+- name: tempo
+  repository: https://grafana.github.io/helm-charts
+  version: 1.18.2
+- name: promtail
+  repository: https://grafana.github.io/helm-charts
+  version: 6.16.6
+- name: alloy
+  repository: https://grafana.github.io/helm-charts
+  version: 0.12.1
+digest: sha256:777285c9960d5003290f34c4aedd70564cc7f207bcce9fd5b7a50c30e98ac0e9
+generated: "2026-01-16T12:33:26.825269-06:00"
