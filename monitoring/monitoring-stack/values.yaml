@@ -1266,8 +1266,17 @@ promtail:
             - source_labels: ['__journal_priority_keyword']
               target_label: 'level'
 
-  # Extra volumes for audit and journal logs (pods volume already exists in chart)
-  extraVolumes:
+  # Override default volumes to include all needed log paths
+  defaultVolumes:
+    - name: run
+      hostPath:
+        path: /run/promtail
+    - name: containers
+      hostPath:
+        path: /var/lib/docker/containers
+    - name: pods
+      hostPath:
+        path: /var/log/pods
     - name: journal
       hostPath:
         path: /var/log/journal
@@ -1281,7 +1290,15 @@ promtail:
       hostPath:
         path: /var/log/rancher
 
-  extraVolumeMounts:
+  defaultVolumeMounts:
+    - name: run
+      mountPath: /run/promtail
+    - name: containers
+      mountPath: /var/lib/docker/containers
+      readOnly: true
+    - name: pods
+      mountPath: /var/log/pods
+      readOnly: true
     - name: journal
       mountPath: /var/log/journal
       readOnly: true
