@@ -188,7 +188,7 @@ rancher-monitoring:
         uid: thanos
         type: prometheus
         access: proxy
-        url: http://clover-monitoring-thanos-query.cattle-monitoring-system.svc.cluster.local:9090
+        url: http://monitoring-stack-thanos-query.cattle-monitoring-system.svc.cluster.local:9090
         isDefault: false
         jsonData:
           httpMethod: POST
@@ -201,7 +201,7 @@ rancher-monitoring:
         uid: loki
         type: loki
         access: proxy
-        url: http://clover-monitoring-loki-gateway.cattle-monitoring-system.svc.cluster.local
+        url: http://monitoring-stack-loki-gateway.cattle-monitoring-system.svc.cluster.local
         isDefault: false
         jsonData:
           httpHeaderName1: "X-scope-OrgID"
@@ -1075,7 +1075,7 @@ promtail:
     logLevel: info
     serverPort: 3101
     clients:
-      - url: http://clover-monitoring-loki-gateway.cattle-monitoring-system.svc.cluster.local/loki/api/v1/push
+      - url: http://monitoring-stack-loki-gateway.cattle-monitoring-system.svc.cluster.local/loki/api/v1/push
         backoff_config:
           min_period: 500ms
           max_period: 5m
@@ -1192,7 +1192,7 @@ alloy:
 
         loki.write "endpoint" {
           endpoint {
-            url = "http://clover-monitoring-loki-gateway.cattle-monitoring-system.svc.cluster.local/loki/api/v1/push"
+            url = "http://monitoring-stack-loki-gateway.cattle-monitoring-system.svc.cluster.local/loki/api/v1/push"
             batch_size = "1MB"
             batch_wait = "1s"
           }
