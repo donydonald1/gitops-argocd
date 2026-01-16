@@ -1266,6 +1266,7 @@ promtail:
             - source_labels: ['__journal_priority_keyword']
               target_label: 'level'
 
+  # Extra volumes for audit and journal logs (pods volume already exists in chart)
   extraVolumes:
     - name: journal
       hostPath:
@@ -1279,9 +1280,6 @@ promtail:
     - name: rancher-audit-logs
       hostPath:
         path: /var/log/rancher
-    - name: pods
-      hostPath:
-        path: /var/log/pods
 
   extraVolumeMounts:
     - name: journal
@@ -1295,9 +1293,6 @@ promtail:
       readOnly: true
     - name: rancher-audit-logs
       mountPath: /var/log/rancher
-      readOnly: true
-    - name: pods
-      mountPath: /var/log/pods
       readOnly: true
 
   serviceMonitor:
