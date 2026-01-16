@@ -1760,6 +1760,10 @@ kube-prometheus-stack:
     releaseLabel: true
   prometheusOperator:
     admissionWebhooks:
+      # Disable admission webhooks - ArgoCD doesn't support Helm hooks properly
+      # The webhook jobs fail to create the TLS secret needed by the operator
+      # Re-enable once the operator is stable or use cert-manager
+      enabled: false
       annotations: {}
       caBundle: ''
       certManager:
@@ -1856,7 +1860,6 @@ kube-prometheus-stack:
           internalPort: 10250
           tlsMinVersion: VersionTLS13
         tolerations: []
-      enabled: true
       failurePolicy: ''
       matchConditions: {}
       mutatingWebhookConfiguration:
