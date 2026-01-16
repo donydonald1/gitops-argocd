@@ -353,6 +353,7 @@ data:
       "templating": {
         "list": [
           {
+            "allValue": ".+",
             "current": {},
             "datasource": {
               "type": "loki",
@@ -373,6 +374,7 @@ data:
             "type": "query"
           },
           {
+            "allValue": ".+",
             "current": {},
             "datasource": {
               "type": "loki",
@@ -393,6 +395,7 @@ data:
             "type": "query"
           },
           {
+            "allValue": ".+",
             "current": {},
             "datasource": {
               "type": "loki",
