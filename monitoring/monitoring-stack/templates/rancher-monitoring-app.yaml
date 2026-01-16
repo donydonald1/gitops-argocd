@@ -10,10 +10,30 @@ metadata:
 spec:
   chart:
     metadata:
+      apiVersion: v2
+      appVersion: 108.0.1
+      description: Collects several related Helm charts, Grafana dashboards, and Prometheus rules combined with documentation and scripts to provide easy to operate end-to-end Kubernetes cluster monitoring with Prometheus using the Prometheus Operator.
+      home: https://github.com/prometheus-operator/kube-prometheus
+      icon: https://raw.githubusercontent.com/prometheus/prometheus.github.io/master/assets/prometheus_logo-cb55bb5c346.png
+      keywords:
+      - prometheus
+      - monitoring
+      - alerting
+      - metrics
+      - grafana
       name: rancher-monitoring
-      version: "105.2.1+up66.7.1-rancher.14"
+      sources:
+      - https://github.com/prometheus-community/helm-charts
+      - https://github.com/prometheus-operator/kube-prometheus
+      version: "108.0.1+up77.9.1-rancher.10"
+  helmVersion: 3
   info:
+    description: Install complete
     status: deployed
   name: rancher-monitoring
   namespace: cattle-monitoring-system
-  values: {}
+  values:
+    global:
+      cattle:
+        clusterId: local
+        clusterName: ops-dc-tx-rke2-mgmt-prod

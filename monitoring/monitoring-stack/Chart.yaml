@@ -7,9 +7,9 @@ appVersion: "1.0.0"
 
 dependencies:
 # Rancher Monitoring - integrates with Rancher UI
-# Version 105.2.1 is based on kube-prometheus-stack 66.7.1
+# Version 108.0.1 is based on kube-prometheus-stack 77.9.1
 - name: rancher-monitoring
-  version: "105.2.1+up66.7.1-rancher.14"
+  version: "108.0.1+up77.9.1-rancher.10"
   repository: "https://charts.rancher.io"
 
 # Bitnami Thanos for long-term storage and HA queries
