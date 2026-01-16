@@ -1417,32 +1417,32 @@ kube-prometheus-stack:
       arbitraryFSAccessThroughSMs: false
       automountServiceAccountToken: true
       configMaps: []
-      containers: |
-        - name: prometheus-proxy
-          args:
-          - nginx
-          - -g
-          - daemon off;
-          - -c
-          - /nginx/nginx.conf
-          image: "docker.io/rancher/mirrored-library-nginx:1.27.2-alpine"
-          ports:
-          - containerPort: 8081
-            name: nginx-http
-            protocol: TCP
-          volumeMounts:
-          - mountPath: /nginx
-            name: prometheus-nginx
-          - mountPath: /var/cache/nginx
-            name: nginx-home
-          securityContext:
-            runAsUser: 101
-            runAsGroup: 101
-            allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: true
-            capabilities:
-              drop:
-                - ALL
+      containers:
+      - name: prometheus-proxy
+        args:
+        - nginx
+        - -g
+        - daemon off;
+        - -c
+        - /nginx/nginx.conf
+        image: "docker.io/rancher/mirrored-library-nginx:1.27.2-alpine"
+        ports:
+        - containerPort: 8081
+          name: nginx-http
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /nginx
+          name: prometheus-nginx
+        - mountPath: /var/cache/nginx
+          name: nginx-home
+        securityContext:
+          runAsUser: 101
+          runAsGroup: 101
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
       disableCompaction: false
       dnsConfig: {}
       dnsPolicy: ''
