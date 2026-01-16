@@ -599,7 +599,8 @@ kube-prometheus-stack:
         enabled: false
     disableProxyIPv6: false
     imagePullSecrets: []
-    imageRegistry: docker.io
+    # Let subcharts use their default registries
+    imageRegistry: ""
     kubectl:
       pullPolicy: IfNotPresent
       repository: rancher/kuberlr-kubectl
