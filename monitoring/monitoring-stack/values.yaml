@@ -27,7 +27,8 @@ kube-prometheus-stack:
       forceEnableClusterMode: true
       image:
         pullPolicy: IfNotPresent
-        repository: rancher/mirrored-prometheus-alertmanager
+        registry: quay.io
+        repository: prometheus/alertmanager
         sha: ''
         tag: v0.28.1
       initContainers: []
@@ -1415,7 +1416,8 @@ kube-prometheus-stack:
       ignoreNamespaceSelectors: false
       image:
         pullPolicy: IfNotPresent
-        repository: rancher/prom-prometheus
+        registry: quay.io
+        repository: prometheus/prometheus
         tag: v3.5.0
       initContainers: []
       listenLocal: false
@@ -1872,7 +1874,8 @@ kube-prometheus-stack:
     hostNetwork: false
     image:
       pullPolicy: IfNotPresent
-      repository: rancher/mirrored-prometheus-operator-prometheus-operator
+      registry: quay.io
+      repository: prometheus-operator/prometheus-operator
       sha: ''
       tag: v0.85.0
     kubeletEndpointSliceEnabled: false
@@ -1905,7 +1908,8 @@ kube-prometheus-stack:
     prometheusConfigReloader:
       enableProbe: false
       image:
-        repository: rancher/mirrored-prometheus-operator-prometheus-config-reloader
+        registry: quay.io
+        repository: prometheus-operator/prometheus-config-reloader
         sha: ''
         tag: v0.80.1
       resources: {}
