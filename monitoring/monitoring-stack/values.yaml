@@ -282,6 +282,11 @@ rancher-monitoring:
       thanos:
         image: rancher/mirrored-thanos-thanos:v0.39.2
         version: "v0.39.2"
+        # Object storage config for shipping blocks to MinIO
+        objectStorageConfig:
+          existingSecret:
+            name: thanos-objstore-secret
+            key: objstore.yml
 
       enableFeatures:
         - auto-gomemlimit
