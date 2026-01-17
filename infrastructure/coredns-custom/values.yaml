@@ -1,9 +1,0 @@
-# Split-horizon DNS configuration
-# This chart configures CoreDNS to rewrite external hostnames to internal services
-# Enables Harbor S3 redirect by routing s3.ops.techsecom.io to internal HTTPS proxy
-
-# DNS rewrites are configured in the Corefile template:
-# - s3.ops.techsecom.io -> minio-https.minio.svc.cluster.local (HTTPS on 443)
-
-# The minio-https service is created by the minio chart's internal-https-proxy.yaml
-# It provides TLS termination and forwards to MinIO's HTTP port 9000
