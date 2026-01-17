@@ -105,43 +105,42 @@ kube-prometheus-stack:
         mountPath: /etc/secrets
         readOnly: true
 
-    extraEnvFrom:
-      - secretRef:
-          name: grafana-user-secret
+    # Environment variables from secrets
+    envFromSecrets:
+      - name: grafana-user-secret
+      - name: grafana-oauth-secret
 
+    # Additional env vars with valueFrom
+    envValueFrom:
+      GF_DATABASE_USER:
+        secretKeyRef:
+          name: grafana-user-secret
+          key: username
+      GF_AUTH_GENERIC_OAUTH_CLIENT_ID:
+        secretKeyRef:
+          name: grafana-oauth-secret
+          key: client_id
+      GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET:
+        secretKeyRef:
+          name: grafana-oauth-secret
+          key: client_secret
+      GF_AUTH_GENERIC_OAUTH_AUTH_URL:
+        secretKeyRef:
+          name: grafana-oauth-secret
+          key: auth_url
+      GF_AUTH_GENERIC_OAUTH_TOKEN_URL:
+        secretKeyRef:
+          name: grafana-oauth-secret
+          key: token_url
+      GF_AUTH_GENERIC_OAUTH_API_URL:
+        secretKeyRef:
+          name: grafana-oauth-secret
+          key: api_url
+
+    # Simple env vars
     extraEnv:
-      - name: GF_DATABASE_USER
-        valueFrom:
-          secretKeyRef:
-            name: grafana-user-secret
-            key: username
       - name: GF_DATABASE_PASSWORD__FILE
         value: /etc/secrets/password
-      - name: GF_AUTH_GENERIC_OAUTH_CLIENT_ID
-        valueFrom:
-          secretKeyRef:
-            name: grafana-oauth-secret
-            key: client_id
-      - name: GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET
-        valueFrom:
-          secretKeyRef:
-            name: grafana-oauth-secret
-            key: client_secret
-      - name: GF_AUTH_GENERIC_OAUTH_AUTH_URL
-        valueFrom:
-          secretKeyRef:
-            name: grafana-oauth-secret
-            key: auth_url
-      - name: GF_AUTH_GENERIC_OAUTH_TOKEN_URL
-        valueFrom:
-          secretKeyRef:
-            name: grafana-oauth-secret
-            key: token_url
-      - name: GF_AUTH_GENERIC_OAUTH_API_URL
-        valueFrom:
-          secretKeyRef:
-            name: grafana-oauth-secret
-            key: api_url
 
     ingress:
       enabled: true
