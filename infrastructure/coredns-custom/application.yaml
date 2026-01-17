@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: coredns-custom
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"  # Deploy early - DNS is critical
+    notifications.argoproj.io/subscribe.on-sync-succeeded.telegram: "-1001726711150"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/donydonald1/gitops-argocd.git
+    targetRevision: HEAD
+    path: infrastructure/coredns-custom
+  destination:
+    name: in-cluster
+    namespace: kube-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=false
+      - Replace=true  # Required to override RKE2 managed ConfigMap
+      - ServerSideApply=false

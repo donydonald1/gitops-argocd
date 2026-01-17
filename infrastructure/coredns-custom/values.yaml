@@ -1,0 +1,12 @@
+# Split-horizon DNS configuration
+# These entries allow internal cluster traffic to resolve to internal IPs
+# while external traffic uses public DNS
+
+splitHorizonDNS:
+  # MinIO S3 endpoint - resolves to internal service for faster Harbor image pulls
+  - host: s3.ops.techsecom.io
+    ip: 10.43.126.156  # kubectl get svc -n minio minio -o jsonpath='{.spec.clusterIP}'
+
+  # Add more entries as needed:
+  # - host: minio.ops.techsecom.io
+  #   ip: 10.43.x.x
