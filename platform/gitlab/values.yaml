@@ -52,11 +52,16 @@ gitlab:
 
     sidekiq:
       maxReplicas: 10
-      minReplicas: 1
+      minReplicas: 3
+      # Increased concurrency for faster background job processing
+      concurrency: 25
       resources:
         requests:
+          cpu: 2
+          memory: 4Gi
+        limits:
           cpu: 4
-          memory: 6Gi
+          memory: 8Gi
       readinessProbe:
         initialDelaySeconds: 60
         periodSeconds: 20
@@ -106,11 +111,35 @@ gitlab:
       ingress:
         tls:
           secretName: webservice-tls-secret
-      minReplicas: 1
+      # Increased minReplicas for better load distribution
+      minReplicas: 3
+      # Puma worker/thread tuning for faster response times
+      puma:
+        threads:
+          min: 4
+          max: 8
+        workerProcesses: 4
+        workerMaxMemory: 2048
+        disableWorkerKiller: false
       workhorse:
         monitoring:
           exporter:
             enabled: true
+        # Workhorse tuning
+        resources:
+          requests:
+            cpu: 200m
+            memory: 256Mi
+          limits:
+            cpu: 1
+            memory: 1Gi
+      resources:
+        requests:
+          cpu: 1
+          memory: 4Gi
+        limits:
+          cpu: 4
+          memory: 8Gi
 
   gitlab-zoekt:
     install: false
