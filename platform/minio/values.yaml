@@ -23,6 +23,8 @@ minio:
     runAsUser: 0
     runAsGroup: 0
     fsGroup: 0
+    # Prevent recursive chown on large volumes - only change ownership if root differs
+    fsGroupChangePolicy: OnRootMismatch
   ingress:
     enabled: true
     ingressClassName: nginx
