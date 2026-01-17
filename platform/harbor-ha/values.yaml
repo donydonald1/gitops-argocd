@@ -277,12 +277,19 @@ harbor:
     resourcePolicy: "keep"
     imageChartStorage:
       type: "s3"
-      # https://github.com/goharbor/harbor-helm/issues/1318
+      # Disable S3 redirect - in-cluster pulls are faster through Harbor proxy
+      # than routing through external Cloudflare endpoint
+      # See: https://github.com/goharbor/harbor-helm/issues/1318
       disableredirect: true
       s3:
         bucket: harbor
         existingSecret: harbor-s3
         regionendpoint: "http://minio.minio.svc.cluster.local:9000"
+        # Performance tuning: increase chunk size for faster large blob transfers
+        chunksize: "104857600"
+        multipartcopychunksize: "104857600"
+        multipartcopymaxconcurrency: 100
+        multipartcopythresholdsize: "104857600"
 
   portal:
     replicas: 3
