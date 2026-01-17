@@ -336,7 +336,8 @@ data:
                 "type": "loki",
                 "uid": "loki"
               },
-              "expr": "{job=\"rancher-audit\"} | verb=~\"$verb\" | resource=~\"$resource\"",
+              "expr": "{job=\"rancher-audit\", verb=~\"${verb:regex}\", resource=~\"${resource:regex}\"}",
+              "queryType": "range",
               "refId": "A"
             }
           ],
