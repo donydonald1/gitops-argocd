@@ -277,14 +277,16 @@ harbor:
     resourcePolicy: "keep"
     imageChartStorage:
       type: "s3"
-      # S3 redirect disabled - internal MinIO service is HTTP on port 9000
-      # External clients would fail TLS when redirected to internal endpoint
-      # See: https://github.com/goharbor/harbor-helm/issues/1318
-      disableredirect: true
+      # S3 redirect enabled - clients download blobs directly from MinIO
+      # Split-horizon DNS (coredns-custom) rewrites s3.ops.techsecom.io to
+      # minio-https.minio.svc.cluster.local for internal HTTPS access
+      # External clients use Cloudflare -> ingress -> MinIO
+      disableredirect: false
       s3:
         bucket: harbor
         existingSecret: harbor-s3
-        regionendpoint: "http://minio.minio.svc.cluster.local:9000"
+        # External URL - CoreDNS rewrites this to internal HTTPS service for cluster traffic
+        regionendpoint: "https://s3.ops.techsecom.io"
         # Performance tuning: increase chunk size for faster large blob transfers
         chunksize: "104857600"
         multipartcopychunksize: "104857600"

@@ -1,12 +1,9 @@
 # Split-horizon DNS configuration
-# These entries allow internal cluster traffic to resolve to internal IPs
-# while external traffic uses public DNS
+# This chart configures CoreDNS to rewrite external hostnames to internal services
+# Enables Harbor S3 redirect by routing s3.ops.techsecom.io to internal HTTPS proxy
 
-splitHorizonDNS:
-  # MinIO S3 endpoint - resolves to internal service for faster Harbor image pulls
-  - host: s3.ops.techsecom.io
-    ip: 10.43.126.156  # kubectl get svc -n minio minio -o jsonpath='{.spec.clusterIP}'
+# DNS rewrites are configured in the Corefile template:
+# - s3.ops.techsecom.io -> minio-https.minio.svc.cluster.local (HTTPS on 443)
 
-  # Add more entries as needed:
-  # - host: minio.ops.techsecom.io
-  #   ip: 10.43.x.x
+# The minio-https service is created by the minio chart's internal-https-proxy.yaml
+# It provides TLS termination and forwards to MinIO's HTTP port 9000

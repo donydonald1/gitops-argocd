@@ -18,14 +18,9 @@ data:
             lameduck 10s
         }
         ready
-        # Split-horizon DNS - resolve external hostnames to internal service IPs
-        # This allows in-cluster traffic to bypass external routing (Cloudflare)
-        hosts {
-            {{- range .Values.splitHorizonDNS }}
-            {{ .ip }} {{ .host }}
-            {{- end }}
-            fallthrough
-        }
+        # Split-horizon DNS - rewrite external hostnames to internal services
+        # s3.ops.techsecom.io -> minio-https.minio.svc.cluster.local (HTTPS on 443)
+        rewrite name s3.ops.techsecom.io minio-https.minio.svc.cluster.local
         kubernetes cluster.local cluster.local in-addr.arpa ip6.arpa {
             pods insecure
             fallthrough in-addr.arpa ip6.arpa

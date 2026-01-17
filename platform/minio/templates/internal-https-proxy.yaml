@@ -1,0 +1,198 @@
+# Internal HTTPS proxy for MinIO S3 API
+# This enables Harbor S3 redirect by providing HTTPS on port 443 internally
+# Split-horizon DNS (coredns-custom) resolves s3.ops.techsecom.io to this service IP
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: minio-internal-tls
+  namespace: minio
+spec:
+  secretName: minio-internal-tls
+  duration: 8760h  # 1 year
+  renewBefore: 720h  # 30 days
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  dnsNames:
+    - s3.ops.techsecom.io
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: minio-https-proxy-config
+  namespace: minio
+data:
+  nginx.conf: |
+    worker_processes auto;
+    error_log /dev/stderr warn;
+    pid /tmp/nginx.pid;
+
+    events {
+        worker_connections 4096;
+        use epoll;
+        multi_accept on;
+    }
+
+    http {
+        # Performance tuning
+        sendfile on;
+        tcp_nopush on;
+        tcp_nodelay on;
+        keepalive_timeout 65;
+        keepalive_requests 10000;
+
+        # Buffer sizes for large uploads
+        client_max_body_size 0;
+        client_body_buffer_size 128k;
+        proxy_buffering off;
+        proxy_request_buffering off;
+
+        # Timeouts for large file transfers
+        proxy_connect_timeout 300s;
+        proxy_send_timeout 300s;
+        proxy_read_timeout 300s;
+
+        # Logging
+        access_log /dev/stdout;
+
+        # Upstream MinIO
+        upstream minio {
+            server minio.minio.svc.cluster.local:9000;
+            keepalive 256;
+        }
+
+        server {
+            listen 443 ssl http2;
+            server_name s3.ops.techsecom.io;
+
+            # TLS configuration
+            ssl_certificate /etc/nginx/ssl/tls.crt;
+            ssl_certificate_key /etc/nginx/ssl/tls.key;
+            ssl_protocols TLSv1.2 TLSv1.3;
+            ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384;
+            ssl_prefer_server_ciphers off;
+            ssl_session_cache shared:SSL:10m;
+            ssl_session_timeout 1d;
+
+            # Required for S3 signature verification
+            ignore_invalid_headers off;
+
+            location / {
+                proxy_pass http://minio;
+                proxy_http_version 1.1;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+                proxy_set_header Connection "";
+
+                # Preserve S3 headers
+                proxy_pass_request_headers on;
+
+                # Chunked transfer encoding for streaming
+                chunked_transfer_encoding off;
+            }
+
+            # Health check endpoint
+            location /health {
+                return 200 'ok';
+                add_header Content-Type text/plain;
+            }
+        }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio-https-proxy
+  namespace: minio
+  labels:
+    app: minio-https-proxy
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: minio-https-proxy
+  template:
+    metadata:
+      labels:
+        app: minio-https-proxy
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.27-alpine
+          ports:
+            - containerPort: 443
+              name: https
+          volumeMounts:
+            - name: config
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+              readOnly: true
+            - name: tls
+              mountPath: /etc/nginx/ssl
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 443
+              scheme: HTTPS
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 443
+              scheme: HTTPS
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 101
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+      volumes:
+        - name: config
+          configMap:
+            name: minio-https-proxy-config
+        - name: tls
+          secret:
+            secretName: minio-internal-tls
+        - name: tmp
+          emptyDir: {}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: minio-https-proxy
+                topologyKey: kubernetes.io/hostname
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio-https
+  namespace: minio
+  labels:
+    app: minio-https-proxy
+spec:
+  type: ClusterIP
+  ports:
+    - port: 443
+      targetPort: 443
+      protocol: TCP
+      name: https
+  selector:
+    app: minio-https-proxy
