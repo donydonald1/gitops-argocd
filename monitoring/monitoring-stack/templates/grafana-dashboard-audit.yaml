@@ -336,7 +336,7 @@ data:
                 "type": "loki",
                 "uid": "loki"
               },
-              "expr": "{job=\"rancher-audit\", verb=~\"$verb\", resource=~\"$resource\"}",
+              "expr": "{job=\"rancher-audit\"} | verb=~\"$verb\" | resource=~\"$resource\"",
               "refId": "A"
             }
           ],
@@ -349,7 +349,7 @@ data:
       "templating": {
         "list": [
           {
-            "allValue": ".+",
+            "allValue": ".*",
             "current": {},
             "datasource": {
               "type": "loki",
@@ -370,7 +370,7 @@ data:
             "type": "query"
           },
           {
-            "allValue": ".+",
+            "allValue": ".*",
             "current": {},
             "datasource": {
               "type": "loki",
