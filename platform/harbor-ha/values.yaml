@@ -10,18 +10,33 @@ redis:
     existingSecret: redis-creds
     existingSecretPasswordKey: REDIS_PASSWORD
     sentinel: false
+  # Performance tuning for Harbor Redis
   commonConfiguration: |-
+    maxmemory 4gb
     maxmemory-policy volatile-lru
     appendonly yes
     save 900 1
     save 300 10
     save 60 10000
+    tcp-keepalive 300
+    activerehashing yes
+    lazyfree-lazy-eviction yes
+    lazyfree-lazy-expire yes
+    io-threads 4
+    io-threads-do-reads yes
 
   architecture: replication
   replica:
     replicaCount: 3
     disableCommands:
     - FLUSHDB
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: 2
+        memory: 6Gi
     persistence:
       enabled: true
       storageClass: longhorn
@@ -135,11 +150,11 @@ harbor:
       reloader.stakater.com/auto: "true"
     resources:
       requests:
-        cpu: 100m
-        memory: 256Mi
-      limits:
-        cpu: 1
+        cpu: 500m
         memory: 1Gi
+      limits:
+        cpu: 4
+        memory: 4Gi
     extraEnvVars:
     - name: OIDC_CLIENT_ID
       valueFrom:
@@ -179,13 +194,15 @@ harbor:
       reloader.stakater.com/auto: "true"
     jobLoggers:
     - database
+    # Increased workers for parallel job processing
+    maxJobWorkers: 20
     resources:
       requests:
-        cpu: 100m
-        memory: 256Mi
+        cpu: 500m
+        memory: 512Mi
       limits:
-        cpu: 1
-        memory: 1Gi
+        cpu: 2
+        memory: 2Gi
 
   registry:
     replicas: 3
@@ -204,19 +221,19 @@ harbor:
     registry:
       resources:
         requests:
-          cpu: 100m
-          memory: 256Mi
+          cpu: 500m
+          memory: 1Gi
         limits:
-          cpu: 2
-          memory: 2Gi
+          cpu: 4
+          memory: 8Gi
     controller:
       resources:
         requests:
-          cpu: 100m
-          memory: 256Mi
-        limits:
-          cpu: 1
+          cpu: 200m
           memory: 512Mi
+        limits:
+          cpu: 2
+          memory: 2Gi
     # trivy:
     #   # enabled the flag to enable Trivy scanner
     #   enabled: true
