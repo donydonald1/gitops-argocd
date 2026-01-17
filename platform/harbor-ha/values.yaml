@@ -254,6 +254,11 @@ harbor:
         cert-manager.io/duration: "2160h"
         cert-manager.io/renew-before: "720h"
         nginx.ingress.kubernetes.io/proxy-body-size: "0"
+        # Extended timeouts for large image uploads (e.g., 27GB Windows ISOs)
+        nginx.ingress.kubernetes.io/proxy-connect-timeout: "600"
+        nginx.ingress.kubernetes.io/proxy-send-timeout: "1800"
+        nginx.ingress.kubernetes.io/proxy-read-timeout: "1800"
+        nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
         # external-dns.alpha.kubernetes.io/target: "rke2-manager.techsecom.io"
         # external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
       hosts:
