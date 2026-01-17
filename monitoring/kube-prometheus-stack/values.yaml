@@ -1,4 +1,11 @@
 # ────────────────────────────────────────────────────────────────────────────────
+# Global settings for Bitnami charts (Thanos)
+# ────────────────────────────────────────────────────────────────────────────────
+global:
+  security:
+    allowInsecureImages: true
+
+# ────────────────────────────────────────────────────────────────────────────────
 # kube-prometheus-stack (Prometheus, Alertmanager, Grafana)
 # Community chart - no Rancher dependencies
 # ────────────────────────────────────────────────────────────────────────────────
