@@ -67,7 +67,7 @@ rancher-monitoring:
       server:
         root_url: https://grafana.ops.techsecom.io
       auth.anonymous:
-        org_name: Main Org.
+        enabled: false
       dataproxy:
         max_idle_connections: 500
       security:
