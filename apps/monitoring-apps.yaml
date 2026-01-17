@@ -26,11 +26,21 @@ spec:
       #     valueFiles:
       #     - "values.yaml"
 
-      - name: monitoring-stack
-        namespace: cattle-monitoring-system
+      # OLD Rancher monitoring-stack - DISABLED
+      # - name: monitoring-stack
+      #   namespace: cattle-monitoring-system
+      #   serverSideApply: true
+      #   SkipCRDs: false
+      #   imageList: "prometheus=rancher/mirrored-prometheus-prometheus, alertmanager=rancher/mirrored-prometheus-alertmanager, grafana=rancher/mirrored-grafana-grafana"
+      #   helm:
+      #     valueFiles:
+      #     - "values.yaml"
+
+      # NEW Community kube-prometheus-stack
+      - name: kube-prometheus-stack
+        namespace: monitoring
         serverSideApply: true
         SkipCRDs: false
-        imageList: "prometheus=rancher/mirrored-prometheus-prometheus, alertmanager=rancher/mirrored-prometheus-alertmanager, grafana=rancher/mirrored-grafana-grafana"
         helm:
           valueFiles:
           - "values.yaml"

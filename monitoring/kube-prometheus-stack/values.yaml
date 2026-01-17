@@ -1,316 +1,1248 @@
+# ────────────────────────────────────────────────────────────────────────────────
+# kube-prometheus-stack (Prometheus, Alertmanager, Grafana)
+# Community chart - no Rancher dependencies
+# ────────────────────────────────────────────────────────────────────────────────
 kube-prometheus-stack:
-  cleanPrometheusOperatorObjectNames: true
-  customRules:
-    KubePersistentVolumeFillingUp:
-      #      for: 1h
-      severity: "warning"
-  grafana:
-    enabled: false
-    # forceDeployDatasources: true
-    additionalDataSources:
-    - name: Loki
-      type: loki
-      url: http://loki.logging:3100
+  fullnameOverride: "kps"
 
-  prometheusOperator:
-    admissionWebhooks:
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Grafana Configuration
+  # ─────────────────────────────────────────────────────────────────────────────
+  grafana:
+    enabled: true
+    fullnameOverride: "grafana"
+
+    env:
+      GF_SERVER_ROOT_URL: https://grafana.ops.techsecom.io
+      GF_SECURITY_COOKIE_SAMESITE: lax
+      TZ: America/Chicago
+      GF_DATABASE_TYPE: postgres
+      GF_DATABASE_HOST: cnpg-cluster-rw.cnpg-system.svc.cluster.local:5432
+      GF_DATABASE_NAME: grafana
+      GF_DATABASE_SSL_MODE: disable
+
+    admin:
+      existingSecret: grafana-admin-creds
+      userKey: username
+      passwordKey: password
+
+    plugins:
+      - grafana-exploretraces-app
+
+    assertNoLeakedSecrets: false
+    initChownData:
+      enabled: false
+
+    persistence:
+      enabled: true
+      type: statefulset
+      storageClassName: longhorn
+      accessModes:
+        - ReadWriteOnce
+      size: 10Gi
+
+    service:
+      type: ClusterIP
+      port: 80
+
+    grafana.ini:
+      server:
+        root_url: https://grafana.ops.techsecom.io
+      auth.anonymous:
+        enabled: false
+      dataproxy:
+        max_idle_connections: 500
+      security:
+        allow_embedding: true
+      feature_toggles:
+        provisioning: true
+        kubernetesDashboards: true
+      auth:
+        disable_signout_menu: false
+        oauth_auto_login: true
+        signout_redirect_url: https://grafana.ops.techsecom.io/login/generic_oauth
+      auth.generic_oauth:
+        enabled: true
+        name: OAuth
+        client_id: <path:secret/data/grafana#client_id>
+        client_secret: <path:secret/data/grafana#client_secret>
+        allow_sign_up: true
+        scopes: openid profile email roles
+        auth_url: <path:secret/data/grafana#auth_url>
+        token_url: <path:secret/data/grafana#token_url>
+        api_url: <path:secret/data/grafana#api_url>
+        use_pkce: true
+        use_refresh_token: true
+        role_attribute_path: contains(roles[*], 'admin') && 'Admin' || contains(roles[*], 'editor') && 'Editor' || 'Viewer'
+        role_attribute_strict: false
+        allow_assign_grafana_admin: true
+      users:
+        auto_assign_org: true
+        auto_assign_org_id: 1
+        auto_assign_org_role: Editor
+      auth.basic:
+        enabled: false
+      database:
+        type: postgres
+        host: "cnpg-cluster-rw.cnpg-system.svc.cluster.local:5432"
+        name: grafana
+        user: $__file{/etc/secrets/username}
+        password: $__file{/etc/secrets/password}
+        ssl_mode: disable
+      plugins:
+        allow_loading_unsigned_plugins: grafana-pyroscope-app,grafana-exploretraces-app
+
+    extraSecretMounts:
+      - name: grafana-db-secret
+        secretName: grafana-user-secret
+        mountPath: /etc/secrets
+        readOnly: true
+
+    extraEnvFrom:
+      - secretRef:
+          name: grafana-user-secret
+
+    extraEnv:
+      - name: GF_DATABASE_USER
+        valueFrom:
+          secretKeyRef:
+            name: grafana-user-secret
+            key: username
+      - name: GF_DATABASE_PASSWORD__FILE
+        value: /etc/secrets/password
+
+    ingress:
+      enabled: true
+      ingressClassName: nginx
+      annotations:
+        cert-manager.io/cluster-issuer: "letsencrypt-prod"
+        cert-manager.io/revision-history-limit: "3"
+        external-dns.alpha.kubernetes.io/enabled: "true"
+        cert-manager.io/duration: "2160h"
+        cert-manager.io/renew-before: "720h"
+      hosts:
+        - grafana.ops.techsecom.io
+      tls:
+        - hosts:
+            - grafana.ops.techsecom.io
+          secretName: grafana-cert-tls
+
+    serviceMonitor:
       enabled: true
 
-      annotations:
-        argocd.argoproj.io/hook: PreSync
-        argocd.argoproj.io/hook-delete-policy: HookSucceeded
+    serviceAccount:
+      autoMount: true
+      create: true
 
-      patch:
-        annotations:
-          argocd.argoproj.io/hook: PreSync
-          argocd.argoproj.io/hook-delete-policy: HookSucceeded
+    sidecar:
+      dashboards:
+        enabled: true
+        label: grafana_dashboard
+        labelValue: "1"
+        searchNamespace: ALL
+        provider:
+          allowUiUpdates: false
+      datasources:
+        enabled: true
+        defaultDatasourceEnabled: true
+        label: grafana_datasource
+        labelValue: "1"
 
-      mutatingWebhookConfiguration:
-        annotations:
-          argocd.argoproj.io/hook: PreSync
+    defaultDashboardsEnabled: true
+    defaultDashboardsTimezone: utc
 
-      validatingWebhookConfiguration:
-        annotations:
-          argocd.argoproj.io/hook: PreSync
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+
+    # Additional datasources for Thanos, Loki, Tempo
+    additionalDataSources:
+      - name: Thanos
+        uid: thanos
+        type: prometheus
+        access: proxy
+        url: http://thanos-query.monitoring.svc.cluster.local:9090
+        isDefault: false
+        jsonData:
+          httpMethod: POST
+          exemplarTraceIdDestinations:
+            - datasourceUid: tempo
+              name: Tempo
+        editable: false
+
+      - name: Loki
+        uid: loki
+        type: loki
+        access: proxy
+        url: http://loki-gateway.monitoring.svc.cluster.local
+        isDefault: false
+        jsonData:
+          httpHeaderName1: "X-scope-OrgID"
+          derivedFields:
+            - name: trace_id
+              matcherRegex: '"trace_id"\\s*:\\s*"([a-fA-F0-9\\-]+)"'
+              datasourceUid: tempo
+              internalLink: true
+            - name: traceId
+              matcherRegex: '"traceId"\\s*:\\s*"([a-fA-F0-9\\-]+)"'
+              datasourceUid: tempo
+              internalLink: true
+        editable: false
+
+      - name: Tempo
+        uid: tempo
+        type: tempo
+        access: proxy
+        url: http://tempo.monitoring.svc.cluster.local:3200
+        isDefault: false
+        jsonData:
+          httpMethod: GET
+          tracesToLogsV2:
+            datasourceUid: loki
+          search:
+            hide: false
+          lokiSearch:
+            datasourceUid: loki
+          tracesToLogs:
+            datasourceUid: loki
+            mapTagNamesEnabled: true
+            tags: ["namespace", "pod", "container", "audit", "app"]
+            filterByTraceID: true
+            filterBySpanID: true
+          serviceMap:
+            datasourceUid: thanos
+          nodeGraph:
+            enabled: true
+        editable: false
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Prometheus Configuration
+  # ─────────────────────────────────────────────────────────────────────────────
   prometheus:
+    enabled: true
+
     thanosService:
       enabled: true
-    thanosServiceMonitor:
-      enabled: true
-    prometheusSpec:
-      serviceMonitorSelector: {}
-      externalUrl: https://prometheus.ops.techsecom.io
-      # serviceMonitorSelectorNilUsesHelmValues: false
-      # podMonitorSelectorNilUsesHelmValues: false
-      # probeSelectorNilUsesHelmValues: false
-      # ruleSelectorNilUsesHelmValues: false
-      enableRemoteWriteReceiver: true
-      enableAdminAPI: true
-      walCompression: true
-      replicaExternalLabelName: "replica"
-      replicas: 2
-      thanos:
-        baseImage: quay.io/thanos/thanos
-        version: v0.39.2
-      enableFeatures:
-      - auto-gomemlimit
-      - memory-snapshot-on-shutdown
-      - new-service-discovery-manager
-      retention: 14d
-      retentionSize: 15GB
-      externalLabels:
-        cluster: prod
-      resources:
-        # requests:
-        #   cpu: 1000m
-        limits:
-          memory: 2500Mi
-      storageSpec:
-        volumeClaimTemplate:
-          spec:
-            storageClassName: nfs-csi
-            resources:
-              requests:
-                storage: 60Gi
-      # remoteWrite:
-      # - url: "http://thanos-receive:19291/api/v1/receive"
-      #   name: thanos-receiver
-      #   # enableHttp2: true
-      # additionalRulesForClusterRole:
-      # - apiGroups: [ "" ]
-      #   resources: [ "services/k6-operator-controller-manager-metrics-service" ]
-      #   verbs: [ "get", "list", "watch" ]
+
+    service:
+      type: ClusterIP
+      port: 9090
+
     ingress:
       enabled: true
       pathType: Prefix
       ingressClassName: nginx
       annotations:
-        kubernetes.io/ingress.class: "nginx"
         cert-manager.io/cluster-issuer: letsencrypt-prod
         cert-manager.io/revision-history-limit: "3"
         external-dns.alpha.kubernetes.io/enabled: "true"
         cert-manager.io/duration: "2160h"
         cert-manager.io/renew-before: "720h"
-
-      hosts: [ prometheus.ops.techsecom.io ]
-      tls:
-      - hosts:
+      hosts:
         - prometheus.ops.techsecom.io
-        secretName: prom-server-cert-tls
+      tls:
+        - hosts:
+            - prometheus.ops.techsecom.io
+          secretName: prom-server-cert-tls
 
-    server:
+    prometheusSpec:
+      externalLabels:
+        cluster: "ops-dc-tx-rke2-mgmt-prod"
+
+      # Thanos sidecar for long-term storage
+      thanos:
+        image: quay.io/thanos/thanos:v0.39.2
+        version: "v0.39.2"
+        objectStorageConfig:
+          existingSecret:
+            name: thanos-objstore-secret
+            key: objstore.yml
+
+      enableFeatures:
+        - auto-gomemlimit
+        - memory-snapshot-on-shutdown
+        - new-service-discovery-manager
+        - exemplar-storage
+        - native-histograms
+
+      # Pick up all ServiceMonitors/PodMonitors across namespaces
+      serviceMonitorSelectorNilUsesHelmValues: false
+      podMonitorSelectorNilUsesHelmValues: false
+      ruleSelectorNilUsesHelmValues: false
+      scrapeConfigSelectorNilUsesHelmValues: false
+
+      enableRemoteWriteReceiver: true
+      enableAdminAPI: true
+      replicas: 1
+
+      scrapeInterval: 30s
+      evaluationInterval: 30s
+      retention: 10d
+      retentionSize: 50GiB
+
+      resources:
+        limits:
+          cpu: 2000m
+          memory: 4000Mi
+        requests:
+          cpu: 1000m
+          memory: 2000Mi
+
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 50Gi
+            storageClassName: longhorn
+
+      securityContext:
+        fsGroup: 2000
+        runAsGroup: 2000
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
+
       additionalScrapeConfigs:
-      - job_name: opencost
-        honor_labels: true
-        scrape_interval: 1m
-        scrape_timeout: 10s
-        metrics_path: /metrics
-        scheme: http
-        dns_sd_configs:
-        - names:
-          - opencost.opencost
-          type: "A"
-          port: 9003
-      - job_name: 'kubernetes-pods'
-        kubernetes_sd_configs:
-        - role: pod
-        relabel_configs:
-        - source_labels: [ __meta_kubernetes_pod_annotation_prometheus_io_scrape ]
-          action: keep
-          regex: true
-        - source_labels: [ __meta_kubernetes_pod_annotation_prometheus_io_path ]
-          action: replace
-          target_label: __metrics_path__
-          regex: (.+)
-        - source_labels: [ __address__, __meta_kubernetes_pod_annotation_prometheus_io_port ]
-          action: replace
-          regex: ([^:]+)(?::\d+)?;(\d+)
-          replacement: $1:$2
-          target_label: __address__
-        - action: labelmap
-          regex: __meta_kubernetes_pod_label_(.+)
-        - source_labels: [ __meta_kubernetes_namespace ]
-          action: replace
-          target_label: kubernetes_namespace
-        - source_labels: [ __meta_kubernetes_pod_name ]
-          action: replace
-          target_label: kubernetes_pod_name
-      retention: 30d
+        - job_name: prometheus
+          static_configs:
+            - targets:
+                - localhost:9090
+        - job_name: kubernetes-apiservers
+          kubernetes_sd_configs:
+            - role: endpoints
+          scheme: https
+          tls_config:
+            ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+            insecure_skip_verify: true
+          bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+          relabel_configs:
+            - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+              action: keep
+              regex: default;kubernetes;https
+
+    serviceMonitor:
+      selfMonitor: true
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Alertmanager Configuration
+  # ─────────────────────────────────────────────────────────────────────────────
   alertmanager:
     enabled: true
+
     config:
       global:
         resolve_timeout: 5m
       route:
-        group_by: [ 'alertname', 'job' ]
-        group_wait: 45s
-        group_interval: 10m
-        repeat_interval: 12h
+        group_by: ['alertname', 'job', 'namespace']
+        group_wait: 30s
+        group_interval: 5m
+        repeat_interval: 4h
         receiver: "msteams"
         routes:
-        - receiver: "null" # quote
-          matchers:
-          - alertname =~ "Watchdog"
-        - receiver: "null" # quote
-          matchers:
-          - alertname =~ "InfoInhibitor"
-        - receiver: "msteams"
-          match:
-            severity: critical
-          continue: true
-        - receiver: "msteams"
+          - receiver: "null"
+            matchers:
+              - alertname =~ "Watchdog|InfoInhibitor"
+          - receiver: "msteams-critical"
+            matchers:
+              - severity = "critical"
+            group_wait: 10s
+            group_interval: 1m
+            repeat_interval: 1h
+            continue: false
+          - receiver: "msteams"
+            matchers:
+              - severity = "warning"
+            group_wait: 30s
+            group_interval: 5m
+            repeat_interval: 4h
+          - receiver: "msteams"
       inhibit_rules:
-      - source_matchers:
-        - severity = "critical"
-        target_matchers:
-        - severity = "warning"
-        equal: [ "alertname", "namespace" ]
-      - target_match_re:
-          alertname: '.+Overcommit'
-        source_match:
-          alertname: 'Watchdog'
-        equal: [ 'prometheus' ]
+        - source_matchers:
+            - severity = "critical"
+          target_matchers:
+            - severity = "warning"
+          equal: ["alertname", "namespace"]
+        - target_match_re:
+            alertname: '.+Overcommit'
+          source_match:
+            alertname: 'Watchdog'
+          equal: ['prometheus']
       receivers:
-      - name: "null"
-      - name: "msteams"
-        msteams_configs:
-        - send_resolved: true
-          webhook_url: <path:secret/data/msteams#webhook-url>
-          title: |-
-            🚨 [{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] 
-            (Cluster: {{ .CommonLabels.cluster }})
+        - name: "null"
+        - name: "msteams"
+          msteams_configs:
+            - send_resolved: true
+              webhook_url: <path:secret/data/msteams#webhook-url>
+              title: '{{ if eq .Status "firing" }}🔴{{ else }}🟢{{ end }} [{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}'
+              text: |
+                {{ if eq .Status "firing" }}
+                ⚠️ **ALERT FIRING** - Immediate attention required
+                {{ else }}
+                ✅ **ALERT RESOLVED** - Issue has been remediated
+                {{ end }}
 
-            **📢 Alert Notification - Techsecoms Monitoring**
+                ---
 
-            {{ if eq .Status "firing" }}🔥 **Action Required Immediately!** 🔥{{ else }}✅ **Issue Resolved** ✅{{ end }}
+                **🏷️ Alert Information**
 
-          text: |-
-            **🔔 Alert Details:**
-            {{ range $index, $alert := .Alerts -}}{{ if $index }}---{{ end }}
-            {{ if $alert.Labels.alertname }}
-            **🆘 Alert Name**: {{ $alert.Labels.alertname }}
-            {{ end }}
+                | Field | Value |
+                |-------|-------|
+                | **Cluster** | `{{ .CommonLabels.cluster }}` |
+                | **Alert** | `{{ .CommonLabels.alertname }}` |
+                | **Severity** | {{ if eq .CommonLabels.severity "critical" }}🔴 **CRITICAL**{{ else if eq .CommonLabels.severity "warning" }}🟡 **WARNING**{{ else }}🔵 **{{ .CommonLabels.severity | toUpper }}**{{ end }} |
+                {{ if .CommonLabels.namespace }}| **Namespace** | `{{ .CommonLabels.namespace }}` |{{ end }}
+                {{ if .CommonLabels.service }}| **Service** | `{{ .CommonLabels.service }}` |{{ end }}
 
-            **🛑 Labels:**
-            {{ if $alert.Labels.severity }}
-            - **Severity**: {{ $alert.Labels.severity }}
-            {{ end }}
-            {{ if $alert.Labels.instance }}
-            - **Instance**: {{ $alert.Labels.instance }}
-            {{ end }}
-            {{ if $alert.Labels.namespace }}
-            - **Namespace**: {{ $alert.Labels.namespace }}
-            {{ end }}
-            {{ if $alert.Labels.pod }}
-            - **Pod**: {{ $alert.Labels.pod }}
-            {{ end }}
+                ---
 
-            **📄 Annotations:**
-            {{ if $alert.Annotations.description }}
-            - **Description**: {{ $alert.Annotations.description }}
-            {{ end }}
-            {{ if $alert.Annotations.summary }}
-            - **Summary**: {{ $alert.Annotations.summary }}
-            {{ end }}
+                {{ range $alert := .Alerts }}
 
-            {{ if $alert.GeneratorURL }}
-            🔗 **Source**: [View in AlertManager]({{ $alert.GeneratorURL }})
-            {{ end }}
+                ---
 
-            **📌 Additional Notes:**
-            - Ensure the affected service is reviewed immediately.
-            - Escalate to the **on-call team** if required.
-            - Check related metrics and logs for further debugging.
+                **📋 Alert Details**
 
-            {{ end }}
+                {{ if $alert.Annotations.summary }}
+                > **Summary**: {{ $alert.Annotations.summary }}
+                {{ end }}
+
+                {{ if $alert.Annotations.description }}
+                > **Description**: {{ $alert.Annotations.description }}
+                {{ end }}
+
+                {{ if $alert.Annotations.runbook_url }}
+                📖 **Runbook**: [View Runbook]({{ $alert.Annotations.runbook_url }})
+                {{ end }}
+
+                **Labels:**
+                {{ if $alert.Labels.pod }}- **Pod**: `{{ $alert.Labels.pod }}`{{ end }}
+                {{ if $alert.Labels.container }}- **Container**: `{{ $alert.Labels.container }}`{{ end }}
+                {{ if $alert.Labels.instance }}- **Instance**: `{{ $alert.Labels.instance }}`{{ end }}
+                {{ if $alert.Labels.node }}- **Node**: `{{ $alert.Labels.node }}`{{ end }}
+                {{ if $alert.Labels.job }}- **Job**: `{{ $alert.Labels.job }}`{{ end }}
+
+                **Timestamps:**
+                - **Started**: {{ $alert.StartsAt.Format "2006-01-02 15:04:05 MST" }}
+                {{ if $alert.EndsAt.IsZero | not }}- **Ended**: {{ $alert.EndsAt.Format "2006-01-02 15:04:05 MST" }}{{ end }}
+
+                {{ end }}
+
+                ---
+
+                **🔗 Quick Links**
+
+                - [📊 Grafana Dashboard](https://grafana.ops.techsecom.io)
+                - [🔔 Alertmanager](https://alertmanager.ops.techsecom.io)
+                - [📈 Prometheus](https://prometheus.ops.techsecom.io)
+                - [📝 Loki Logs](https://grafana.ops.techsecom.io/explore?orgId=1&left=%5B%22now-1h%22,%22now%22,%22Loki%22,%7B%7D%5D)
+
+                ---
+
+                **📞 Escalation Path:**
+                1. Check Grafana dashboards for anomalies
+                2. Review logs in Loki for error context
+                3. If critical, escalate to on-call team
+                4. Document incident in tracking system
+        - name: "msteams-critical"
+          msteams_configs:
+            - send_resolved: true
+              webhook_url: <path:secret/data/msteams#webhook-url>
+              title: '🚨 CRITICAL: {{ .CommonLabels.alertname }} on {{ .CommonLabels.cluster }}'
+              text: |
+                **🚨🚨🚨 CRITICAL ALERT - IMMEDIATE ACTION REQUIRED 🚨🚨🚨**
+
+                ---
+
+                | Field | Value |
+                |-------|-------|
+                | **Cluster** | `{{ .CommonLabels.cluster }}` |
+                | **Alert** | `{{ .CommonLabels.alertname }}` |
+                | **Severity** | 🔴 **CRITICAL** |
+                {{ if .CommonLabels.namespace }}| **Namespace** | `{{ .CommonLabels.namespace }}` |{{ end }}
+                {{ if .CommonLabels.pod }}| **Pod** | `{{ .CommonLabels.pod }}` |{{ end }}
+                {{ if .CommonLabels.node }}| **Node** | `{{ .CommonLabels.node }}` |{{ end }}
+
+                ---
+
+                {{ range $index, $alert := .Alerts }}
+                {{ if $alert.Annotations.summary }}> {{ $alert.Annotations.summary }}{{ end }}
+
+                {{ if $alert.Annotations.description }}**Details**: {{ $alert.Annotations.description }}{{ end }}
+
+                **Started**: {{ $alert.StartsAt.Format "2006-01-02 15:04:05 MST" }}
+                {{ end }}
+
+                ---
+
+                **⚡ Immediate Actions:**
+                1. **STOP** - Acknowledge this alert
+                2. **ASSESS** - Check [Grafana](https://grafana.ops.techsecom.io) for impact
+                3. **ACT** - Follow runbook or escalate immediately
+                4. **COMMUNICATE** - Update stakeholders on status
+
+                🔗 [View Alert Source]({{ (index .Alerts 0).GeneratorURL }})
+
+    ingress:
+      enabled: true
+      pathType: Prefix
+      ingressClassName: nginx
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+        cert-manager.io/revision-history-limit: "3"
+        external-dns.alpha.kubernetes.io/enabled: "true"
+        cert-manager.io/duration: "2160h"
+        cert-manager.io/renew-before: "720h"
+      hosts:
+        - alertmanager.ops.techsecom.io
+      tls:
+        - hosts:
+            - alertmanager.ops.techsecom.io
+          secretName: alertmanager-cert-tls
+
     alertmanagerSpec:
       replicas: 1
-      # podAntiAffinity: hard
+      retention: 120h
+      externalUrl: https://alertmanager.ops.techsecom.io
 
       storage:
         volumeClaimTemplate:
           spec:
-            storageClassName: nfs-csi
+            storageClassName: longhorn
             resources:
               requests:
                 storage: 10Gi
-      tolerations:
-      - key: "arm64"
-        operator: "Exists"
-  kubeProxy:
-    enabled: false
 
-  kubelet:
-    enabled: true
+      resources:
+        limits:
+          cpu: 1000m
+          memory: 500Mi
+        requests:
+          cpu: 100m
+          memory: 100Mi
+
+      securityContext:
+        fsGroup: 2000
+        runAsGroup: 2000
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
+
     serviceMonitor:
-      metricRelabelings:
-      # Drop high cardinality labels
-      - action: labeldrop
-        regex: (uid)
-      - action: labeldrop
-        regex: (id|name)
-      - action: drop
-        sourceLabels: [ "__name__" ]
-        regex: (rest_client_request_duration_seconds_bucket|rest_client_request_duration_seconds_sum|rest_client_request_duration_seconds_count)
+      selfMonitor: true
 
-  kubeApiServer:
-    enabled: true
-    serviceMonitor:
-      metricRelabelings:
-      # Drop high cardinality labels
-      - action: drop
-        sourceLabels: [ "__name__" ]
-        regex: (apiserver|etcd|rest_client)_request(|_sli|_slo)_duration_seconds_bucket
-      - action: drop
-        sourceLabels: [ "__name__" ]
-        regex: (apiserver_response_sizes_bucket|apiserver_watch_events_sizes_bucket)
-
-  kubeControllerManager:
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Prometheus Operator Configuration
+  # ─────────────────────────────────────────────────────────────────────────────
+  prometheusOperator:
     enabled: true
 
-  kubeScheduler:
-    enabled: true
-
-  kube-state-metrics:
-    fullnameOverride: kube-state-metrics
-    metricLabelsAllowlist:
-    - pods=[*]
-    - deployments=[*]
-    - persistentvolumeclaims=[*]
-    prometheus:
-      monitor:
+    admissionWebhooks:
+      enabled: true
+      patch:
         enabled: true
-        relabelings:
-        - action: replace
-          regex: (.*)
-          replacement: $1
-          sourceLabels: [ "__meta_kubernetes_pod_node_name" ]
-          targetLabel: kubernetes_node
+
+    serviceMonitor:
+      selfMonitor: true
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Node Exporter
+  # ─────────────────────────────────────────────────────────────────────────────
   nodeExporter:
     enabled: true
 
   prometheus-node-exporter:
-    fullnameOverride: node-exporter
     prometheus:
       monitor:
         enabled: true
-        relabelings:
-        - action: replace
-          regex: (.*)
-          replacement: $1
-          sourceLabels: [ "__meta_kubernetes_pod_node_name" ]
-          targetLabel: kubernetes_node
 
-# Configure components of the External Secrets Operator (ESO).
-eso:
-  # -- Install components of the ESO.
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Kube State Metrics
+  # ─────────────────────────────────────────────────────────────────────────────
+  kubeStateMetrics:
+    enabled: true
+
+  kube-state-metrics:
+    prometheus:
+      monitor:
+        enabled: true
+        honorLabels: true
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Kubernetes Components Monitoring
+  # For RKE2, we need special configuration for control plane components
+  # ─────────────────────────────────────────────────────────────────────────────
+  kubeControllerManager:
+    enabled: true
+    endpoints:
+      - 192.168.1.10  # Replace with your control plane node IPs
+      - 192.168.1.11
+      - 192.168.1.12
+    service:
+      enabled: true
+      port: 10257
+      targetPort: 10257
+    serviceMonitor:
+      enabled: true
+      https: true
+      insecureSkipVerify: true
+
+  kubeScheduler:
+    enabled: true
+    endpoints:
+      - 192.168.1.10  # Replace with your control plane node IPs
+      - 192.168.1.11
+      - 192.168.1.12
+    service:
+      enabled: true
+      port: 10259
+      targetPort: 10259
+    serviceMonitor:
+      enabled: true
+      https: true
+      insecureSkipVerify: true
+
+  kubeProxy:
+    enabled: true
+    endpoints:
+      - 192.168.1.10  # Replace with your control plane node IPs
+      - 192.168.1.11
+      - 192.168.1.12
+    service:
+      enabled: true
+      port: 10249
+      targetPort: 10249
+    serviceMonitor:
+      enabled: true
+
+  kubeEtcd:
+    enabled: true
+    endpoints:
+      - 192.168.1.10  # Replace with your control plane node IPs
+      - 192.168.1.11
+      - 192.168.1.12
+    service:
+      enabled: true
+      port: 2381
+      targetPort: 2381
+    serviceMonitor:
+      enabled: true
+      scheme: http
+
+  kubeDns:
+    enabled: false
+
+  kubeApiServer:
+    enabled: true
+
+  kubelet:
+    enabled: true
+    namespace: kube-system
+
+  coreDns:
+    enabled: true
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Default Rules
+  # ─────────────────────────────────────────────────────────────────────────────
+  defaultRules:
+    create: true
+    rules:
+      alertmanager: true
+      etcd: true
+      configReloaders: true
+      general: true
+      k8sContainerCpuUsageSecondsTotal: true
+      k8sContainerMemoryCache: true
+      k8sContainerMemoryRss: true
+      k8sContainerMemorySwap: true
+      k8sContainerMemoryWorkingSetBytes: true
+      k8sContainerResource: true
+      k8sPodOwner: true
+      kubeApiserverAvailability: true
+      kubeApiserverBurnrate: true
+      kubeApiserverHistogram: true
+      kubeApiserverSlos: true
+      kubeControllerManager: true
+      kubePrometheusGeneral: true
+      kubePrometheusNodeRecording: true
+      kubeProxy: true
+      kubeSchedulerAlerting: true
+      kubeSchedulerRecording: true
+      kubeStateMetrics: true
+      kubelet: true
+      kubernetesApps: true
+      kubernetesResources: true
+      kubernetesStorage: true
+      kubernetesSystem: true
+      network: true
+      node: true
+      nodeExporterAlerting: true
+      nodeExporterRecording: true
+      prometheus: true
+      prometheusOperator: true
+
+# ────────────────────────────────────────────────────────────────────────────────
+# Bitnami Thanos (Query, Store Gateway, Compactor)
+# ────────────────────────────────────────────────────────────────────────────────
+thanos:
+  image:
+    registry: quay.io
+    repository: thanos/thanos
+    tag: v0.39.2
+
+  query:
+    enabled: true
+    replicaCount: 2
+    replicaLabels:
+      - replica
+    dnsDiscovery:
+      sidecarsService: kps-thanos-discovery
+      sidecarsNamespace: monitoring
+    ingress:
+      enabled: true
+      hostname: thanos.ops.techsecom.io
+      annotations:
+        cert-manager.io/cluster-issuer: "letsencrypt-prod"
+        cert-manager.io/revision-history-limit: "3"
+        external-dns.alpha.kubernetes.io/enabled: "true"
+        cert-manager.io/duration: "2160h"
+        cert-manager.io/renew-before: "720h"
+      ingressClassName: nginx
+      tls: true
+
+  queryFrontend:
+    enabled: true
+
+  bucketweb:
+    enabled: true
+    ingress:
+      enabled: true
+      hostname: thanos-bucketweb.ops.techsecom.io
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+        cert-manager.io/revision-history-limit: "3"
+        external-dns.alpha.kubernetes.io/enabled: "true"
+        cert-manager.io/duration: "2160h"
+        cert-manager.io/renew-before: "720h"
+      ingressClassName: nginx
+      tls: true
+
+  compactor:
+    enabled: true
+    retentionResolutionRaw: 7d
+    retentionResolution5m: 14d
+    retentionResolution1h: 30d
+    ingress:
+      enabled: true
+      hostname: thanos-compactor.ops.techsecom.io
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+        cert-manager.io/revision-history-limit: "3"
+        external-dns.alpha.kubernetes.io/enabled: "true"
+        cert-manager.io/duration: "2160h"
+        cert-manager.io/renew-before: "720h"
+      ingressClassName: nginx
+      tls: true
+    persistence:
+      enabled: true
+      storageClass: longhorn
+      size: 20Gi
+
+  storegateway:
+    enabled: true
+    ingress:
+      enabled: true
+      hostname: thanos-storegateway.ops.techsecom.io
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+        cert-manager.io/revision-history-limit: "3"
+        external-dns.alpha.kubernetes.io/enabled: "true"
+        cert-manager.io/duration: "2160h"
+        cert-manager.io/renew-before: "720h"
+      ingressClassName: nginx
+      tls: true
+    persistence:
+      enabled: true
+      storageClass: longhorn
+      size: 7Gi
+
+  ruler:
+    enabled: false
+
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+  objstoreConfig: |
+    type: s3
+    config:
+      bucket: thanos
+      endpoint: "minio.minio.svc.cluster.local:9000"
+      access_key: <path:secret/data/minio#postgres_user>
+      secret_key: <path:secret/data/minio#postgres_password>
+      insecure: true
+
+# ────────────────────────────────────────────────────────────────────────────────
+# Loki (Log Aggregation)
+# ────────────────────────────────────────────────────────────────────────────────
+loki:
+  deploymentMode: SimpleScalable
+
+  loki:
+    auth_enabled: false
+
+    analytics:
+      reporting_enabled: false
+
+    compactor:
+      working_directory: /var/loki/compactor/retention
+      delete_request_store: s3
+      retention_enabled: true
+
+    frontend:
+      max_outstanding_per_tenant: 4096
+
+    ingester:
+      chunk_encoding: snappy
+
+    commonConfig:
+      replication_factor: 2
+
+    limits_config:
+      ingestion_burst_size_mb: 128
+      ingestion_rate_mb: 64
+      max_query_parallelism: 100
+      per_stream_rate_limit: 64M
+      per_stream_rate_limit_burst: 128M
+      reject_old_samples: true
+      reject_old_samples_max_age: 168h
+      retention_period: 14d
+      shard_streams:
+        enabled: true
+      split_queries_by_interval: 1h
+      max_line_size: 5242880
+      max_line_size_truncate: true
+      max_global_streams_per_user: 50000
+      max_streams_per_user: 10000
+
+    query_scheduler:
+      max_outstanding_requests_per_tenant: 4096
+
+    rulerConfig:
+      enable_api: true
+      enable_alertmanager_v2: true
+      alertmanager_url: http://kps-alertmanager.monitoring.svc.cluster.local:9093
+      storage:
+        type: local
+        local:
+          directory: /rules
+      rule_path: /rules/fake
+
+    schemaConfig:
+      configs:
+        - from: "2024-04-01"
+          store: tsdb
+          object_store: s3
+          schema: v13
+          index:
+            prefix: loki_index_
+            period: 24h
+
+    server:
+      log_level: info
+      grpc_server_max_recv_msg_size: 8388608
+      grpc_server_max_send_msg_size: 8388608
+
+    storage:
+      type: s3
+      bucketNames:
+        chunks: loki-chunks
+        ruler: loki-ruler
+        admin: loki-admin
+      s3:
+        s3ForcePathStyle: true
+        insecure: true
+        endpoint: http://minio.minio.svc.cluster.local:9000
+        secretAccessKey: <path:secret/data/minio#postgres_password>
+        accessKeyId: <path:secret/data/minio#postgres_user>
+        region: us-east-1
+
+  gateway:
+    replicas: 2
+    enabled: true
+    image:
+      registry: docker.io
+      repository: nginxinc/nginx-unprivileged
+      tag: 1.29-alpine
+    nginxConfig:
+      resolver: "rke2-coredns-rke2-coredns.kube-system.svc.cluster.local valid=30s ipv6=off"
+
+  write:
+    replicas: 3
+    persistence:
+      size: 10Gi
+      storageClass: "longhorn"
+
+  read:
+    replicas: 2
+
+  backend:
+    replicas: 2
+    persistence:
+      storageClass: "longhorn"
+
+  ingress:
+    enabled: true
+    ingressClassName: "nginx"
+    annotations:
+      cert-manager.io/cluster-issuer: "letsencrypt-prod"
+      cert-manager.io/revision-history-limit: "3"
+      external-dns.alpha.kubernetes.io/enabled: "true"
+      cert-manager.io/duration: "2160h"
+      cert-manager.io/renew-before: "720h"
+    paths:
+      distributor:
+        - /api/prom/push
+        - /loki/api/v1/push
+        - /otlp/v1/logs
+      queryFrontend:
+        - /api/prom/query
+        - /api/prom/label
+        - /api/prom/series
+        - /api/prom/tail
+        - /loki/api/v1/query
+        - /loki/api/v1/query_range
+        - /loki/api/v1/tail
+        - /loki/api/v1/label
+        - /loki/api/v1/labels
+        - /loki/api/v1/series
+        - /loki/api/v1/index/stats
+    hosts:
+      - loki.ops.techsecom.io
+    tls:
+      - secretName: loki-distributed-tls
+        hosts:
+          - loki.ops.techsecom.io
+
+  monitoring:
+    dashboards:
+      enabled: true
+      labels:
+        grafana_dashboard: "1"
+    rules:
+      enabled: true
+      alerting: true
+    serviceMonitor:
+      enabled: true
+    podMonitor:
+      enabled: true
+
+  lokiCanary:
+    enabled: false
+
+  test:
+    enabled: false
+
+  sidecar:
+    image:
+      repository: ghcr.io/kiwigrid/k8s-sidecar
+    rules:
+      searchNamespace: ALL
+      folder: /rules/fake
+
+# ────────────────────────────────────────────────────────────────────────────────
+# Tempo (Distributed Tracing)
+# ────────────────────────────────────────────────────────────────────────────────
+tempo:
   enabled: true
-  # -- Defines provider type. One of `aws` or `generic`.
-  type: "vault"
-  # -- Defines Secret Store name.
-  secretStoreName: "vault"
-  # -- Value name in AWS ParameterStore, AWS SecretsManager or other Secret Store.
-  secretName: "secret/grafana"
+  fullnameOverride: tempo
 
-# oidc:
-#   enabled: false
+  serviceMonitor:
+    enabled: true
+
+  stream_over_http_enabled: true
+
+  gateway:
+    enabled: true
+
+  minio:
+    enabled: false
+
+  storage:
+    trace:
+      backend: s3
+      s3:
+        access_key: <path:secret/data/minio#postgres_user>
+        secret_key: <path:secret/data/minio#postgres_password>
+        bucket: "tempo-traces"
+        endpoint: "http://minio.minio.svc.cluster.local:9000"
+        insecure: true
+
+  traces:
+    otlp:
+      http:
+        enabled: true
+      grpc:
+        enabled: true
+
+  distributor:
+    config:
+      log_received_spans:
+        enabled: true
+      log_discarded_spans:
+        enabled: true
+
+  tempo:
+    metricsGenerator:
+      enabled: true
+      remoteWriteUrl: "http://kps-prometheus.monitoring.svc.cluster.local:9090/api/v1/write"
+
+  persistence:
+    enabled: true
+    size: 20Gi
+    storageClassName: longhorn
+
+# ────────────────────────────────────────────────────────────────────────────────
+# Promtail (Log Collection)
+# ────────────────────────────────────────────────────────────────────────────────
+promtail:
+  enabled: true
+
+  tolerations:
+    - effect: NoSchedule
+      key: node-role.kubernetes.io/control-plane
+      operator: Exists
+    - effect: NoSchedule
+      key: node-role.kubernetes.io/master
+      operator: Exists
+
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+  config:
+    logLevel: info
+    serverPort: 3101
+    clients:
+      - url: http://loki-gateway.monitoring.svc.cluster.local/loki/api/v1/push
+        backoff_config:
+          min_period: 500ms
+          max_period: 5m
+          max_retries: 10
+        batchwait: 1s
+        batchsize: 1048576
+        timeout: 10s
+        tenant_id: ""
+
+    snippets:
+      extraRelabelConfigs:
+        - action: replace
+          replacement: ops-dc-tx-rke2-mgmt-prod
+          target_label: cluster
+
+      pipelineStages:
+        - cri: {}
+        - json:
+            expressions:
+              level: level
+              msg: msg
+              message: message
+        - labels:
+            level:
+        - regex:
+            expression: '(?i)(?P<extracted_level>FATAL|ERROR|WARN(?:ING)?|INFO|DEBUG|TRACE)'
+        - labels:
+            extracted_level:
+
+      extraScrapeConfigs: |
+        - job_name: rancher-audit
+          static_configs:
+            - targets:
+                - localhost
+              labels:
+                job: rancher-audit
+                log_type: audit
+                __path__: /var/log/rancher/*.log
+          pipeline_stages:
+            - json:
+                expressions:
+                  stage: stage
+                  verb: verb
+                  resource: objectRef.resource
+            - drop:
+                source: stage
+                expression: 'RequestReceived'
+            - labels:
+                verb:
+                resource:
+        - job_name: linux-audit
+          static_configs:
+            - targets:
+                - localhost
+              labels:
+                job: linux-audit
+                log_type: audit
+                __path__: /var/log/audit/audit.log
+          pipeline_stages:
+            - regex:
+                expression: 'type=(?P<audit_type>\w+).*msg=audit\((?P<timestamp>[^:]+):(?P<audit_id>\d+)\).*'
+            - labels:
+                audit_type:
+        - job_name: systemd-journal
+          journal:
+            max_age: 12h
+            labels:
+              job: systemd-journal
+              log_type: journal
+          relabel_configs:
+            - source_labels: ['__journal__systemd_unit']
+              target_label: 'unit'
+            - source_labels: ['__journal__hostname']
+              target_label: 'hostname'
+            - source_labels: ['__journal_priority_keyword']
+              target_label: 'level'
+
+  defaultVolumes:
+    - name: run
+      hostPath:
+        path: /run/promtail
+    - name: containers
+      hostPath:
+        path: /var/lib/docker/containers
+    - name: pods
+      hostPath:
+        path: /var/log/pods
+    - name: journal
+      hostPath:
+        path: /var/log/journal
+    - name: machine-id
+      hostPath:
+        path: /etc/machine-id
+    - name: audit-logs
+      hostPath:
+        path: /var/log/audit
+    - name: rancher-audit-logs
+      hostPath:
+        path: /var/log/rancher
+
+  defaultVolumeMounts:
+    - name: run
+      mountPath: /run/promtail
+    - name: containers
+      mountPath: /var/lib/docker/containers
+      readOnly: true
+    - name: pods
+      mountPath: /var/log/pods
+      readOnly: true
+    - name: journal
+      mountPath: /var/log/journal
+      readOnly: true
+    - name: machine-id
+      mountPath: /etc/machine-id
+      readOnly: true
+    - name: audit-logs
+      mountPath: /var/log/audit
+      readOnly: true
+    - name: rancher-audit-logs
+      mountPath: /var/log/rancher
+      readOnly: true
+
+  serviceMonitor:
+    enabled: true
+
+  extraPorts:
+    syslog:
+      name: tcp-syslog
+      containerPort: 1514
+      protocol: TCP
+      service:
+        type: ClusterIP
+        port: 1514
+
+# ────────────────────────────────────────────────────────────────────────────────
+# Alloy (OpenTelemetry Collector)
+# ────────────────────────────────────────────────────────────────────────────────
+alloy:
+  alloy:
+    mounts:
+      varlog: true
+
+    service:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "12345"
+        prometheus.io/path: "/metrics"
+
+    extraPorts:
+      - name: otlp-grpc
+        port: 4317
+        targetPort: 4317
+        protocol: TCP
+      - name: otlp-http
+        port: 4318
+        targetPort: 4318
+        protocol: TCP
+
+    configMap:
+      content: |
+        // OTLP receiver configuration
+        otelcol.receiver.otlp "default" {
+          grpc {
+            endpoint = "0.0.0.0:4317"
+          }
+          http {
+            endpoint = "0.0.0.0:4318"
+          }
+          output {
+            metrics = [otelcol.exporter.prometheus.default.input]
+            traces  = [otelcol.exporter.otlp.tempo.input]
+            logs    = [otelcol.exporter.loki.default.input]
+          }
+        }
+
+        // Metrics to Prometheus
+        otelcol.exporter.prometheus "default" {
+          forward_to = [prometheus.remote_write.default.receiver]
+        }
+
+        prometheus.remote_write "default" {
+          endpoint {
+            url = "http://kps-prometheus.monitoring.svc.cluster.local/api/v1/write"
+          }
+        }
+
+        // Traces to Tempo
+        otelcol.exporter.otlp "tempo" {
+          client {
+            endpoint = "http://tempo.monitoring.svc.cluster.local:4317"
+            tls {
+              insecure = true
+            }
+          }
+        }
+
+        // Logs to Loki
+        otelcol.exporter.loki "default" {
+          forward_to = [loki.write.endpoint.receiver]
+        }
+
+        loki.write "endpoint" {
+          endpoint {
+            url = "http://loki-gateway.monitoring.svc.cluster.local/loki/api/v1/push"
+            batch_size = "1MB"
+            batch_wait = "1s"
+          }
+        }

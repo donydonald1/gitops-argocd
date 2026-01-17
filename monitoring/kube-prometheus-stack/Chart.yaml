@@ -1,7 +1,37 @@
-name: kube-prometheus-stack
 apiVersion: v2
-version: 1.0.0
+name: kube-prometheus-stack-umbrella
+description: Umbrella chart for kube-prometheus-stack with Thanos, Loki, Tempo, Promtail, and Alloy
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+
 dependencies:
-- name: kube-prometheus-stack
-  version: 77.5.0
-  repository: https://prometheus-community.github.io/helm-charts
+  # Community kube-prometheus-stack (Prometheus, Alertmanager, Grafana)
+  - name: kube-prometheus-stack
+    version: "81.0.0"
+    repository: "https://prometheus-community.github.io/helm-charts"
+
+  # Bitnami Thanos for long-term storage and HA queries
+  - name: thanos
+    version: "17.3.1"
+    repository: "https://charts.bitnami.com/bitnami"
+
+  # Grafana Loki for log aggregation
+  - name: loki
+    version: "6.49.0"
+    repository: "https://grafana.github.io/helm-charts"
+
+  # Grafana Tempo for distributed tracing
+  - name: tempo
+    version: "1.24.3"
+    repository: "https://grafana.github.io/helm-charts"
+
+  # Promtail for log collection
+  - name: promtail
+    version: "6.17.1"
+    repository: "https://grafana.github.io/helm-charts"
+
+  # Grafana Alloy for OTLP collection
+  - name: alloy
+    version: "1.5.2"
+    repository: "https://grafana.github.io/helm-charts"
