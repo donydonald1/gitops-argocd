@@ -109,11 +109,9 @@ spec:
         repoURL: https://github.com/donydonald1/gitops-argocd.git
         targetRevision: HEAD
         path: "monitoring/{{ .name }}"
-        # plugin:
-        #   name: avp-directory-include
-        # env:
-        #   - name: FILE_NAME
-        #     value: "system/{{ .name }}"
+        helm:
+          valueFiles:
+          - values.yaml
       destination:
         name: in-cluster
         namespace: '{{ default .name (dig "namespace" "" .) }}'
