@@ -25,6 +25,27 @@ gitlab:
       persistence:
         size: 300Gi
         storageClass: nfs-csi
+      # Gitaly performance tuning
+      resources:
+        requests:
+          cpu: 1
+          memory: 2Gi
+        limits:
+          cpu: 4
+          memory: 8Gi
+      # Increase concurrency for parallel git operations
+      concurrency:
+        - rpc: "/gitaly.SmartHTTPService/PostReceivePack"
+          max_per_repo: 10
+        - rpc: "/gitaly.SmartHTTPService/PostUploadPack"
+          max_per_repo: 10
+        - rpc: "/gitaly.SSHService/SSHUploadPack"
+          max_per_repo: 10
+      cgroups:
+        repositories:
+          count: 100
+          memoryBytes: 4294967296
+          cpuShares: 512
     gitlab-pages:
       maxReplicas: 10
       minReplicas: 3
@@ -192,11 +213,15 @@ gitlab:
 
   gitlab-runner:
     install: true
-    replicas: 3
+    replicas: 5
     # Use internal URL to bypass Cloudflare for API calls (fixes artifact upload issues)
     gitlabUrl: http://gitlab-webservice-default.gitlab.svc:8181
     rbac:
       create: true
+    # Increased concurrent jobs per runner
+    concurrent: 30
+    # Faster check interval
+    checkInterval: 1
     runners:
       locked: false
       secret: "gitlab-runner-secret"
@@ -205,28 +230,39 @@ gitlab:
       config: |
         [[runners]]
           name = "k8s-gitlab-runner"
-          request_concurrency = 4
-          output_limit = 16384
+          # Increased concurrency per runner
+          request_concurrency = 8
+          output_limit = 32768
           [runners.feature_flags]
             FF_USE_FASTZIP = true
             FF_USE_NEW_SHELL_ESCAPE = true
             FF_ENABLE_JOB_LOG_STREAMING = true
+            FF_USE_IMPROVED_URL_MASKING = true
+            FF_RESOLVE_FULL_TLS_CHAIN = false
           [runners.kubernetes]
             image = "ubuntu:22.04"
             privileged = true
             namespace = "gitlab"
-            poll_timeout = 2000
+            poll_timeout = 1800
             service_account = "default"
             # Increased resources for faster CI jobs
-            cpu_request = "1"
-            cpu_limit = "4"
-            memory_request = "2Gi"
-            memory_limit = "8Gi"
-            # Helper container resources
-            helper_cpu_request = "100m"
-            helper_cpu_limit = "500m"
-            helper_memory_request = "128Mi"
-            helper_memory_limit = "512Mi"
+            cpu_request = "2"
+            cpu_limit = "8"
+            memory_request = "4Gi"
+            memory_limit = "16Gi"
+            # Helper container resources (increased)
+            helper_cpu_request = "500m"
+            helper_cpu_limit = "2"
+            helper_memory_request = "512Mi"
+            helper_memory_limit = "2Gi"
+            # Use EmptyDir for faster builds
+            [[runners.kubernetes.volumes.empty_dir]]
+              name = "repo"
+              mount_path = "/builds"
+              medium = "Memory"
+            [[runners.kubernetes.volumes.empty_dir]]
+              name = "docker"
+              mount_path = "/var/lib/docker"
           [runners.cache]
             Type = "s3"
             Path = "gitlab-runner"

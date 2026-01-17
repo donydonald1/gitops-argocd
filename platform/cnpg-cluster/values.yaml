@@ -5,23 +5,23 @@ computeSizeFactor: 4
 
 affinity: {}
 
-# PostgreSQL pod resources
+# PostgreSQL pod resources - increased for GitLab performance
 resources:
   requests:
-    memory: 512Mi
-    cpu: 300m
+    memory: 4Gi
+    cpu: 2
   limits:
-    memory: 2Gi
-    cpu: 1000m
+    memory: 16Gi
+    cpu: 8
 
-# Pooler pod resources
+# Pooler pod resources - increased for connection handling
 poolerResources:
   requests:
-    memory: 250Mi
-    cpu: 300m
-  limits:
-    memory: 800Mi
+    memory: 512Mi
     cpu: 500m
+  limits:
+    memory: 2Gi
+    cpu: 2
 annotations:
   argocd.argoproj.io/sync-wave: "-1"
   argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
@@ -186,3 +186,26 @@ pooler:
     maxDbConnections: 2000
 postgresql:
   maxConnectionsOverride: 2000
+  # Performance tuning for GitLab workload
+  parameters:
+    # Memory settings (tuned for 16GB limit)
+    shared_buffers: "4GB"
+    effective_cache_size: "12GB"
+    work_mem: "64MB"
+    maintenance_work_mem: "1GB"
+    # WAL settings for performance
+    wal_buffers: "64MB"
+    max_wal_size: "4GB"
+    min_wal_size: "1GB"
+    checkpoint_completion_target: "0.9"
+    # Query planner settings
+    random_page_cost: "1.1"
+    effective_io_concurrency: "200"
+    # Parallelism
+    max_worker_processes: "8"
+    max_parallel_workers_per_gather: "4"
+    max_parallel_workers: "8"
+    max_parallel_maintenance_workers: "4"
+    # Connection settings
+    idle_in_transaction_session_timeout: "30min"
+    statement_timeout: "60min"

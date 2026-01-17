@@ -8,11 +8,31 @@ redis:
     existingSecret: redis-creds
     existingSecretPasswordKey: REDIS_PASSWORD
     sentinel: false
+  # Performance tuning for GitLab main Redis (sessions, queues, shared state)
+  commonConfiguration: |-
+    maxmemory 8gb
+    maxmemory-policy volatile-lru
+    timeout 0
+    tcp-keepalive 300
+    activerehashing yes
+    lazyfree-lazy-eviction yes
+    lazyfree-lazy-expire yes
+    lazyfree-lazy-server-del yes
+    io-threads 4
+    io-threads-do-reads yes
   architecture: replication
   replica:
     replicaCount: 3
     disableCommands:
       - FLUSHDB
+    # Increased resources for better performance
+    resources:
+      requests:
+        cpu: 500m
+        memory: 2Gi
+      limits:
+        cpu: 2
+        memory: 10Gi
     persistence:
       enabled: true
       storageClass: longhorn
