@@ -177,12 +177,27 @@ gitlab:
         [[runners]]
           name = "k8s-gitlab-runner"
           request_concurrency = 4
+          output_limit = 16384
+          [runners.feature_flags]
+            FF_USE_FASTZIP = true
+            FF_USE_NEW_SHELL_ESCAPE = true
+            FF_ENABLE_JOB_LOG_STREAMING = true
           [runners.kubernetes]
             image = "ubuntu:22.04"
             privileged = true
             namespace = "gitlab"
             poll_timeout = 2000
             service_account = "default"
+            # Increased resources for faster CI jobs
+            cpu_request = "1"
+            cpu_limit = "4"
+            memory_request = "2Gi"
+            memory_limit = "8Gi"
+            # Helper container resources
+            helper_cpu_request = "100m"
+            helper_cpu_limit = "500m"
+            helper_memory_request = "128Mi"
+            helper_memory_limit = "512Mi"
           [runners.cache]
             Type = "s3"
             Path = "gitlab-runner"
