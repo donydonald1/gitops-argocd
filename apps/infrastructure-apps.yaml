@@ -14,18 +14,19 @@ spec:
       # =============================================
       # WAVE -3: Core Infrastructure (must be ready before everything)
       # =============================================
-      - name: ingress-nginx
-        namespace: ingress-nginx
-        serverSideApply: true
-        wave: "-3"  # Deploy first - ingress for all apps
-        imageList: "ingress-nginx=registry.k8s.io/ingress-nginx/controller"
-        helm:
-          values:
-          - values.yaml
+      # All infrastructure apps currently managed externally
 
       # =============================================
       # DISABLED APPLICATIONS
       # =============================================
+      # - name: ingress-nginx
+      #   namespace: ingress-nginx
+      #   serverSideApply: true
+      #   wave: "-3"  # Deploy first - ingress for all apps
+      #   imageList: "ingress-nginx=registry.k8s.io/ingress-nginx/controller"
+      #   helm:
+      #     values:
+      #     - values.yaml
       # - name: argocd
       #   namespace: argocd
       #   serverSideApply: true
