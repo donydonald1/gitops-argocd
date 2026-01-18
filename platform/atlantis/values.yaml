@@ -199,7 +199,7 @@ eso:
   enabled: true
   # Path in Vault where Atlantis secrets are stored
   # Expected keys: gitlab_token, gitlab_webhook_secret
-  vaultPath: /atlantis/
+  vaultPath: atlantis
 
 # Pod Disruption Budget for high availability
 podDisruptionBudget:
