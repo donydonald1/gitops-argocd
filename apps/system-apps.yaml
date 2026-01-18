@@ -2,6 +2,9 @@ apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
   name: system-apps
+  annotations:
+    # ApplicationSet sync-wave: System operators deploy after infrastructure (wave -2)
+    argocd.argoproj.io/sync-wave: "-2"
 spec:
   goTemplate: true
   goTemplateOptions: [ "missingkey=error" ]
