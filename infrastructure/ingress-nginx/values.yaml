@@ -10,8 +10,17 @@ ingress-nginx:
       enable-annotation-validation: "false"
 
     config:
-      # auto value takes all nodes in cgroups v2 (dell_v2)
-      worker-processes: 1
+      # Use auto to utilize all available CPU cores
+      worker-processes: auto
+      # Increase worker connections for high traffic
+      worker-connections: "65536"
+      # Keep-alive optimizations
+      keep-alive: "75"
+      keep-alive-requests: "10000"
+      # Upstream keepalive for backend connections
+      upstream-keepalive-connections: "320"
+      upstream-keepalive-requests: "10000"
+      upstream-keepalive-timeout: "60"
       hsts: "true"
       http-snippet: |
         proxy_cache_path /dev/shm levels=1:2 keys_zone=static-cache:2m max_size=300m inactive=7d use_temp_path=off;
@@ -40,10 +49,11 @@ ingress-nginx:
 
     resources:
       limits:
-        memory: 328Mi
+        cpu: 4
+        memory: 2Gi
       requests:
-        cpu: 40m
-        memory: 150Mi
+        cpu: 500m
+        memory: 512Mi
 
     # affinity:
     #   nodeAffinity:
@@ -72,11 +82,11 @@ ingress-nginx:
 
     autoscaling:
       enabled: true
-      minReplicas: 2
+      minReplicas: 3
       maxReplicas: 11
-      # when CPU == 500m
-      targetCPUUtilizationPercentage: 1250
-      targetMemoryUtilizationPercentage: 200
+      # Scale at 70% CPU utilization for responsive scaling
+      targetCPUUtilizationPercentage: 70
+      targetMemoryUtilizationPercentage: 80
     topologySpreadConstraints:
     - maxSkew: 4
       topologyKey: kubernetes.io/hostname

@@ -11,10 +11,28 @@ longhorn:
     backupTarget: s3://longhorn@us-east-1/longhorn
     # The secret where the MinIO credentials are stored.
     backupTargetCredentialSecret: minio-secret
-    # Usually Longhorn does not store volumes on the node that it runs on. This setting allows that.
-    # replicaSoftAntiAffinity: true
-    # replicaZoneSoftAntiAffinity: true
-    # nodeDownPodDeletionPolicy: delete-both-statefulset-and-deployment-pod
+    # Performance tuning
+    defaultReplicaCount: 3
+    # Storage performance settings
+    storageMinimalAvailablePercentage: 15
+    storageOverProvisioningPercentage: 100
+    # Replica auto-balance for even distribution
+    replicaAutoBalance: best-effort
+    # Faster volume attachment
+    replicaSoftAntiAffinity: true
+    replicaZoneSoftAntiAffinity: true
+    # Pod deletion policy for faster recovery
+    nodeDownPodDeletionPolicy: delete-both-statefulset-and-deployment-pod
+    # Concurrent rebuild limits
+    concurrentReplicaRebuildPerNodeLimit: 5
+    concurrentVolumeBackupRestorePerNodeLimit: 5
+    # Engine upgrade settings
+    autoSalvage: true
+    autoDeletePodWhenVolumeDetachedUnexpectedly: true
+    # Faster snapshot creation
+    snapshotDataIntegrityImmediateCheckAfterSnapshotCreation: false
+    # Guaranteed engine manager CPU
+    guaranteedInstanceManagerCPU: 15
   ingress:
     enabled: true
     ingressClassName: nginx

@@ -8,36 +8,115 @@ spec:
   generators:
   - list:
       elements:
+      # =============================================
+      # WAVE -2: Core Operators (must be ready before their CRs)
+      # =============================================
+      - name: cloudnative-pg
+        namespace: cnpg-system
+        serverSideApply: true
+        wave: "-2"  # Deploy operator first - required by cnpg-cluster
+        imageList: "cnpg=ghcr.io/cloudnative-pg/cloudnative-pg"
+
+      - name: eck-operator
+        namespace: elastic-system
+        serverSideApply: true
+        wave: "-2"  # Deploy operator first - required by eck-stack
+        imageList: "eck-operator=docker.elastic.co/eck/eck-operator"
+        helm:
+          values:
+          - values.yaml
+
+      - name: keycloak-operator
+        namespace: keycloak-operator
+        serverSideApply: true
+        wave: "-2"  # Deploy operator first - required by keycloak
+        imageList: "keycloak-operator=epamedp/keycloak-operator"
+
+      - name: sonar-operator
+        namespace: sonarqube
+        serverSideApply: true
+        wave: "-2"  # Deploy operator first
+        imageList: "sonar-operator=epamedp/sonar-operator"
+
+      # =============================================
+      # WAVE -1: Infrastructure Utilities (early stage)
+      # =============================================
+      - name: reloader
+        namespace: reloader
+        serverSideApply: true
+        wave: "-1"  # Deploy early - other apps depend on config reloading
+        imageList: "reloader=stakater/reloader"
+
+      - name: keda
+        namespace: keda
+        serverSideApply: true
+        wave: "-1"  # Deploy early - apps may use KEDA for autoscaling
+        imageList: "keda=ghcr.io/kedacore/keda, keda-metrics=ghcr.io/kedacore/keda-metrics-apiserver"
+        helm:
+          values:
+          - "values.yaml"
+
+      - name: node-feature-discovery
+        namespace: node-feature-discovery
+        serverSideApply: true
+        wave: "-1"  # Deploy early - provides node labels for scheduling
+        imageList: "nfd=registry.k8s.io/nfd/node-feature-discovery"
+
+      - name: node-problem-detector
+        namespace: node-problem-detector
+        serverSideApply: true
+        wave: "-1"  # Deploy early - monitors node health
+        imageList: "npd=registry.k8s.io/node-problem-detector/node-problem-detector"
+
+      # =============================================
+      # WAVE 0: Base Infrastructure Services
+      # =============================================
       - name: argo-cd-image-updater
         namespace: argocd
         serverSideApply: true
+        wave: "0"
         imageList: "image-updater=quay.io/argoprojlabs/argocd-image-updater"
 
       - name: pod-cleaner
         namespace: pod-cleaner
         serverSideApply: true
+        wave: "0"
         imageList: "pod-cleaner=bolferdocker/nvidia-watcher"
 
+      - name: kured
+        namespace: kured
+        serverSideApply: true
+        wave: "0"
+        imageList: "kured=ghcr.io/kubereboot/kured"
+
+      # =============================================
+      # WAVE 1: Virtualization Platform
+      # =============================================
+      - name: kubevirt
+        namespace: kubevirt
+        serverSideApply: true
+        wave: "1"  # After base infrastructure
+        imageList: "virt-operator=quay.io/kubevirt/virt-operator, cdi-operator=quay.io/kubevirt/cdi-operator"
+
+      - name: kubevirt-manager
+        namespace: kubevirt-manager
+        serverSideApply: true
+        wave: "2"  # After kubevirt is ready
+        imageList: "kubevirt-manager=docker.io/kubevirtmanager/kubevirt-manager"
+
+      # =============================================
+      # DISABLED APPLICATIONS
+      # =============================================
       # - name: k8s-cleaner
       #   namespace: k8s-cleaner
       #   helm:
       #     values:
       #     - values.yaml
 
-      - name: eck-operator
-        namespace: elastic-system
-        serverSideApply: true
-        imageList: "eck-operator=docker.elastic.co/eck/eck-operator"
-
-        # - name: gitlab-operator
-        #   namespace: gitlab
-        #   serverSideApply: true
-        helm:
-          values:
-          - values.yaml
       # - name: longhorn
       #   namespace: longhorn-system
       #   serverSideApply: true
+      #   wave: "-1"  # Storage should be early
       #   helm:
       #     values:
       #     - values.yaml
@@ -46,15 +125,6 @@ spec:
       #   namespace: awx-operator
       #   serverSideApply: true
 
-      # - name: change-detection
-      #   namespace: change-detection
-      #   # #- name: awx-operator
-
-      - name: kured
-        namespace: kured
-        serverSideApply: true
-        imageList: "kured=ghcr.io/kubereboot/kured"
-
       # - name: external-dns
       #   namespace: external-dns
 
@@ -62,11 +132,6 @@ spec:
       #   namespace: spegel
 
       # - name: jaeger-operator
-
-      - name: keycloak-operator
-        namespace: keycloak-operator
-        serverSideApply: true
-        imageList: "keycloak-operator=epamedp/keycloak-operator"
 
       # - name: minio-operator
       #   namespace: minio-operator
@@ -77,63 +142,13 @@ spec:
       # - name: redis-operator
       #   serverSideApply: true
 
-      - name: sonar-operator
-        namespace: sonarqube
-        serverSideApply: true
-        imageList: "sonar-operator=epamedp/sonar-operator"
-
-      - name: keda
-        namespace: keda
-        serverSideApply: true
-        imageList: "keda=ghcr.io/kedacore/keda, keda-metrics=ghcr.io/kedacore/keda-metrics-apiserver"
-        helm:
-          values:
-          - "values.yaml"
-
-      - name: reloader
-        namespace: reloader
-        serverSideApply: true
-        imageList: "reloader=stakater/reloader"
-
       # - name: descheduler
       #   namespace: descheduler
       #   serverSideApply: true
 
-      - name: node-feature-discovery
-        namespace: node-feature-discovery
-        serverSideApply: true
-        imageList: "nfd=registry.k8s.io/nfd/node-feature-discovery"
-
-      - name: node-problem-detector
-        namespace: node-problem-detector
-        serverSideApply: true
-        imageList: "npd=registry.k8s.io/node-problem-detector/node-problem-detector"
-        # - name: external-secrets
-        #   namespace: external-secrets
-        #   serverSideApply: true
-        # - name: couchdb
-        # - name: kanboard
-        #   namespace: kenboard
-        #   serverSideApply: true
-
-      - name: cloudnative-pg
-        namespace: cnpg-system
-        serverSideApply: true
-        wave: "-1"  # Deploy operator before clusters
-        imageList: "cnpg=ghcr.io/cloudnative-pg/cloudnative-pg"
-
-      - name: kubevirt
-        namespace: kubevirt
-        serverSideApply: true
-        wave: "0"
-        imageList: "virt-operator=quay.io/kubevirt/virt-operator, cdi-operator=quay.io/kubevirt/cdi-operator"
-
-      - name: kubevirt-manager
-        namespace: kubevirt-manager
-        serverSideApply: true
-        imageList: "kubevirt-manager=docker.io/kubevirtmanager/kubevirt-manager"
-        # - name: ghost
-        # - name: go-healthcheck
+      # - name: external-secrets
+      #   namespace: external-secrets
+      #   serverSideApply: true
 
   template:
     metadata:

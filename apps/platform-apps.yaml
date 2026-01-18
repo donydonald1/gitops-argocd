@@ -8,64 +8,44 @@ spec:
   generators:
   - list:
       elements:
-      - name: keycloak
-        namespace: keycloak
+      # =============================================
+      # WAVE -1: Storage Infrastructure (MinIO must be ready before other apps)
+      # =============================================
+      - name: minio
+        namespace: minio
         serverSideApply: true
-        wave: "2" # Deploy after CNPG database is ready
-        imageList: "keycloak=quay.io/keycloak/keycloak"
+        wave: "-1"  # Deploy MinIO first - storage backend for all apps
+        imageList: "minio=minio/minio"
         helm:
           values:
           - values.yaml
 
-      - name: harbor-ha
-        namespace: harbor
-        serverSideApply: true
-        SkipCRDs: true
-        wave: "2" # Deploy after databases and storage are ready
-        imageList: "harbor-core=goharbor/harbor-core, harbor-portal=goharbor/harbor-portal, harbor-jobservice=goharbor/harbor-jobservice, harbor-registry=goharbor/registry-photon, harbor-trivy=goharbor/trivy-adapter-photon"
+      # =============================================
+      # WAVE 0: Database Cluster (requires CNPG operator from system wave -2)
+      # =============================================
+      - name: cnpg-cluster
+        namespace: cnpg-system
+        wave: "0"  # Deploy after CNPG operator is ready
+        imageList: "postgresql=ghcr.io/cloudnative-pg/postgresql"
         helm:
           values:
           - values.yaml
-      # - name: kubevirt
-      #   namespace: kubevirt
-      #   serverSideApply: true
-      #   SkipCRDs: true
-      #   helm:
-      #     values:
-      #     - values.yaml
+        serverSideApply: true
 
+      # =============================================
+      # WAVE 1: Services depending on storage/database foundation
+      # =============================================
       - name: velero
         namespace: velero
         serverSideApply: true
-        wave: "1" # Deploy after storage (MinIO) is ready
+        wave: "1"  # Backup solution - needs MinIO ready
         imageList: "velero=velero/velero, velero-aws=velero/velero-plugin-for-aws"
         helm:
           values:
           - values.yaml
 
-      # - name: sonar
-      #   namespace: sonar
-
-      # - name: report-portal
-      #   namespace: report-portal
-      #   serverSideApply: true
-      #   wave: "3" # Deploy after databases (CNPG), storage (MinIO), and Elasticsearch are ready
-      #   imageList: "service-index=reportportal/service-index, service-ui=reportportal/service-ui, service-api=reportportal/service-api, service-analyzer=reportportal/service-analyzer"
-      #   helm:
-      #     values:
-      #     - values.yaml
-
-      # - name: defectdojo
-      #   namespace: defectdojo
-      #   serverSideApply: true
-      #   wave: "3"  # Deploy after databases (CNPG), Keycloak, and storage are ready
-      #   imageList: "defectdojo=defectdojo/defectdojo-django"
-      #   helm:
-      #     values:
-      #     - values.yaml
-
       - name: gitlab-redis-main
-        wave: "1" # Deploy Redis before GitLab
+        wave: "1"  # Redis for GitLab - deploy before GitLab
         namespace: gitlab
         serverSideApply: true
         imageList: "redis=bitnami/redis"
@@ -74,7 +54,7 @@ spec:
           - values.yaml
 
       - name: gitlab-redis-cache
-        wave: "1" # Deploy Redis before GitLab
+        wave: "1"  # Redis cache for GitLab - deploy before GitLab
         namespace: gitlab
         serverSideApply: true
         imageList: "redis=bitnami/redis"
@@ -82,36 +62,9 @@ spec:
           values:
           - values.yaml
 
-      - name: gitlab
-        wave: "2" # Deploy after databases (CNPG), storage (MinIO), and Redis are ready
-        namespace: gitlab
-        serverSideApply: true
-        imageList: "gitlab=gitlab/gitlab-ee"
-        helm:
-          values:
-          - values.yaml
-
-      - name: minio
-        namespace: minio
-        serverSideApply: true
-        wave: "0" # Deploy MinIO first (storage for other apps)
-        imageList: "minio=minio/minio"
-        helm:
-          values:
-          - values.yaml
-
-      - name: cnpg-cluster
-        namespace: cnpg-system
-        wave: "0" # Deploy with minio after CNPG operator (wave -1)
-        imageList: "postgresql=ghcr.io/cloudnative-pg/postgresql"
-        helm:
-          values:
-          - values.yaml
-        serverSideApply: true
-
       - name: clickhouse
         namespace: clickhouse
-        wave: "1" # Deploy after storage (MinIO) and CNPG operator are ready
+        wave: "1"  # Analytics DB - needs storage ready
         serverSideApply: true
         imageList: "clickhouse=bitnami/clickhouse"
         helm:
@@ -121,15 +74,13 @@ spec:
       - name: wikijs
         namespace: wikijs
         serverSideApply: true
-        wave: "1" # Deploy after databases and storage are ready
+        wave: "1"  # Wiki - needs database ready
         imageList: "wikijs=ghcr.io/requarks/wiki"
-
-      # # - name: go-healthcheck
 
       - name: it-tools
         namespace: it-tools
         serverSideApply: true
-        wave: "1"
+        wave: "1"  # Utility app - minimal dependencies
         imageList: "it-tools=corentinth/it-tools"
         helm:
           values:
@@ -138,16 +89,59 @@ spec:
       - name: kroki
         namespace: kroki
         serverSideApply: true
-        wave: "1"
+        wave: "1"  # Diagram service - minimal dependencies
         imageList: "kroki=yuzutech/kroki"
         helm:
           values:
           - values.yaml
 
+      # =============================================
+      # WAVE 2: Core Platform Applications (require databases + storage + Redis)
+      # =============================================
+      - name: keycloak
+        namespace: keycloak
+        serverSideApply: true
+        wave: "2"  # Identity provider - needs CNPG database
+        imageList: "keycloak=quay.io/keycloak/keycloak"
+        helm:
+          values:
+          - values.yaml
+
+      - name: harbor-ha
+        namespace: harbor
+        serverSideApply: true
+        SkipCRDs: true
+        wave: "2"  # Container registry - needs database + storage
+        imageList: "harbor-core=goharbor/harbor-core, harbor-portal=goharbor/harbor-portal, harbor-jobservice=goharbor/harbor-jobservice, harbor-registry=goharbor/registry-photon, harbor-trivy=goharbor/trivy-adapter-photon"
+        helm:
+          values:
+          - values.yaml
+
+      - name: gitlab
+        wave: "2"  # GitLab - needs CNPG, MinIO, and Redis
+        namespace: gitlab
+        serverSideApply: true
+        imageList: "gitlab=gitlab/gitlab-ee"
+        helm:
+          values:
+          - values.yaml
+
+      - name: n8n
+        namespace: n8n
+        serverSideApply: true
+        wave: "2"  # Workflow automation - needs database
+        imageList: "n8n=n8nio/n8n"
+        helm:
+          values:
+          - values.yaml
+
+      # =============================================
+      # WAVE 3: Extensions depending on platform apps
+      # =============================================
       - name: gitlab-agent
         namespace: gitlab
         serverSideApply: true
-        wave: "3" # Deploy after GitLab is fully ready
+        wave: "3"  # GitLab Agent - needs GitLab fully ready
         imageList: "gitlab-agent=registry.gitlab.com/gitlab-org/cluster-integration/gitlab-agent"
         helm:
           values:
@@ -156,20 +150,35 @@ spec:
       - name: atlantis
         namespace: atlantis
         serverSideApply: true
-        wave: "3" # Deploy after GitLab is ready (requires GitLab webhooks)
+        wave: "3"  # Atlantis - needs GitLab webhooks configured
         imageList: "atlantis=ghcr.io/runatlantis/atlantis"
         helm:
           values:
           - values.yaml
 
-      - name: n8n
-        namespace: n8n
-        serverSideApply: true
-        wave: "2" # Deploy after CNPG database is ready
-        imageList: "n8n=n8nio/n8n"
-        helm:
-          values:
-          - values.yaml
+      # =============================================
+      # DISABLED APPLICATIONS
+      # =============================================
+      # - name: sonar
+      #   namespace: sonar
+
+      # - name: report-portal
+      #   namespace: report-portal
+      #   serverSideApply: true
+      #   wave: "3"  # Needs CNPG, MinIO, and Elasticsearch
+      #   imageList: "service-index=reportportal/service-index, service-ui=reportportal/service-ui, service-api=reportportal/service-api, service-analyzer=reportportal/service-analyzer"
+      #   helm:
+      #     values:
+      #     - values.yaml
+
+      # - name: defectdojo
+      #   namespace: defectdojo
+      #   serverSideApply: true
+      #   wave: "3"  # Needs CNPG, Keycloak, and storage
+      #   imageList: "defectdojo=defectdojo/defectdojo-django"
+      #   helm:
+      #     values:
+      #     - values.yaml
 
   template:
     metadata:

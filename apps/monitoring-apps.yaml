@@ -8,23 +8,81 @@ spec:
   generators:
   - list:
       elements:
+      # =============================================
+      # WAVE 0: Core Monitoring (Prometheus, Grafana, AlertManager)
+      # =============================================
+      - name: kube-prometheus-stack
+        namespace: monitoring
+        serverSideApply: true
+        SkipCRDs: false
+        wave: "0"  # Deploy first - provides CRDs for ServiceMonitors
+        helm:
+          valueFiles:
+          - "values.yaml"
+
+      # =============================================
+      # WAVE 1: Logging Stack (requires ECK operator from system wave -2)
+      # =============================================
+      - name: eck-stack
+        namespace: elastic-system
+        serverSideApply: true
+        wave: "1"  # Deploy after ECK operator is ready
+        imageList: "elasticsearch=docker.elastic.co/elasticsearch/elasticsearch, kibana=docker.elastic.co/kibana/kibana, logstash=docker.elastic.co/logstash/logstash"
+
+      # =============================================
+      # DISABLED APPLICATIONS
+      # =============================================
       # - name: uptime-kuma
       #   namespace: kube-system
+      #   wave: "1"
       #   helm:
       #     valueFiles:
       #     - "values.yaml"
       #   serverSideApply: true
-      # - name: cloudnative-pg
-      #   namespace: cnpg-system
-      #   serverSideApply: true
-      # # - name: ghost
-      # - name: go-healthcheck
-      # - name: kube-prometheus-stack
+
+      # - name: prometheus-rules
       #   namespace: monitoring
+      #   wave: "1"  # After kube-prometheus-stack
+      #   serverSideApply: true
+
+      # - name: thanos
+      #   namespace: monitoring
+      #   wave: "1"  # After Prometheus
       #   serverSideApply: true
       #   helm:
       #     valueFiles:
       #     - "values.yaml"
+
+      # - name: grafana
+      #   namespace: monitoring
+      #   wave: "1"
+      #   serverSideApply: true
+      #   helm:
+      #     valueFiles:
+      #     - "values.yaml"
+
+      # - name: loki
+      #   namespace: monitoring
+      #   wave: "1"  # After storage (MinIO)
+      #   serverSideApply: true
+      #   helm:
+      #     valueFiles:
+      #     - "values.yaml"
+
+      # - name: influxdb
+      #   namespace: monitoring
+      #   wave: "1"
+      #   serverSideApply: true
+
+      # - name: botkube
+      #   namespace: monitoring
+      #   wave: "2"  # After monitoring is ready
+      #   serverSideApply: true
+
+      # - name: karma
+      #   namespace: monitoring
+      #   wave: "1"
+      #   serverSideApply: true
 
       # OLD Rancher monitoring-stack - DISABLED
       # - name: monitoring-stack
@@ -36,68 +94,12 @@ spec:
       #     valueFiles:
       #     - "values.yaml"
 
-      # NEW Community kube-prometheus-stack
-      - name: kube-prometheus-stack
-        namespace: monitoring
-        serverSideApply: true
-        SkipCRDs: false
-        helm:
-          valueFiles:
-          - "values.yaml"
-      # - name: prometheus-rules
-      #   namespace: monitoring
-      #   serverSideApply: tru
-      # - name: thanos
-      #   namespace: monitoring
-      #   serverSideApply: true
-      #   helm:
-      #     valueFiles:
-      #     - "values.yaml"
-
-      # - name: grafana
-      #   namespace: monitoring
-      #   serverSideApply: true
-      #   helm:
-      #     valueFiles:
-      #     - "values.yaml"
-      # - name: loki
-      #   namespace: monitoring
-      #   serverSideApply: true
-      # helm:
-      # - name: influxdb
-      #   namespace: monitoring
-      #   serverSideApply: true
-
-      # - name: botkube
-      #   namespace: monitoring
-      #   serverSideApply: true
-
-      # - name: karma
-      #   namespace: monitoring
-      #   serverSideApply: true
-      # - name: eck-stack
-      #   namespace: elastic-system
-      #   helm:
-      #     valueFiles:
-      #     - "values.yaml"
-      #   serverSideApply: true
-      # - name: loki
-      #   namespace: monitoring
-      #   serverSideApply: true
-      # helm:
-      #   valueFiles:
-      #   - "values.yaml"
-      # - "manifest-dev.yaml"
-      - name: eck-stack
-        namespace: elastic-system
-        serverSideApply: true
-        imageList: "elasticsearch=docker.elastic.co/elasticsearch/elasticsearch, kibana=docker.elastic.co/kibana/kibana, logstash=docker.elastic.co/logstash/logstash"
-
   template:
     metadata:
       name: "{{ .name }}"
       annotations:
         argocd.argoproj.io/manifest-generate-paths: "."
+        argocd.argoproj.io/sync-wave: '{{ default "0" (dig "wave" "" .) }}'
         # ArgoCD Image Updater - set imageList in element to enable
         argocd-image-updater.argoproj.io/image-list: '{{ dig "imageList" "" . }}'
         argocd-image-updater.argoproj.io/write-back-method: git
