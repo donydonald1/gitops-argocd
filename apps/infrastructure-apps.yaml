@@ -14,12 +14,6 @@ spec:
       # =============================================
       # WAVE -3: Core Infrastructure (must be ready before everything)
       # =============================================
-      - name: cert-manager
-        namespace: cert-manager
-        serverSideApply: true
-        wave: "-3"  # Deploy first - TLS certificates for all apps
-        imageList: "cert-manager=quay.io/jetstack/cert-manager-controller"
-
       - name: ingress-nginx
         namespace: ingress-nginx
         serverSideApply: true
