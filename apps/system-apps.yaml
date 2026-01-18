@@ -82,12 +82,6 @@ spec:
         wave: "0"
         imageList: "image-updater=quay.io/argoprojlabs/argocd-image-updater"
 
-      - name: pod-cleaner
-        namespace: pod-cleaner
-        serverSideApply: true
-        wave: "0"
-        imageList: "pod-cleaner=bolferdocker/nvidia-watcher"
-
       - name: kured
         namespace: kured
         serverSideApply: true
