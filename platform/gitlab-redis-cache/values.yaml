@@ -91,6 +91,9 @@ redis:
       failureThreshold: 10
   volumePermissions:
     enabled: true
+    image:
+      registry: docker.io
+      repository: bitnamilegacy/os-shell
   metrics:
     enabled: true
     serviceMonitor:
