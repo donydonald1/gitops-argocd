@@ -12,9 +12,10 @@ dependencies:
     repository: "https://prometheus-community.github.io/helm-charts"
 
   # Bitnami Thanos for long-term storage and HA queries
+  # Using bitnami-oci alias configured in ArgoCD to avoid rate limits
   - name: thanos
     version: "17.3.1"
-    repository: "https://charts.bitnami.com/bitnami"
+    repository: "https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami"
 
   # Grafana Loki for log aggregation
   - name: loki
