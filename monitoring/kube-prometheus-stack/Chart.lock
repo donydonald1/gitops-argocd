@@ -3,7 +3,7 @@ dependencies:
   repository: https://prometheus-community.github.io/helm-charts
   version: 81.0.0
 - name: thanos
-  repository: https://charts.bitnami.com/bitnami
+  repository: https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami
   version: 17.3.1
 - name: loki
   repository: https://grafana.github.io/helm-charts
@@ -17,5 +17,5 @@ dependencies:
 - name: alloy
   repository: https://grafana.github.io/helm-charts
   version: 1.5.2
-digest: sha256:ab89ba4d4012dd879531b399c06e9fae1ad040e5a14b996e14e21b3c3aeb1e91
-generated: "2026-01-16T23:15:41.215519-06:00"
+digest: sha256:69f86e8a128004061fbd0a1b8e24c811b4d17b7a582b59cfe6683f3a1bdcabf0
+generated: "2026-01-18T04:36:01.183018-06:00"
