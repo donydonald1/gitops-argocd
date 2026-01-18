@@ -106,10 +106,11 @@ minio:
     existingSecretKey: harborPassword
     policy: readwrite
 
-  - accessKey: reportportal
-    existingSecret: minio-users
-    existingSecretKey: reportportalPassword
-    policy: readwrite
+  # Disabled - reportportal is not deployed
+  # - accessKey: reportportal
+  #   existingSecret: minio-users
+  #   existingSecretKey: reportportalPassword
+  #   policy: readwrite
 
   - accessKey: terraform-state
     existingSecret: minio-users
@@ -412,11 +413,12 @@ minio:
     # bucket [true|false] NOTE: versioning is enabled by default if you use locking
     objectlocking: false
 
-  - name: reportportal
-    policy: none
-    purge: false
-    versioning: true
-    objectlocking: false
+  # Disabled - reportportal is not deployed
+  # - name: reportportal
+  #   policy: none
+  #   purge: false
+  #   versioning: true
+  #   objectlocking: false
 
   - name: terraform-state
     policy: none
