@@ -12,7 +12,7 @@ spec:
     preserveResourcesOnDeletion: false
   generators:
   - list:
-      elements:
+      elements: []
       # =============================================
       # WAVE -3: Core Infrastructure (must be ready before everything)
       # =============================================
