@@ -16,6 +16,7 @@ spec:
         serverSideApply: true
         wave: "-1"  # Deploy MinIO first - storage backend for all apps
         imageList: "minio=minio/minio"
+        skipHooks: "false"  # Enable Helm hooks for bucket/user creation jobs
         helm:
           values:
           - values.yaml
@@ -225,3 +226,5 @@ spec:
         - SkipDryRunOnMissingResource=true
         # - RespectIgnoreDifferences=false
         - '{{ printf "%s=%s" "ServerSideApply" (dig "serverSideApply" "true" . | toString) }}'
+        # Enable Helm hooks for apps that need post-install jobs (e.g., MinIO bucket creation)
+        - '{{ printf "%s=%s" "SkipHooks" (dig "skipHooks" "true" . | toString) }}'
