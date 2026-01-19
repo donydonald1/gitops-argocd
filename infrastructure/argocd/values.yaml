@@ -71,6 +71,40 @@ argo-cd:
           ignoreDifferences: |
             jsonPointers:
             - /webhooks/0/clientConfig/caBundle
+
+        v1.edp.epam.com/ClusterKeycloak:
+          health.lua: |
+            hs = {}
+            if obj.status ~= nil then
+              if obj.status.connected == true then
+                hs.status = "Healthy"
+                hs.message = "Connected to Keycloak"
+              else
+                hs.status = "Degraded"
+                hs.message = "Not connected to Keycloak"
+              end
+            else
+              hs.status = "Progressing"
+              hs.message = "Waiting for status"
+            end
+            return hs
+
+        v1.edp.epam.com/ClusterKeycloakRealm:
+          health.lua: |
+            hs = {}
+            if obj.status ~= nil then
+              if obj.status.available == true then
+                hs.status = "Healthy"
+                hs.message = obj.status.value or "Realm available"
+              else
+                hs.status = "Degraded"
+                hs.message = obj.status.value or "Realm not available"
+              end
+            else
+              hs.status = "Progressing"
+              hs.message = "Waiting for status"
+            end
+            return hs
       oidc.config: |
         name: OIDC
         issuer: <path:secret/data/argocd#iodc_issuer_url>
