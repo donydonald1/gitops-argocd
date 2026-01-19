@@ -307,11 +307,11 @@ harbor:
     resourcePolicy: "keep"
     imageChartStorage:
       type: "s3"
-      # S3 redirect enabled - clients download blobs directly from MinIO
-      # Split-horizon DNS (coredns-custom) rewrites s3.ops.techsecom.io to
-      # minio-https.minio.svc.cluster.local for internal HTTPS access
-      # External clients use Cloudflare -> ingress -> MinIO
-      disableredirect: false
+      # S3 redirect disabled - all blob uploads go through Harbor registry
+      # This is required for multi-replica registry deployments to avoid
+      # "upload resumed at wrong offset" errors when session affinity fails
+      # Trade-off: slightly higher latency, but reliable uploads
+      disableredirect: true
       s3:
         bucket: harbor
         existingSecret: harbor-s3
