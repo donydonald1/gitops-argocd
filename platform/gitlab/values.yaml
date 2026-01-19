@@ -3,7 +3,7 @@
 gitlabRunner:
   enabled: false
   replicas: 3
-  runnerToken: "<path:secret/gitlab#runner-token>"  # Pulled from Vault via AVP
+  runnerToken: "<path:secret/gitlab#runner-token>" # Pulled from Vault via AVP
 
 # GitLab Configuration
 gitlab:
@@ -19,9 +19,9 @@ gitlab:
       # Note: global.extraEnv GIT_CONFIG_* doesn't work because Gitaly has ignore_gitconfig=true
       git:
         config:
-          # Allow all directories as safe (fixes dubious ownership on NFS)
-          - key: safe.directory
-            value: "*"
+        # Allow all directories as safe (fixes dubious ownership on NFS)
+        - key: safe.directory
+          value: "*"
       persistence:
         size: 300Gi
         storageClass: nfs-csi
@@ -35,12 +35,12 @@ gitlab:
           memory: 8Gi
       # Increase concurrency for parallel git operations
       concurrency:
-        - rpc: "/gitaly.SmartHTTPService/PostReceivePack"
-          max_per_repo: 10
-        - rpc: "/gitaly.SmartHTTPService/PostUploadPack"
-          max_per_repo: 10
-        - rpc: "/gitaly.SSHService/SSHUploadPack"
-          max_per_repo: 10
+      - rpc: "/gitaly.SmartHTTPService/PostReceivePack"
+        max_per_repo: 10
+      - rpc: "/gitaly.SmartHTTPService/PostUploadPack"
+        max_per_repo: 10
+      - rpc: "/gitaly.SSHService/SSHUploadPack"
+        max_per_repo: 10
       cgroups:
         repositories:
           count: 100
@@ -274,16 +274,16 @@ gitlab:
               S3ForcePathStyle = true
               Insecure = true
     envVars:
-      - name: CACHE_S3_ACCESS_KEY
-        valueFrom:
-          secretKeyRef:
-            name: aws-credentials-glab-runner
-            key: accesskey
-      - name: CACHE_S3_SECRET_KEY
-        valueFrom:
-          secretKeyRef:
-            name: aws-credentials-glab-runner
-            key: secretkey
+    - name: CACHE_S3_ACCESS_KEY
+      valueFrom:
+        secretKeyRef:
+          name: aws-credentials-glab-runner
+          key: accesskey
+    - name: CACHE_S3_SECRET_KEY
+      valueFrom:
+        secretKeyRef:
+          name: aws-credentials-glab-runner
+          key: secretkey
     extraEnv:
       CACHE_S3_SERVER_ADDRESS: "minio.minio.svc.cluster.local:9000"
       CACHE_S3_BUCKET_NAME: "gitlab-runner-cache"
@@ -341,9 +341,9 @@ gitlab:
       replaceInternalGitaly: true
       autoMigrate: true
       virtualStorages:
-        - name: default
-          gitalyReplicas: 3
-          maxUnavailable: 1
+      - name: default
+        gitalyReplicas: 3
+        maxUnavailable: 1
       psql:
         host: cnpg-cluster-rw.cnpg-system.svc.cluster.local
         port: 5432
@@ -360,14 +360,14 @@ gitlab:
         events:
           includereferences: true
         endpoints:
-          - name: alertmanager
-            url: http://kps-alertmanager.monitoring.svc.cluster.local:9093
-            timeout: 500ms
-            threshold: 5
-            maxretries: 5
-            backoff: 1s
-            headers:
-              X-Random-Config: [plain direct]
+        - name: alertmanager
+          url: http://kps-alertmanager.monitoring.svc.cluster.local:9093
+          timeout: 500ms
+          threshold: 5
+          maxretries: 5
+          backoff: 1s
+          headers:
+            X-Random-Config: [ plain direct ]
 
     appConfig:
       initialDefaults:
@@ -429,11 +429,11 @@ gitlab:
         autoLinkSamlUser: true
         enabled: true
         providers:
-          - secret: idp-provider
+        - secret: idp-provider
         syncProfileAttributes:
-          - email
-          - username
-          - profile
+        - email
+        - username
+        - profile
       packages:
         bucket: gitlab-packages
         connection: {}
@@ -460,8 +460,8 @@ gitlab:
       host: mymaster
       port: 6379
       sentinels:
-        - host: redis-main.gitlab.svc.cluster.local
-          port: 26379
+      - host: redis-main.gitlab.svc.cluster.local
+        port: 26379
       auth:
         enabled: true
         secret: redis-creds
@@ -470,8 +470,8 @@ gitlab:
         host: mymaster
         port: 6379
         sentinels:
-          - host: redis-cache.gitlab.svc.cluster.local
-            port: 26379
+        - host: redis-cache.gitlab.svc.cluster.local
+          port: 26379
         password:
           enabled: true
           secret: redis-creds
@@ -510,7 +510,7 @@ gitlab:
         cert-manager.io/revision-history-limit: "3"
         external-dns.alpha.kubernetes.io/enabled: "true"
         external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
-        external-dns.alpha.kubernetes.io/target: 2d3d989b-85c6-4b7d-9d2e-9f87d0463368.cfargotunnel.com
+        external-dns.alpha.kubernetes.io/target: a91a3a49-afc1-4006-95d7-9db52837572a.cfargotunnel.com
         nginx.ingress.kubernetes.io/enable-access-log: "true"
         nginx.ingress.kubernetes.io/proxy-ssl-protocols: TLSv1.3 TLSv1.2
         nginx.ingress.kubernetes.io/ssl-redirect: "true"
