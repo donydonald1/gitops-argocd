@@ -145,7 +145,10 @@ harbor:
 
   # Stakater Reloader - automatically reload pods when secrets change
   core:
-    replicas: 3
+    # Using single replica to avoid blob upload offset errors
+    # Harbor core proxies /v2/ API calls to the registry, and with multiple
+    # core pods, chunked uploads can hit different cores causing offset mismatches
+    replicas: 1
     podAnnotations:
       reloader.stakater.com/auto: "true"
     resources:
