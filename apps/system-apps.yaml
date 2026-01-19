@@ -88,6 +88,15 @@ spec:
         wave: "0"
         imageList: "kured=ghcr.io/kubereboot/kured"
 
+      - name: kubernetes-event-exporter
+        namespace: kubernetes-event-exporter
+        serverSideApply: true
+        wave: "0"
+        imageList: "event-exporter=bitnami/kubernetes-event-exporter"
+        helm:
+          values:
+          - values.yaml
+
       # =============================================
       # WAVE 1: Virtualization Platform
       # =============================================

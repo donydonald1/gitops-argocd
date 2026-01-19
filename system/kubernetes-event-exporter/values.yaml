@@ -1,0 +1,83 @@
+kubernetes-event-exporter:
+  fullnameOverride: kubernetes-event-exporter
+
+  # RBAC configuration
+  rbac:
+    create: true
+
+  serviceAccount:
+    create: true
+    name: kubernetes-event-exporter
+
+  # Resource limits
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+  # Event exporter configuration
+  config:
+    logLevel: info
+    logFormat: json
+    maxEventAgeSeconds: 60
+
+    # Route all events
+    route:
+      routes:
+        # Send all events to Loki
+        - match:
+            - receiver: "loki"
+        # Send Warning/Error events to Loki with additional label
+        - match:
+            - receiver: "loki-warnings"
+              type: "Warning"
+        - match:
+            - receiver: "loki-warnings"
+              type: "Error"
+
+    receivers:
+      # Main Loki receiver for all events
+      - name: "loki"
+        loki:
+          url: http://kube-prometheus-stack-loki-gateway.monitoring.svc.cluster.local/loki/api/v1/push
+          streamLabels:
+            job: kubernetes-events
+            log_type: event
+            cluster: ops-dc-tx-rke2-mgmt-prod
+
+      # Warning/Error events with additional severity label
+      - name: "loki-warnings"
+        loki:
+          url: http://kube-prometheus-stack-loki-gateway.monitoring.svc.cluster.local/loki/api/v1/push
+          streamLabels:
+            job: kubernetes-events
+            log_type: event
+            cluster: ops-dc-tx-rke2-mgmt-prod
+            severity: warning
+
+  # Pod security context
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    fsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+
+  # Tolerations to run on all nodes including control plane
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
+
+  # Pod priority
+  priorityClassName: system-cluster-critical
