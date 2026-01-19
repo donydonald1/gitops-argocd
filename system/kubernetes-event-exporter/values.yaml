@@ -1,11 +1,11 @@
 kubernetes-event-exporter:
   fullnameOverride: kubernetes-event-exporter
 
-  # Image configuration - use bitnamilegacy registry
+  # Image configuration - use bitnamilegacy registry with latest tag
   image:
     registry: docker.io
     repository: bitnamilegacy/kubernetes-event-exporter
-    tag: 1.7.0
+    tag: latest
 
   # RBAC configuration
   rbac:
