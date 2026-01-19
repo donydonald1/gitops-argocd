@@ -98,7 +98,8 @@ spec:
           fi
 
           echo "Checking if IDP exists..."
-          IDP_EXISTS=$(curl -sf -o /dev/null -w "%{http_code}" \
+          # Use -s (silent) without -f (fail) to capture HTTP status code even on 404
+          IDP_EXISTS=$(curl -s -o /dev/null -w "%{http_code}" \
             "${KEYCLOAK_URL}/admin/realms/master/identity-provider/instances/techsecoms-oidc" \
             -H "Authorization: Bearer ${TOKEN}")
 
