@@ -53,14 +53,13 @@ spec:
           webhookUrl:
             name: alertmanager-msteams-secret
             key: webhook-url
-          title: |-
-            {{ if eq .Status "firing" }}🔴{{ else }}🟢{{ end }} [{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}
-          text: |-
-            {{ if eq .Status "firing" }}
+          title: '{{ "{{" }} if eq .Status "firing" {{ "}}" }}🔴{{ "{{" }} else {{ "}}" }}🟢{{ "{{" }} end {{ "}}" }} [{{ "{{" }} .Status | toUpper {{ "}}" }}{{ "{{" }} if eq .Status "firing" {{ "}}" }}:{{ "{{" }} .Alerts.Firing | len {{ "}}" }}{{ "{{" }} end {{ "}}" }}] {{ "{{" }} .CommonLabels.alertname {{ "}}" }}'
+          text: |
+            {{ "{{" }} if eq .Status "firing" {{ "}}" }}
             ⚠️ **ALERT FIRING** - Immediate attention required
-            {{ else }}
+            {{ "{{" }} else {{ "}}" }}
             ✅ **ALERT RESOLVED** - Issue has been remediated
-            {{ end }}
+            {{ "{{" }} end {{ "}}" }}
 
             ---
 
@@ -68,44 +67,44 @@ spec:
 
             | Field | Value |
             |-------|-------|
-            | **Cluster** | `{{ .CommonLabels.cluster }}` |
-            | **Alert** | `{{ .CommonLabels.alertname }}` |
-            | **Severity** | {{ if eq .CommonLabels.severity "critical" }}🔴 **CRITICAL**{{ else if eq .CommonLabels.severity "warning" }}🟡 **WARNING**{{ else }}🔵 **{{ .CommonLabels.severity | toUpper }}**{{ end }} |
-            {{ if .CommonLabels.namespace }}| **Namespace** | `{{ .CommonLabels.namespace }}` |{{ end }}
-            {{ if .CommonLabels.service }}| **Service** | `{{ .CommonLabels.service }}` |{{ end }}
+            | **Cluster** | `{{ "{{" }} .CommonLabels.cluster {{ "}}" }}` |
+            | **Alert** | `{{ "{{" }} .CommonLabels.alertname {{ "}}" }}` |
+            | **Severity** | {{ "{{" }} if eq .CommonLabels.severity "critical" {{ "}}" }}🔴 **CRITICAL**{{ "{{" }} else if eq .CommonLabels.severity "warning" {{ "}}" }}🟡 **WARNING**{{ "{{" }} else {{ "}}" }}🔵 **{{ "{{" }} .CommonLabels.severity | toUpper {{ "}}" }}**{{ "{{" }} end {{ "}}" }} |
+            {{ "{{" }} if .CommonLabels.namespace {{ "}}" }}| **Namespace** | `{{ "{{" }} .CommonLabels.namespace {{ "}}" }}` |{{ "{{" }} end {{ "}}" }}
+            {{ "{{" }} if .CommonLabels.service {{ "}}" }}| **Service** | `{{ "{{" }} .CommonLabels.service {{ "}}" }}` |{{ "{{" }} end {{ "}}" }}
 
             ---
 
-            {{ range $alert := .Alerts }}
+            {{ "{{" }} range $alert := .Alerts {{ "}}" }}
 
             ---
 
             **📋 Alert Details**
 
-            {{ if $alert.Annotations.summary }}
-            > **Summary**: {{ $alert.Annotations.summary }}
-            {{ end }}
+            {{ "{{" }} if $alert.Annotations.summary {{ "}}" }}
+            > **Summary**: {{ "{{" }} $alert.Annotations.summary {{ "}}" }}
+            {{ "{{" }} end {{ "}}" }}
 
-            {{ if $alert.Annotations.description }}
-            > **Description**: {{ $alert.Annotations.description }}
-            {{ end }}
+            {{ "{{" }} if $alert.Annotations.description {{ "}}" }}
+            > **Description**: {{ "{{" }} $alert.Annotations.description {{ "}}" }}
+            {{ "{{" }} end {{ "}}" }}
 
-            {{ if $alert.Annotations.runbook_url }}
-            📖 **Runbook**: [View Runbook]({{ $alert.Annotations.runbook_url }})
-            {{ end }}
+            {{ "{{" }} if $alert.Annotations.runbook_url {{ "}}" }}
+            📖 **Runbook**: [View Runbook]({{ "{{" }} $alert.Annotations.runbook_url {{ "}}" }})
+            {{ "{{" }} end {{ "}}" }}
 
             **Labels:**
-            {{ if $alert.Labels.pod }}- **Pod**: `{{ $alert.Labels.pod }}`{{ end }}
-            {{ if $alert.Labels.container }}- **Container**: `{{ $alert.Labels.container }}`{{ end }}
-            {{ if $alert.Labels.instance }}- **Instance**: `{{ $alert.Labels.instance }}`{{ end }}
-            {{ if $alert.Labels.node }}- **Node**: `{{ $alert.Labels.node }}`{{ end }}
-            {{ if $alert.Labels.job }}- **Job**: `{{ $alert.Labels.job }}`{{ end }}
+            {{ "{{" }} if $alert.Labels.pod {{ "}}" }}- **Pod**: `{{ "{{" }} $alert.Labels.pod {{ "}}" }}`{{ "{{" }} end {{ "}}" }}
+            {{ "{{" }} if $alert.Labels.container {{ "}}" }}- **Container**: `{{ "{{" }} $alert.Labels.container {{ "}}" }}`{{ "{{" }} end {{ "}}" }}
+            {{ "{{" }} if $alert.Labels.instance {{ "}}" }}- **Instance**: `{{ "{{" }} $alert.Labels.instance {{ "}}" }}`{{ "{{" }} end {{ "}}" }}
+            {{ "{{" }} if $alert.Labels.node {{ "}}" }}- **Node**: `{{ "{{" }} $alert.Labels.node {{ "}}" }}`{{ "{{" }} end {{ "}}" }}
+            {{ "{{" }} if $alert.Labels.job {{ "}}" }}- **Job**: `{{ "{{" }} $alert.Labels.job {{ "}}" }}`{{ "{{" }} end {{ "}}" }}
 
             **Timestamps:**
-            - **Started**: {{ $alert.StartsAt.Format "2006-01-02 15:04:05 MST" }}
-            {{ if $alert.EndsAt.IsZero | not }}- **Ended**: {{ $alert.EndsAt.Format "2006-01-02 15:04:05 MST" }}{{ end }}
+            - **Started**: {{ "{{" }} $alert.StartsAt.Format "2006-01-02 15:04:05 MST" {{ "}}" }}
+            {{ "{{" }} if $alert.EndsAt.IsZero | not {{ "}}" }}- **Ended**: {{ "{{" }} $alert.EndsAt.Format "2006-01-02 15:04:05 MST" {{ "}}" }}{{ "{{" }} end {{ "}}" }}
 
-            {{ end }}
+            {{ "{{" }} end {{ "}}" }}
 
             ---
 
@@ -129,30 +128,30 @@ spec:
           webhookUrl:
             name: alertmanager-msteams-secret
             key: webhook-url
-          title: '🚨 CRITICAL: {{ .CommonLabels.alertname }} on {{ .CommonLabels.cluster }}'
-          text: |-
+          title: '🚨 CRITICAL: {{ "{{" }} .CommonLabels.alertname {{ "}}" }} on {{ "{{" }} .CommonLabels.cluster {{ "}}" }}'
+          text: |
             **🚨🚨🚨 CRITICAL ALERT - IMMEDIATE ACTION REQUIRED 🚨🚨🚨**
 
             ---
 
             | Field | Value |
             |-------|-------|
-            | **Cluster** | `{{ .CommonLabels.cluster }}` |
-            | **Alert** | `{{ .CommonLabels.alertname }}` |
+            | **Cluster** | `{{ "{{" }} .CommonLabels.cluster {{ "}}" }}` |
+            | **Alert** | `{{ "{{" }} .CommonLabels.alertname {{ "}}" }}` |
             | **Severity** | 🔴 **CRITICAL** |
-            {{ if .CommonLabels.namespace }}| **Namespace** | `{{ .CommonLabels.namespace }}` |{{ end }}
-            {{ if .CommonLabels.pod }}| **Pod** | `{{ .CommonLabels.pod }}` |{{ end }}
-            {{ if .CommonLabels.node }}| **Node** | `{{ .CommonLabels.node }}` |{{ end }}
+            {{ "{{" }} if .CommonLabels.namespace {{ "}}" }}| **Namespace** | `{{ "{{" }} .CommonLabels.namespace {{ "}}" }}` |{{ "{{" }} end {{ "}}" }}
+            {{ "{{" }} if .CommonLabels.pod {{ "}}" }}| **Pod** | `{{ "{{" }} .CommonLabels.pod {{ "}}" }}` |{{ "{{" }} end {{ "}}" }}
+            {{ "{{" }} if .CommonLabels.node {{ "}}" }}| **Node** | `{{ "{{" }} .CommonLabels.node {{ "}}" }}` |{{ "{{" }} end {{ "}}" }}
 
             ---
 
-            {{ range $index, $alert := .Alerts }}
-            {{ if $alert.Annotations.summary }}> {{ $alert.Annotations.summary }}{{ end }}
+            {{ "{{" }} range $index, $alert := .Alerts {{ "}}" }}
+            {{ "{{" }} if $alert.Annotations.summary {{ "}}" }}> {{ "{{" }} $alert.Annotations.summary {{ "}}" }}{{ "{{" }} end {{ "}}" }}
 
-            {{ if $alert.Annotations.description }}**Details**: {{ $alert.Annotations.description }}{{ end }}
+            {{ "{{" }} if $alert.Annotations.description {{ "}}" }}**Details**: {{ "{{" }} $alert.Annotations.description {{ "}}" }}{{ "{{" }} end {{ "}}" }}
 
-            **Started**: {{ $alert.StartsAt.Format "2006-01-02 15:04:05 MST" }}
-            {{ end }}
+            **Started**: {{ "{{" }} $alert.StartsAt.Format "2006-01-02 15:04:05 MST" {{ "}}" }}
+            {{ "{{" }} end {{ "}}" }}
 
             ---
 
@@ -162,4 +161,4 @@ spec:
             3. **ACT** - Follow runbook or escalate immediately
             4. **COMMUNICATE** - Update stakeholders on status
 
-            🔗 [View Alert Source]({{ (index .Alerts 0).GeneratorURL }})
+            🔗 [View Alert Source]({{ "{{" }} (index .Alerts 0).GeneratorURL {{ "}}" }})
