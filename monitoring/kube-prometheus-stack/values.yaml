@@ -368,9 +368,11 @@ kube-prometheus-stack:
   alertmanager:
     enabled: true
 
-    # Use external secret for Alertmanager config to support webhook_url_file
-    # The config is stored in alertmanager-config secret (see templates/alertmanager-config-secret.yaml)
-    # This bypasses Prometheus Operator CRD validation which doesn't support webhook_url_file
+    # Minimal global config - routing/receivers defined via AlertmanagerConfig CR
+    # which supports webhookUrl secret reference for MS Teams
+    config:
+      global:
+        resolve_timeout: 5m
 
     ingress:
       enabled: true
@@ -394,8 +396,12 @@ kube-prometheus-stack:
       retention: 120h
       externalUrl: https://alertmanager.ops.techsecom.io
 
-      # Use config from secret to support webhook_url_file (not supported by CRD validation)
-      configSecret: alertmanager-config
+      # Pick up AlertmanagerConfig CRs from the monitoring namespace
+      # This allows using webhookUrl secret reference for MS Teams
+      alertmanagerConfigSelector:
+        matchLabels:
+          app: alertmanager
+      alertmanagerConfigNamespaceSelector: {}
 
       secrets:
         - alertmanager-msteams-secret

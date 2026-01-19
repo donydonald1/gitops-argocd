@@ -1,0 +1,165 @@
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: AlertmanagerConfig
+metadata:
+  name: msteams-config
+  labels:
+    app: alertmanager
+spec:
+  route:
+    groupBy: ['alertname', 'job', 'namespace']
+    groupWait: 30s
+    groupInterval: 5m
+    repeatInterval: 4h
+    receiver: msteams
+    routes:
+      - receiver: "null"
+        matchers:
+          - matchType: "=~"
+            name: alertname
+            value: "Watchdog|InfoInhibitor"
+      - receiver: msteams-critical
+        matchers:
+          - matchType: "="
+            name: severity
+            value: critical
+        groupWait: 10s
+        groupInterval: 1m
+        repeatInterval: 1h
+        continue: false
+      - receiver: msteams
+        matchers:
+          - matchType: "="
+            name: severity
+            value: warning
+        groupWait: 30s
+        groupInterval: 5m
+        repeatInterval: 4h
+      - receiver: msteams
+  inhibitRules:
+    - sourceMatch:
+        - matchType: "="
+          name: severity
+          value: critical
+      targetMatch:
+        - matchType: "="
+          name: severity
+          value: warning
+      equal: ["alertname", "namespace"]
+  receivers:
+    - name: "null"
+    - name: msteams
+      msteamsConfigs:
+        - sendResolved: true
+          webhookUrl:
+            name: alertmanager-msteams-secret
+            key: webhook-url
+          title: |-
+            {{ if eq .Status "firing" }}🔴{{ else }}🟢{{ end }} [{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}
+          text: |-
+            {{ if eq .Status "firing" }}
+            ⚠️ **ALERT FIRING** - Immediate attention required
+            {{ else }}
+            ✅ **ALERT RESOLVED** - Issue has been remediated
+            {{ end }}
+
+            ---
+
+            **🏷️ Alert Information**
+
+            | Field | Value |
+            |-------|-------|
+            | **Cluster** | `{{ .CommonLabels.cluster }}` |
+            | **Alert** | `{{ .CommonLabels.alertname }}` |
+            | **Severity** | {{ if eq .CommonLabels.severity "critical" }}🔴 **CRITICAL**{{ else if eq .CommonLabels.severity "warning" }}🟡 **WARNING**{{ else }}🔵 **{{ .CommonLabels.severity | toUpper }}**{{ end }} |
+            {{ if .CommonLabels.namespace }}| **Namespace** | `{{ .CommonLabels.namespace }}` |{{ end }}
+            {{ if .CommonLabels.service }}| **Service** | `{{ .CommonLabels.service }}` |{{ end }}
+
+            ---
+
+            {{ range $alert := .Alerts }}
+
+            ---
+
+            **📋 Alert Details**
+
+            {{ if $alert.Annotations.summary }}
+            > **Summary**: {{ $alert.Annotations.summary }}
+            {{ end }}
+
+            {{ if $alert.Annotations.description }}
+            > **Description**: {{ $alert.Annotations.description }}
+            {{ end }}
+
+            {{ if $alert.Annotations.runbook_url }}
+            📖 **Runbook**: [View Runbook]({{ $alert.Annotations.runbook_url }})
+            {{ end }}
+
+            **Labels:**
+            {{ if $alert.Labels.pod }}- **Pod**: `{{ $alert.Labels.pod }}`{{ end }}
+            {{ if $alert.Labels.container }}- **Container**: `{{ $alert.Labels.container }}`{{ end }}
+            {{ if $alert.Labels.instance }}- **Instance**: `{{ $alert.Labels.instance }}`{{ end }}
+            {{ if $alert.Labels.node }}- **Node**: `{{ $alert.Labels.node }}`{{ end }}
+            {{ if $alert.Labels.job }}- **Job**: `{{ $alert.Labels.job }}`{{ end }}
+
+            **Timestamps:**
+            - **Started**: {{ $alert.StartsAt.Format "2006-01-02 15:04:05 MST" }}
+            {{ if $alert.EndsAt.IsZero | not }}- **Ended**: {{ $alert.EndsAt.Format "2006-01-02 15:04:05 MST" }}{{ end }}
+
+            {{ end }}
+
+            ---
+
+            **🔗 Quick Links**
+
+            - [📊 Grafana Dashboard](https://grafana.ops.techsecom.io)
+            - [🔔 Alertmanager](https://alertmanager.ops.techsecom.io)
+            - [📈 Prometheus](https://prometheus.ops.techsecom.io)
+            - [📝 Loki Logs](https://grafana.ops.techsecom.io/explore?orgId=1&left=%5B%22now-1h%22,%22now%22,%22Loki%22,%7B%7D%5D)
+
+            ---
+
+            **📞 Escalation Path:**
+            1. Check Grafana dashboards for anomalies
+            2. Review logs in Loki for error context
+            3. If critical, escalate to on-call team
+            4. Document incident in tracking system
+    - name: msteams-critical
+      msteamsConfigs:
+        - sendResolved: true
+          webhookUrl:
+            name: alertmanager-msteams-secret
+            key: webhook-url
+          title: '🚨 CRITICAL: {{ .CommonLabels.alertname }} on {{ .CommonLabels.cluster }}'
+          text: |-
+            **🚨🚨🚨 CRITICAL ALERT - IMMEDIATE ACTION REQUIRED 🚨🚨🚨**
+
+            ---
+
+            | Field | Value |
+            |-------|-------|
+            | **Cluster** | `{{ .CommonLabels.cluster }}` |
+            | **Alert** | `{{ .CommonLabels.alertname }}` |
+            | **Severity** | 🔴 **CRITICAL** |
+            {{ if .CommonLabels.namespace }}| **Namespace** | `{{ .CommonLabels.namespace }}` |{{ end }}
+            {{ if .CommonLabels.pod }}| **Pod** | `{{ .CommonLabels.pod }}` |{{ end }}
+            {{ if .CommonLabels.node }}| **Node** | `{{ .CommonLabels.node }}` |{{ end }}
+
+            ---
+
+            {{ range $index, $alert := .Alerts }}
+            {{ if $alert.Annotations.summary }}> {{ $alert.Annotations.summary }}{{ end }}
+
+            {{ if $alert.Annotations.description }}**Details**: {{ $alert.Annotations.description }}{{ end }}
+
+            **Started**: {{ $alert.StartsAt.Format "2006-01-02 15:04:05 MST" }}
+            {{ end }}
+
+            ---
+
+            **⚡ Immediate Actions:**
+            1. **STOP** - Acknowledge this alert
+            2. **ASSESS** - Check [Grafana](https://grafana.ops.techsecom.io) for impact
+            3. **ACT** - Follow runbook or escalate immediately
+            4. **COMMUNICATE** - Update stakeholders on status
+
+            🔗 [View Alert Source]({{ (index .Alerts 0).GeneratorURL }})
