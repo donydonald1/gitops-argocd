@@ -2,15 +2,16 @@
 # Agent connects to GitLab KAS server for cluster integration and workspaces
 
 gitlab-agent:
-  # Image configuration - using stable v18.7.0 release
+  # Image configuration - match GitLab version (v18.8.x)
   image:
-    tag: "v18.7.0"
+    tag: "v18.8.0"
     pullPolicy: IfNotPresent
 
   # GitLab configuration
   config:
-    # KAS address - using the GitLab KAS service
-    kasAddress: "wss://kas.gitlab.techsecom.io"
+    # KAS address - use internal service to bypass Cloudflare proxy
+    # Port 8150 is the gRPC/WebSocket endpoint for agents
+    kasAddress: "grpc://gitlab-kas.gitlab.svc.cluster.local:8150"
 
     # Token secret name - references the secret created by ExternalSecret
     # The secret is created by templates/externalsecret.yaml with key 'token'
@@ -19,9 +20,13 @@ gitlab-agent:
     # Observability settings (must be under config)
     observability:
       enabled: true
+      # Enable gRPC logging for debugging
+      logging:
+        level: info
+        grpc_level: warn
 
   # Replicas for HA
-  replicas: 2
+  replicas: 3
 
   # Resource configuration
   resources:
