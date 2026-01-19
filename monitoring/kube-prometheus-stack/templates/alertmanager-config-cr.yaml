@@ -35,6 +35,14 @@ spec:
         groupInterval: 5m
         repeatInterval: 4h
       - receiver: msteams
+        matchers:
+          - matchType: "="
+            name: severity
+            value: info
+        groupWait: 30s
+        groupInterval: 10m
+        repeatInterval: 12h
+      - receiver: msteams
   inhibitRules:
     - sourceMatch:
         - matchType: "="
@@ -53,26 +61,96 @@ spec:
           webhookUrl:
             name: alertmanager-msteams-secret
             key: webhook-url
-          title: {{ printf "%s" `'[{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}'` }}
-          text: {{ printf "%s" `'**Cluster**: {{ .CommonLabels.cluster }} | **Severity**: {{ .CommonLabels.severity }}
+          title: {{ printf "%s" `'{{ if eq .Status "firing" }}🔔{{ else }}✅{{ end }} {{ .CommonLabels.alertname }}'` }}
+          text: |
+            {{ printf "%s" `'{{ if eq .Status "resolved" }}**✅ RESOLVED**{{ end }}
 
-{{ range .Alerts }}**{{ .Annotations.summary }}**
-{{ .Annotations.description }}
-{{ end }}
+            ---
+            **📊 Alert Details**
+            | Field | Value |
+            |-------|-------|
+            | **Status** | {{ .Status | toUpper }} |
+            | **Severity** | {{ if eq .CommonLabels.severity "critical" }}🔴 Critical{{ else if eq .CommonLabels.severity "warning" }}🟠 Warning{{ else }}🔵 Info{{ end }} |
+            | **Cluster** | {{ .CommonLabels.cluster }} |
+            | **Namespace** | {{ .CommonLabels.namespace }} |
+            | **Alerts Count** | {{ len .Alerts }} |
 
-[Grafana](https://grafana.ops.techsecom.io) | [Alertmanager](https://alertmanager.ops.techsecom.io)'` }}
+            ---
+            {{ range .Alerts }}
+            **📝 {{ .Annotations.summary }}**
+
+            {{ .Annotations.description }}
+
+            {{ if .Labels.pod }}**Pod:** `{{ .Labels.pod }}`{{ end }}
+            {{ if .Labels.container }}**Container:** `{{ .Labels.container }}`{{ end }}
+            {{ if .Labels.service }}**Service:** `{{ .Labels.service }}`{{ end }}
+            {{ if .Labels.node }}**Node:** `{{ .Labels.node }}`{{ end }}
+            {{ if .Labels.job }}**Job:** `{{ .Labels.job }}`{{ end }}
+            {{ if .Labels.instance }}**Instance:** `{{ .Labels.instance }}`{{ end }}
+
+            **Started:** {{ .StartsAt.Format "2006-01-02 15:04:05 UTC" }}
+            {{ if .EndsAt }}**Ended:** {{ .EndsAt.Format "2006-01-02 15:04:05 UTC" }}{{ end }}
+
+            ---
+            {{ end }}
+            **🔗 Quick Links**
+            [📈 Grafana](https://grafana.ops.techsecom.io) | [🔔 Alertmanager](https://alertmanager.ops.techsecom.io) | [📊 Prometheus](https://prometheus.ops.techsecom.io)'` }}
     - name: msteams-critical
       msteamsConfigs:
         - sendResolved: true
           webhookUrl:
             name: alertmanager-msteams-secret
             key: webhook-url
-          title: {{ printf "%s" `'🚨 CRITICAL: {{ .CommonLabels.alertname }}'` }}
-          text: {{ printf "%s" `'**CRITICAL ALERT**
+          title: {{ printf "%s" `'{{ if eq .Status "firing" }}🚨 CRITICAL{{ else }}✅ RESOLVED{{ end }}: {{ .CommonLabels.alertname }}'` }}
+          text: |
+            {{ printf "%s" `'{{ if eq .Status "resolved" }}
+            **✅ ALERT RESOLVED - Issue has been mitigated**
+            {{ else }}
+            **🚨 CRITICAL ALERT - IMMEDIATE ACTION REQUIRED**
+            {{ end }}
 
-**Cluster**: {{ .CommonLabels.cluster }}
-{{ range .Alerts }}**{{ .Annotations.summary }}**
-{{ .Annotations.description }}
-{{ end }}
+            ---
+            **📊 Alert Details**
+            | Field | Value |
+            |-------|-------|
+            | **Status** | {{ .Status | toUpper }} |
+            | **Severity** | 🔴 **CRITICAL** |
+            | **Cluster** | {{ .CommonLabels.cluster }} |
+            | **Namespace** | {{ .CommonLabels.namespace }} |
+            | **Alerts Count** | {{ len .Alerts }} |
 
-[Grafana](https://grafana.ops.techsecom.io)'` }}
+            ---
+            {{ range .Alerts }}
+            **⚠️ {{ .Annotations.summary }}**
+
+            {{ .Annotations.description }}
+
+            {{ if .Annotations.runbook_url }}**📖 Runbook:** [View Runbook]({{ .Annotations.runbook_url }}){{ end }}
+
+            **Affected Resources:**
+            {{ if .Labels.pod }}- **Pod:** `{{ .Labels.pod }}`{{ end }}
+            {{ if .Labels.container }}- **Container:** `{{ .Labels.container }}`{{ end }}
+            {{ if .Labels.service }}- **Service:** `{{ .Labels.service }}`{{ end }}
+            {{ if .Labels.node }}- **Node:** `{{ .Labels.node }}`{{ end }}
+            {{ if .Labels.deployment }}- **Deployment:** `{{ .Labels.deployment }}`{{ end }}
+            {{ if .Labels.statefulset }}- **StatefulSet:** `{{ .Labels.statefulset }}`{{ end }}
+            {{ if .Labels.daemonset }}- **DaemonSet:** `{{ .Labels.daemonset }}`{{ end }}
+            {{ if .Labels.job }}**Job:** `{{ .Labels.job }}`{{ end }}
+            {{ if .Labels.instance }}**Instance:** `{{ .Labels.instance }}`{{ end }}
+
+            **Timeline:**
+            - **Started:** {{ .StartsAt.Format "2006-01-02 15:04:05 UTC" }}
+            {{ if .EndsAt }}- **Ended:** {{ .EndsAt.Format "2006-01-02 15:04:05 UTC" }}{{ end }}
+
+            ---
+            {{ end }}
+            **🔗 Quick Links**
+            [📈 Grafana](https://grafana.ops.techsecom.io) | [🔔 Alertmanager](https://alertmanager.ops.techsecom.io) | [📊 Prometheus](https://prometheus.ops.techsecom.io)
+
+            {{ if eq .Status "firing" }}
+            **💡 Suggested Actions:**
+            1. Check the affected resource status in the cluster
+            2. Review recent changes or deployments
+            3. Check resource utilization and logs
+            4. Escalate if unable to resolve within SLA
+            {{ end }}'` }}
