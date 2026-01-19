@@ -326,11 +326,12 @@ harbor:
         existingSecret: harbor-s3
         # External URL - CoreDNS rewrites this to internal HTTPS service for cluster traffic
         regionendpoint: "https://s3.ops.techsecom.io"
-        # Performance tuning: increase chunk size for faster large blob transfers
-        chunksize: "104857600"
-        multipartcopychunksize: "104857600"
-        multipartcopymaxconcurrency: 100
-        multipartcopythresholdsize: "104857600"
+        # Reduced chunk size to 32MB to avoid upload timeout issues with S3
+        # Smaller chunks = more reliable uploads at the cost of some overhead
+        chunksize: "33554432"
+        multipartcopychunksize: "33554432"
+        multipartcopymaxconcurrency: 50
+        multipartcopythresholdsize: "33554432"
 
   portal:
     replicas: 3
