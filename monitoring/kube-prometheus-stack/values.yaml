@@ -1065,6 +1065,17 @@ promtail:
       key: node-role.kubernetes.io/master
       operator: Exists
 
+  # SELinux context to allow reading host log files
+  # spc_t (super privileged container) allows access to host paths
+  containerSecurityContext:
+    readOnlyRootFilesystem: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+    seLinuxOptions:
+      type: spc_t
+
   resources:
     limits:
       cpu: 500m
