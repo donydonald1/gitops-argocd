@@ -109,6 +109,7 @@ spec:
         serverSideApply: true
         wave: "2"  # Identity provider - needs CNPG database
         imageList: "keycloak=quay.io/keycloak/keycloak"
+        skipHooks: "false"  # Enable PostSync hook for OIDC IDP setup
         helm:
           values:
           - values.yaml
