@@ -508,18 +508,9 @@ kube-prometheus-stack:
       https: true
       insecureSkipVerify: true
 
+  # Disabled: Using Cilium kube-proxy replacement
   kubeProxy:
-    enabled: true
-    endpoints:
-      - 192.168.1.10  # Replace with your control plane node IPs
-      - 192.168.1.11
-      - 192.168.1.12
-    service:
-      enabled: true
-      port: 10249
-      targetPort: 10249
-    serviceMonitor:
-      enabled: true
+    enabled: false
 
   kubeEtcd:
     enabled: true
@@ -572,7 +563,7 @@ kube-prometheus-stack:
       kubeControllerManager: true
       kubePrometheusGeneral: true
       kubePrometheusNodeRecording: true
-      kubeProxy: true
+      kubeProxy: false  # Disabled: Using Cilium kube-proxy replacement
       kubeSchedulerAlerting: true
       kubeSchedulerRecording: true
       kubeStateMetrics: true
