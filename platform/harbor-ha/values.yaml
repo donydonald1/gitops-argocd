@@ -205,7 +205,13 @@ harbor:
         memory: 2Gi
 
   registry:
-    replicas: 3
+    # Using single replica to avoid "upload resumed at wrong offset" errors
+    # The Docker Registry stores blob upload state locally per pod, so with
+    # multiple replicas and chunked uploads, requests can hit different pods
+    # causing upload state mismatch. This is a known limitation of the
+    # Docker Registry with multi-replica deployments.
+    # TODO: Consider using shared storage or external blob upload state when available
+    replicas: 1
     secret: ""
     podAnnotations:
       reloader.stakater.com/auto: "true"
