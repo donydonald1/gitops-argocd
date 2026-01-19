@@ -476,14 +476,15 @@ kube-prometheus-stack:
 
   # ─────────────────────────────────────────────────────────────────────────────
   # Kubernetes Components Monitoring
-  # For RKE2, we need special configuration for control plane components
+  # RKE2 requires --bind-address=0.0.0.0 for kube-controller-manager and
+  # kube-scheduler in /etc/rancher/rke2/config.yaml to expose metrics
   # ─────────────────────────────────────────────────────────────────────────────
   kubeControllerManager:
     enabled: true
     endpoints:
-      - 192.168.1.10  # Replace with your control plane node IPs
-      - 192.168.1.11
-      - 192.168.1.12
+      - 10.0.3.10
+      - 10.0.3.11
+      - 10.0.3.12
     service:
       enabled: true
       port: 10257
@@ -496,9 +497,9 @@ kube-prometheus-stack:
   kubeScheduler:
     enabled: true
     endpoints:
-      - 192.168.1.10  # Replace with your control plane node IPs
-      - 192.168.1.11
-      - 192.168.1.12
+      - 10.0.3.10
+      - 10.0.3.11
+      - 10.0.3.12
     service:
       enabled: true
       port: 10259
@@ -515,9 +516,9 @@ kube-prometheus-stack:
   kubeEtcd:
     enabled: true
     endpoints:
-      - 192.168.1.10  # Replace with your control plane node IPs
-      - 192.168.1.11
-      - 192.168.1.12
+      - 10.0.3.10
+      - 10.0.3.11
+      - 10.0.3.12
     service:
       enabled: true
       port: 2381
