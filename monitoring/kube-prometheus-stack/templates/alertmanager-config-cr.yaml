@@ -61,96 +61,96 @@ spec:
           webhookUrl:
             name: alertmanager-msteams-secret
             key: webhook-url
-          title: {{ printf "%s" `'{{ if eq .Status "firing" }}🔔{{ else }}✅{{ end }} {{ .CommonLabels.alertname }}'` }}
-          text: |
-            {{ printf "%s" `'{{ if eq .Status "resolved" }}**✅ RESOLVED**{{ end }}
+          title: {{ `'{{ if eq .Status "firing" }}🔔{{ else }}✅{{ end }} {{ .CommonLabels.alertname }}'` }}
+          text: {{ `'{{ if eq .Status "resolved" }}**✅ RESOLVED**{{ end }}
 
-            ---
-            **📊 Alert Details**
-            | Field | Value |
-            |-------|-------|
-            | **Status** | {{ .Status | toUpper }} |
-            | **Severity** | {{ if eq .CommonLabels.severity "critical" }}🔴 Critical{{ else if eq .CommonLabels.severity "warning" }}🟠 Warning{{ else }}🔵 Info{{ end }} |
-            | **Cluster** | {{ .CommonLabels.cluster }} |
-            | **Namespace** | {{ .CommonLabels.namespace }} |
-            | **Alerts Count** | {{ len .Alerts }} |
+---
+**📊 Alert Details**
 
-            ---
-            {{ range .Alerts }}
-            **📝 {{ .Annotations.summary }}**
+| Field | Value |
+|-------|-------|
+| **Status** | {{ .Status | toUpper }} |
+| **Severity** | {{ if eq .CommonLabels.severity "critical" }}🔴 Critical{{ else if eq .CommonLabels.severity "warning" }}🟠 Warning{{ else }}🔵 Info{{ end }} |
+| **Cluster** | {{ .CommonLabels.cluster }} |
+| **Namespace** | {{ .CommonLabels.namespace }} |
+| **Alerts Count** | {{ len .Alerts }} |
 
-            {{ .Annotations.description }}
+---
+{{ range .Alerts }}
+**📝 {{ .Annotations.summary }}**
 
-            {{ if .Labels.pod }}**Pod:** `{{ .Labels.pod }}`{{ end }}
-            {{ if .Labels.container }}**Container:** `{{ .Labels.container }}`{{ end }}
-            {{ if .Labels.service }}**Service:** `{{ .Labels.service }}`{{ end }}
-            {{ if .Labels.node }}**Node:** `{{ .Labels.node }}`{{ end }}
-            {{ if .Labels.job }}**Job:** `{{ .Labels.job }}`{{ end }}
-            {{ if .Labels.instance }}**Instance:** `{{ .Labels.instance }}`{{ end }}
+{{ .Annotations.description }}
 
-            **Started:** {{ .StartsAt.Format "2006-01-02 15:04:05 UTC" }}
-            {{ if .EndsAt }}**Ended:** {{ .EndsAt.Format "2006-01-02 15:04:05 UTC" }}{{ end }}
+{{ if .Labels.pod }}**Pod:** {{ .Labels.pod }}{{ end }}
+{{ if .Labels.container }}**Container:** {{ .Labels.container }}{{ end }}
+{{ if .Labels.service }}**Service:** {{ .Labels.service }}{{ end }}
+{{ if .Labels.node }}**Node:** {{ .Labels.node }}{{ end }}
+{{ if .Labels.job }}**Job:** {{ .Labels.job }}{{ end }}
+{{ if .Labels.instance }}**Instance:** {{ .Labels.instance }}{{ end }}
 
-            ---
-            {{ end }}
-            **🔗 Quick Links**
-            [📈 Grafana](https://grafana.ops.techsecom.io) | [🔔 Alertmanager](https://alertmanager.ops.techsecom.io) | [📊 Prometheus](https://prometheus.ops.techsecom.io)'` }}
+**Started:** {{ .StartsAt.Format "2006-01-02 15:04:05 UTC" }}
+{{ if .EndsAt }}**Ended:** {{ .EndsAt.Format "2006-01-02 15:04:05 UTC" }}{{ end }}
+
+---
+{{ end }}
+**🔗 Quick Links**
+[📈 Grafana](https://grafana.ops.techsecom.io) | [🔔 Alertmanager](https://alertmanager.ops.techsecom.io) | [📊 Prometheus](https://prometheus.ops.techsecom.io)'` }}
     - name: msteams-critical
       msteamsConfigs:
         - sendResolved: true
           webhookUrl:
             name: alertmanager-msteams-secret
             key: webhook-url
-          title: {{ printf "%s" `'{{ if eq .Status "firing" }}🚨 CRITICAL{{ else }}✅ RESOLVED{{ end }}: {{ .CommonLabels.alertname }}'` }}
-          text: |
-            {{ printf "%s" `'{{ if eq .Status "resolved" }}
-            **✅ ALERT RESOLVED - Issue has been mitigated**
-            {{ else }}
-            **🚨 CRITICAL ALERT - IMMEDIATE ACTION REQUIRED**
-            {{ end }}
+          title: {{ `'{{ if eq .Status "firing" }}🚨 CRITICAL{{ else }}✅ RESOLVED{{ end }}: {{ .CommonLabels.alertname }}'` }}
+          text: {{ `'{{ if eq .Status "resolved" }}
+**✅ ALERT RESOLVED - Issue has been mitigated**
+{{ else }}
+**🚨 CRITICAL ALERT - IMMEDIATE ACTION REQUIRED**
+{{ end }}
 
-            ---
-            **📊 Alert Details**
-            | Field | Value |
-            |-------|-------|
-            | **Status** | {{ .Status | toUpper }} |
-            | **Severity** | 🔴 **CRITICAL** |
-            | **Cluster** | {{ .CommonLabels.cluster }} |
-            | **Namespace** | {{ .CommonLabels.namespace }} |
-            | **Alerts Count** | {{ len .Alerts }} |
+---
+**📊 Alert Details**
 
-            ---
-            {{ range .Alerts }}
-            **⚠️ {{ .Annotations.summary }}**
+| Field | Value |
+|-------|-------|
+| **Status** | {{ .Status | toUpper }} |
+| **Severity** | 🔴 **CRITICAL** |
+| **Cluster** | {{ .CommonLabels.cluster }} |
+| **Namespace** | {{ .CommonLabels.namespace }} |
+| **Alerts Count** | {{ len .Alerts }} |
 
-            {{ .Annotations.description }}
+---
+{{ range .Alerts }}
+**⚠️ {{ .Annotations.summary }}**
 
-            {{ if .Annotations.runbook_url }}**📖 Runbook:** [View Runbook]({{ .Annotations.runbook_url }}){{ end }}
+{{ .Annotations.description }}
 
-            **Affected Resources:**
-            {{ if .Labels.pod }}- **Pod:** `{{ .Labels.pod }}`{{ end }}
-            {{ if .Labels.container }}- **Container:** `{{ .Labels.container }}`{{ end }}
-            {{ if .Labels.service }}- **Service:** `{{ .Labels.service }}`{{ end }}
-            {{ if .Labels.node }}- **Node:** `{{ .Labels.node }}`{{ end }}
-            {{ if .Labels.deployment }}- **Deployment:** `{{ .Labels.deployment }}`{{ end }}
-            {{ if .Labels.statefulset }}- **StatefulSet:** `{{ .Labels.statefulset }}`{{ end }}
-            {{ if .Labels.daemonset }}- **DaemonSet:** `{{ .Labels.daemonset }}`{{ end }}
-            {{ if .Labels.job }}**Job:** `{{ .Labels.job }}`{{ end }}
-            {{ if .Labels.instance }}**Instance:** `{{ .Labels.instance }}`{{ end }}
+{{ if .Annotations.runbook_url }}**📖 Runbook:** [View Runbook]({{ .Annotations.runbook_url }}){{ end }}
 
-            **Timeline:**
-            - **Started:** {{ .StartsAt.Format "2006-01-02 15:04:05 UTC" }}
-            {{ if .EndsAt }}- **Ended:** {{ .EndsAt.Format "2006-01-02 15:04:05 UTC" }}{{ end }}
+**Affected Resources:**
+{{ if .Labels.pod }}- **Pod:** {{ .Labels.pod }}{{ end }}
+{{ if .Labels.container }}- **Container:** {{ .Labels.container }}{{ end }}
+{{ if .Labels.service }}- **Service:** {{ .Labels.service }}{{ end }}
+{{ if .Labels.node }}- **Node:** {{ .Labels.node }}{{ end }}
+{{ if .Labels.deployment }}- **Deployment:** {{ .Labels.deployment }}{{ end }}
+{{ if .Labels.statefulset }}- **StatefulSet:** {{ .Labels.statefulset }}{{ end }}
+{{ if .Labels.daemonset }}- **DaemonSet:** {{ .Labels.daemonset }}{{ end }}
+{{ if .Labels.job }}- **Job:** {{ .Labels.job }}{{ end }}
+{{ if .Labels.instance }}- **Instance:** {{ .Labels.instance }}{{ end }}
 
-            ---
-            {{ end }}
-            **🔗 Quick Links**
-            [📈 Grafana](https://grafana.ops.techsecom.io) | [🔔 Alertmanager](https://alertmanager.ops.techsecom.io) | [📊 Prometheus](https://prometheus.ops.techsecom.io)
+**Timeline:**
+- **Started:** {{ .StartsAt.Format "2006-01-02 15:04:05 UTC" }}
+{{ if .EndsAt }}- **Ended:** {{ .EndsAt.Format "2006-01-02 15:04:05 UTC" }}{{ end }}
 
-            {{ if eq .Status "firing" }}
-            **💡 Suggested Actions:**
-            1. Check the affected resource status in the cluster
-            2. Review recent changes or deployments
-            3. Check resource utilization and logs
-            4. Escalate if unable to resolve within SLA
-            {{ end }}'` }}
+---
+{{ end }}
+**🔗 Quick Links**
+[📈 Grafana](https://grafana.ops.techsecom.io) | [🔔 Alertmanager](https://alertmanager.ops.techsecom.io) | [📊 Prometheus](https://prometheus.ops.techsecom.io)
+
+{{ if eq .Status "firing" }}
+**💡 Suggested Actions:**
+1. Check the affected resource status in the cluster
+2. Review recent changes or deployments
+3. Check resource utilization and logs
+4. Escalate if unable to resolve within SLA
+{{ end }}'` }}
