@@ -94,6 +94,14 @@ redis:
       repository: bitnamilegacy/os-shell
   metrics:
     enabled: true
+    # Increase CPU limits to prevent throttling during Prometheus scrapes
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 256Mi
     serviceMonitor:
       enabled: true
       additionalLabels:
