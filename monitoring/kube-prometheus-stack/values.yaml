@@ -403,6 +403,10 @@ kube-prometheus-stack:
           app: alertmanager
       alertmanagerConfigNamespaceSelector: {}
 
+      # Disable automatic namespace matcher so our config matches all alerts
+      alertmanagerConfigMatcherStrategy:
+        type: None
+
       secrets:
         - alertmanager-msteams-secret
 
