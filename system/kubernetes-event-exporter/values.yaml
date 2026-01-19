@@ -28,7 +28,11 @@ kubernetes-event-exporter:
   config:
     logLevel: info
     logFormat: json
-    maxEventAgeSeconds: 60
+    # Increase maxEventAgeSeconds to handle startup delays from API throttling
+    maxEventAgeSeconds: 300
+    # Increase kubeQPS/kubeBurst to reduce throttling on clusters with many CRDs
+    kubeQPS: 50
+    kubeBurst: 100
 
     # Route all events
     route:
