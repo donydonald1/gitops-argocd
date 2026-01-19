@@ -61,98 +61,65 @@ spec:
           webhookUrl:
             name: alertmanager-msteams-secret
             key: webhook-url
-          title: '{{"{{"}} if eq .Status "firing" {{"}}"}}🔔{{"{{"}} else {{"}}"}}✅{{"{{"}} end {{"}}"}} {{"{{"}} .CommonLabels.alertname {{"}}"}}'
-          text: |
-            {{"{{"}} if eq .Status "resolved" {{"}}"}}**✅ RESOLVED**{{"{{"}} end {{"}}"}}
+          title: {{ printf "'[%s] %s'" "{{ .Status | toUpper }}" "{{ .CommonLabels.alertname }}" }}
+          text: |-
+            {{ printf "**Status:** %s | **Severity:** %s | **Cluster:** %s" "{{ .Status | toUpper }}" "{{ .CommonLabels.severity }}" "{{ .CommonLabels.cluster }}" }}
+
+            {{ printf "**Namespace:** %s | **Alerts:** %s" "{{ .CommonLabels.namespace }}" "{{ len .Alerts }}" }}
 
             ---
-            **📊 Alert Details**
+            {{ printf "{{ range .Alerts }}" }}
+            {{ printf "**%s**" "{{ .Annotations.summary }}" }}
 
-            | Field | Value |
-            |-------|-------|
-            | **Status** | {{"{{"}} .Status | toUpper {{"}}"}} |
-            | **Severity** | {{"{{"}} if eq .CommonLabels.severity "critical" {{"}}"}}🔴 Critical{{"{{"}} else if eq .CommonLabels.severity "warning" {{"}}"}}🟠 Warning{{"{{"}} else {{"}}"}}🔵 Info{{"{{"}} end {{"}}"}} |
-            | **Cluster** | {{"{{"}} .CommonLabels.cluster {{"}}"}} |
-            | **Namespace** | {{"{{"}} .CommonLabels.namespace {{"}}"}} |
-            | **Alerts Count** | {{"{{"}} len .Alerts {{"}}"}} |
+            {{ printf "%s" "{{ .Annotations.description }}" }}
 
-            ---
-            {{"{{"}} range .Alerts {{"}}"}}
-            **📝 {{"{{"}} .Annotations.summary {{"}}"}}**
+            {{ printf "{{ if .Labels.pod }}**Pod:** %s{{ end }}" "{{ .Labels.pod }}" }}
+            {{ printf "{{ if .Labels.container }}**Container:** %s{{ end }}" "{{ .Labels.container }}" }}
+            {{ printf "{{ if .Labels.node }}**Node:** %s{{ end }}" "{{ .Labels.node }}" }}
+            {{ printf "{{ if .Labels.job }}**Job:** %s{{ end }}" "{{ .Labels.job }}" }}
 
-            {{"{{"}} .Annotations.description {{"}}"}}
-
-            {{"{{"}} if .Labels.pod {{"}}"}}**Pod:** {{"{{"}} .Labels.pod {{"}}"}}{{"{{"}} end {{"}}"}}
-            {{"{{"}} if .Labels.container {{"}}"}}**Container:** {{"{{"}} .Labels.container {{"}}"}}{{"{{"}} end {{"}}"}}
-            {{"{{"}} if .Labels.service {{"}}"}}**Service:** {{"{{"}} .Labels.service {{"}}"}}{{"{{"}} end {{"}}"}}
-            {{"{{"}} if .Labels.node {{"}}"}}**Node:** {{"{{"}} .Labels.node {{"}}"}}{{"{{"}} end {{"}}"}}
-            {{"{{"}} if .Labels.job {{"}}"}}**Job:** {{"{{"}} .Labels.job {{"}}"}}{{"{{"}} end {{"}}"}}
-            {{"{{"}} if .Labels.instance {{"}}"}}**Instance:** {{"{{"}} .Labels.instance {{"}}"}}{{"{{"}} end {{"}}"}}
-
-            **Started:** {{"{{"}} .StartsAt.Format "2006-01-02 15:04:05 UTC" {{"}}"}}
-            {{"{{"}} if .EndsAt {{"}}"}}**Ended:** {{"{{"}} .EndsAt.Format "2006-01-02 15:04:05 UTC" {{"}}"}}{{"{{"}} end {{"}}"}}
+            {{ printf "**Started:** %s" "{{ .StartsAt.Format \"2006-01-02 15:04:05 UTC\" }}" }}
+            {{ printf "{{ if .EndsAt }}**Ended:** %s{{ end }}" "{{ .EndsAt.Format \"2006-01-02 15:04:05 UTC\" }}" }}
 
             ---
-            {{"{{"}} end {{"}}"}}
-            **🔗 Quick Links**
-            [📈 Grafana](https://grafana.ops.techsecom.io) | [🔔 Alertmanager](https://alertmanager.ops.techsecom.io) | [📊 Prometheus](https://prometheus.ops.techsecom.io)
+            {{ printf "{{ end }}" }}
+            [Grafana](https://grafana.ops.techsecom.io) | [Alertmanager](https://alertmanager.ops.techsecom.io) | [Prometheus](https://prometheus.ops.techsecom.io)
     - name: msteams-critical
       msteamsConfigs:
         - sendResolved: true
           webhookUrl:
             name: alertmanager-msteams-secret
             key: webhook-url
-          title: '{{"{{"}} if eq .Status "firing" {{"}}"}}🚨 CRITICAL{{"{{"}} else {{"}}"}}✅ RESOLVED{{"{{"}} end {{"}}"}}: {{"{{"}} .CommonLabels.alertname {{"}}"}}'
-          text: |
-            {{"{{"}} if eq .Status "resolved" {{"}}"}}
-            **✅ ALERT RESOLVED - Issue has been mitigated**
-            {{"{{"}} else {{"}}"}}
-            **🚨 CRITICAL ALERT - IMMEDIATE ACTION REQUIRED**
-            {{"{{"}} end {{"}}"}}
+          title: {{ printf "'🚨 CRITICAL: %s'" "{{ .CommonLabels.alertname }}" }}
+          text: |-
+            {{ printf "**🚨 CRITICAL ALERT - IMMEDIATE ACTION REQUIRED**" }}
+
+            {{ printf "**Status:** %s | **Cluster:** %s | **Namespace:** %s" "{{ .Status | toUpper }}" "{{ .CommonLabels.cluster }}" "{{ .CommonLabels.namespace }}" }}
 
             ---
-            **📊 Alert Details**
+            {{ printf "{{ range .Alerts }}" }}
+            {{ printf "**⚠️ %s**" "{{ .Annotations.summary }}" }}
 
-            | Field | Value |
-            |-------|-------|
-            | **Status** | {{"{{"}} .Status | toUpper {{"}}"}} |
-            | **Severity** | 🔴 **CRITICAL** |
-            | **Cluster** | {{"{{"}} .CommonLabels.cluster {{"}}"}} |
-            | **Namespace** | {{"{{"}} .CommonLabels.namespace {{"}}"}} |
-            | **Alerts Count** | {{"{{"}} len .Alerts {{"}}"}} |
+            {{ printf "%s" "{{ .Annotations.description }}" }}
 
-            ---
-            {{"{{"}} range .Alerts {{"}}"}}
-            **⚠️ {{"{{"}} .Annotations.summary {{"}}"}}**
+            {{ printf "{{ if .Annotations.runbook_url }}**Runbook:** [View]({{ .Annotations.runbook_url }}){{ end }}" "" }}
 
-            {{"{{"}} .Annotations.description {{"}}"}}
+            {{ printf "**Affected Resources:**" }}
+            {{ printf "{{ if .Labels.pod }}- **Pod:** %s{{ end }}" "{{ .Labels.pod }}" }}
+            {{ printf "{{ if .Labels.container }}- **Container:** %s{{ end }}" "{{ .Labels.container }}" }}
+            {{ printf "{{ if .Labels.node }}- **Node:** %s{{ end }}" "{{ .Labels.node }}" }}
+            {{ printf "{{ if .Labels.deployment }}- **Deployment:** %s{{ end }}" "{{ .Labels.deployment }}" }}
+            {{ printf "{{ if .Labels.statefulset }}- **StatefulSet:** %s{{ end }}" "{{ .Labels.statefulset }}" }}
 
-            {{"{{"}} if .Annotations.runbook_url {{"}}"}}**📖 Runbook:** [View Runbook]({{"{{"}} .Annotations.runbook_url {{"}}"}}){{"{{"}} end {{"}}"}}
-
-            **Affected Resources:**
-            {{"{{"}} if .Labels.pod {{"}}"}}- **Pod:** {{"{{"}} .Labels.pod {{"}}"}}{{"{{"}} end {{"}}"}}
-            {{"{{"}} if .Labels.container {{"}}"}}- **Container:** {{"{{"}} .Labels.container {{"}}"}}{{"{{"}} end {{"}}"}}
-            {{"{{"}} if .Labels.service {{"}}"}}- **Service:** {{"{{"}} .Labels.service {{"}}"}}{{"{{"}} end {{"}}"}}
-            {{"{{"}} if .Labels.node {{"}}"}}- **Node:** {{"{{"}} .Labels.node {{"}}"}}{{"{{"}} end {{"}}"}}
-            {{"{{"}} if .Labels.deployment {{"}}"}}- **Deployment:** {{"{{"}} .Labels.deployment {{"}}"}}{{"{{"}} end {{"}}"}}
-            {{"{{"}} if .Labels.statefulset {{"}}"}}- **StatefulSet:** {{"{{"}} .Labels.statefulset {{"}}"}}{{"{{"}} end {{"}}"}}
-            {{"{{"}} if .Labels.daemonset {{"}}"}}- **DaemonSet:** {{"{{"}} .Labels.daemonset {{"}}"}}{{"{{"}} end {{"}}"}}
-            {{"{{"}} if .Labels.job {{"}}"}}- **Job:** {{"{{"}} .Labels.job {{"}}"}}{{"{{"}} end {{"}}"}}
-            {{"{{"}} if .Labels.instance {{"}}"}}- **Instance:** {{"{{"}} .Labels.instance {{"}}"}}{{"{{"}} end {{"}}"}}
-
-            **Timeline:**
-            - **Started:** {{"{{"}} .StartsAt.Format "2006-01-02 15:04:05 UTC" {{"}}"}}
-            {{"{{"}} if .EndsAt {{"}}"}}- **Ended:** {{"{{"}} .EndsAt.Format "2006-01-02 15:04:05 UTC" {{"}}"}}{{"{{"}} end {{"}}"}}
+            {{ printf "**Started:** %s" "{{ .StartsAt.Format \"2006-01-02 15:04:05 UTC\" }}" }}
+            {{ printf "{{ if .EndsAt }}**Ended:** %s{{ end }}" "{{ .EndsAt.Format \"2006-01-02 15:04:05 UTC\" }}" }}
 
             ---
-            {{"{{"}} end {{"}}"}}
-            **🔗 Quick Links**
-            [📈 Grafana](https://grafana.ops.techsecom.io) | [🔔 Alertmanager](https://alertmanager.ops.techsecom.io) | [📊 Prometheus](https://prometheus.ops.techsecom.io)
+            {{ printf "{{ end }}" }}
+            [Grafana](https://grafana.ops.techsecom.io) | [Alertmanager](https://alertmanager.ops.techsecom.io)
 
-            {{"{{"}} if eq .Status "firing" {{"}}"}}
-            **💡 Suggested Actions:**
-            1. Check the affected resource status in the cluster
-            2. Review recent changes or deployments
-            3. Check resource utilization and logs
+            {{ printf "**Suggested Actions:**" }}
+            1. Check affected resource status
+            2. Review recent changes/deployments
+            3. Check logs and resource utilization
             4. Escalate if unable to resolve within SLA
-            {{"{{"}} end {{"}}"}}
