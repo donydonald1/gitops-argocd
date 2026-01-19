@@ -1157,8 +1157,7 @@ promtail:
 
   defaultVolumes:
     - name: run
-      hostPath:
-        path: /run/promtail
+      emptyDir: {}  # Use emptyDir instead of hostPath to fix permission issues
     - name: containers
       hostPath:
         path: /var/lib/docker/containers
