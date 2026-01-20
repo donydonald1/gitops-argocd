@@ -13,6 +13,7 @@ rules:
       - pods/log
       - nodes
       - persistentvolumeclaims
+      - events
     verbs:
       - get
       - list
