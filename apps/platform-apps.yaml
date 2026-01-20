@@ -68,14 +68,15 @@ spec:
           values:
           - values.yaml
 
-      - name: clickhouse
-        namespace: clickhouse
-        wave: "1"  # Analytics DB - needs storage ready
-        serverSideApply: true
-        imageList: "clickhouse=bitnami/clickhouse"
-        helm:
-          values:
-          - values.yaml
+      # clickhouse - temporarily disabled
+      # - name: clickhouse
+      #   namespace: clickhouse
+      #   wave: "1"  # Analytics DB - needs storage ready
+      #   serverSideApply: true
+      #   imageList: "clickhouse=bitnami/clickhouse"
+      #   helm:
+      #     values:
+      #     - values.yaml
 
       - name: wikijs
         namespace: wikijs
