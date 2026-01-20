@@ -63,6 +63,33 @@ rules:
       - pods/exec
     verbs:
       - create
+  # KubeVirt CDI - DataVolumes and DataSources for ISO images
+  - apiGroups: [ "cdi.kubevirt.io" ]
+    resources:
+      - datavolumes
+      - datasources
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  # KubeVirt - VMs for Packer builds
+  - apiGroups: [ "kubevirt.io" ]
+    resources:
+      - virtualmachines
+      - virtualmachineinstances
+      - virtualmachineexports
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
