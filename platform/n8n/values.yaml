@@ -92,7 +92,7 @@ n8n:
     persistence:
       enabled: true
       type: dynamic
-      storageClass: longhorn
+      storageClass: nfs-csi
       size: 10Gi
 
     # Replica count (main instance - controller)
