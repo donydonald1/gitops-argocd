@@ -1112,6 +1112,7 @@ eck-stack:
       spec:
         accessModes:
         - ReadWriteOnce
+        storageClassName: nfs-csi
         resources:
           requests:
             storage: 15Gi
@@ -1120,9 +1121,19 @@ eck-stack:
       spec:
         accessModes:
         - ReadWriteOnce
+        storageClassName: nfs-csi
         resources:
           requests:
             storage: 20Gi
+    - metadata:
+        name: logstash-data
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        storageClassName: nfs-csi
+        resources:
+          requests:
+            storage: 2Gi
 
     elasticsearchRefs:
     - clusterName: eck
