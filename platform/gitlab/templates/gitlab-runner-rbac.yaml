@@ -11,6 +11,8 @@ rules:
       - services
       - pods
       - pods/log
+      - nodes
+      - persistentvolumeclaims
     verbs:
       - get
       - list
