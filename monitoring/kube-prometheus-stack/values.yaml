@@ -43,7 +43,7 @@ kube-prometheus-stack:
     persistence:
       enabled: true
       type: statefulset
-      storageClassName: longhorn
+      storageClassName: nfs-csi
       accessModes:
         - ReadWriteOnce
       size: 10Gi
@@ -331,7 +331,7 @@ kube-prometheus-stack:
             resources:
               requests:
                 storage: 50Gi
-            storageClassName: longhorn
+            storageClassName: nfs-csi
 
       securityContext:
         fsGroup: 2000
@@ -413,7 +413,7 @@ kube-prometheus-stack:
       storage:
         volumeClaimTemplate:
           spec:
-            storageClassName: longhorn
+            storageClassName: nfs-csi
             resources:
               requests:
                 storage: 10Gi
@@ -644,7 +644,7 @@ thanos:
       tls: true
     persistence:
       enabled: true
-      storageClass: longhorn
+      storageClass: nfs-csi
       size: 20Gi
 
   storegateway:
@@ -662,7 +662,7 @@ thanos:
       tls: true
     persistence:
       enabled: true
-      storageClass: longhorn
+      storageClass: nfs-csi
       size: 7Gi
 
   ruler:
@@ -774,7 +774,7 @@ loki:
     replicas: 3
     persistence:
       size: 10Gi
-      storageClass: "longhorn"
+      storageClass: "nfs-csi"
     extraEnvFrom:
       - secretRef:
           name: loki-s3-secret
@@ -788,7 +788,7 @@ loki:
   backend:
     replicas: 2
     persistence:
-      storageClass: "longhorn"
+      storageClass: "nfs-csi"
     extraEnvFrom:
       - secretRef:
           name: loki-s3-secret
@@ -906,7 +906,7 @@ tempo:
   persistence:
     enabled: true
     size: 20Gi
-    storageClassName: longhorn
+    storageClassName: nfs-csi
 
 # ────────────────────────────────────────────────────────────────────────────────
 # Promtail (Log Collection)

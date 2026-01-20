@@ -325,7 +325,7 @@ eck-stack:
           resources:
             requests:
               storage: 15Gi
-          storageClassName: longhorn
+          storageClassName: nfs-csi
 
     - name: hot
       count: 3
@@ -379,7 +379,7 @@ eck-stack:
           resources:
             requests:
               storage: 15Gi
-          storageClassName: longhorn
+          storageClassName: nfs-csi
     - name: warm
       count: 3
       config:
@@ -432,7 +432,7 @@ eck-stack:
           resources:
             requests:
               storage: 10Gi
-          storageClassName: longhorn
+          storageClassName: nfs-csi
     - name: cold
       count: 3
       config:
@@ -484,7 +484,7 @@ eck-stack:
           resources:
             requests:
               storage: 20Gi
-          storageClassName: longhorn
+          storageClassName: nfs-csi
   eck-kibana:
     enabled: true
     version: 8.19.9
