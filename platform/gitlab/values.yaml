@@ -193,6 +193,10 @@ gitlab:
       verify: true
     ingress:
       enabled: true
+      # KAS requires gRPC which is not supported through Cloudflare Tunnel
+      # Disable Cloudflare proxying for KAS to allow direct gRPC connections
+      annotations:
+        external-dns.alpha.kubernetes.io/cloudflare-proxied: "false"
       tls:
         secretName: kas-tls-secret
 
