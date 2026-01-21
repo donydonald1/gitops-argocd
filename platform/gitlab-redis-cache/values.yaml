@@ -89,11 +89,19 @@ redis:
       periodSeconds: 15
       timeoutSeconds: 10
       failureThreshold: 10
+  # Disable volumePermissions - not supported on NFS storage
+  # Instead, use podSecurityContext to run as correct user
   volumePermissions:
+    enabled: false
+  # Run Redis as user 1001 (bitnami default) to avoid permission issues on NFS
+  podSecurityContext:
     enabled: true
-    image:
-      registry: docker.io
-      repository: bitnamilegacy/os-shell
+    fsGroup: 1001
+  containerSecurityContext:
+    enabled: true
+    runAsUser: 1001
+    runAsGroup: 1001
+    runAsNonRoot: true
   metrics:
     enabled: true
     # Increase CPU limits to prevent throttling during Prometheus scrapes
