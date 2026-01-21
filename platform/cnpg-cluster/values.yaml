@@ -43,7 +43,7 @@ connections:
   # direct: auto
 
 storageClass: longhorn
-storageSize: 300Gi
+storageSize: 100Gi
 maxConnections: 2000
 objectStore:
   endpoint: http://minio.minio.svc.cluster.local:9000

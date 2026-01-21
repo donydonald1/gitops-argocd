@@ -4,7 +4,7 @@ redis:
     registry: docker.io
     repository: bitnamilegacy/redis
   global:
-    storageClass: longhorn
+    storageClass: nfs-csi
   auth:
     enabled: true
     existingSecret: redis-creds
@@ -39,7 +39,7 @@ redis:
         memory: 6Gi
     persistence:
       enabled: true
-      storageClass: longhorn
+      storageClass: nfs-csi
       size: 60Gi
     terminationGracePeriodSeconds: 60
     startupProbe:
@@ -80,7 +80,7 @@ redis:
     terminationGracePeriodSeconds: 60
     persistence:
       enabled: true
-      storageClass: longhorn
+      storageClass: nfs-csi
       size: 60Gi
     startupProbe:
       enabled: true
