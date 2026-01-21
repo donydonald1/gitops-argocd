@@ -1,13 +1,329 @@
+# ===========================================
+# Node Problem Detector - Production Configuration
+# ===========================================
+# Detects node problems and reports them as node conditions/events
+# Essential for automated remediation and alerting
+#
+# Reference: https://github.com/kubernetes/node-problem-detector
+
 node-problem-detector:
+  # === Priority Class ===
+  # Use infrastructure-critical to ensure NPD starts early after reboot
+  priorityClassName: "infrastructure-critical"
+
+  # === Resource Limits ===
+  resources:
+    requests:
+      cpu: 20m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+  # === Tolerations ===
+  # Run on all nodes including control-plane
+  tolerations:
+    - key: "node-role.kubernetes.io/control-plane"
+      operator: "Exists"
+      effect: "NoSchedule"
+    - key: "node-role.kubernetes.io/master"
+      operator: "Exists"
+      effect: "NoSchedule"
+    - key: "node.kubernetes.io/not-ready"
+      operator: "Exists"
+      effect: "NoExecute"
+    - key: "node.kubernetes.io/unreachable"
+      operator: "Exists"
+      effect: "NoExecute"
+    - key: "node.kubernetes.io/disk-pressure"
+      operator: "Exists"
+      effect: "NoSchedule"
+    - key: "node.kubernetes.io/memory-pressure"
+      operator: "Exists"
+      effect: "NoSchedule"
+    - key: "node.kubernetes.io/pid-pressure"
+      operator: "Exists"
+      effect: "NoSchedule"
+
+  # === Metrics & Monitoring ===
   metrics:
     enabled: true
     serviceMonitor:
       enabled: true
+      additionalLabels:
+        release: monitoring
     prometheusRule:
       enabled: true
+      additionalLabels:
+        release: monitoring
 
-#  tolerations:
-#    - key: arm
-#      operator: Exists
-#    - key: arm64
-#      operator: Exists
+  # === Host Paths for Problem Detection ===
+  hostpath:
+    logdir: /var/log
+
+  # === Environment Variables ===
+  env:
+    # Enable structured logging
+    - name: NPD_LOG_FORMAT
+      value: "json"
+
+  # === Custom Problem Detection Rules ===
+  settings:
+    # Detect kernel issues
+    log_monitors:
+      - /config/kernel-monitor.json
+      - /config/docker-monitor.json
+      - /config/systemd-monitor.json
+
+    custom_plugin_monitors:
+      - /config/health-checker-containerd.json
+
+  # === Extra Config Files ===
+  # Custom monitors for production issues
+  extraConfigFiles:
+    # Detect Longhorn storage issues
+    longhorn-monitor.json: |
+      {
+        "plugin": "custom",
+        "pluginConfig": {
+          "invoke_interval": "60s",
+          "timeout": "30s",
+          "max_output_length": 256,
+          "concurrency": 1
+        },
+        "source": "longhorn-health-checker",
+        "metricsReporting": true,
+        "conditions": [
+          {
+            "type": "LonghornUnhealthy",
+            "reason": "LonghornHealthy",
+            "message": "Longhorn is functioning properly"
+          }
+        ],
+        "rules": [
+          {
+            "type": "permanent",
+            "condition": "LonghornUnhealthy",
+            "reason": "LonghornDiskFull",
+            "message": "Longhorn disk is full or nearly full"
+          },
+          {
+            "type": "permanent",
+            "condition": "LonghornUnhealthy",
+            "reason": "LonghornReplicaFailed",
+            "message": "Longhorn has failed replicas"
+          }
+        ]
+      }
+
+    # Detect containerd issues (RKE2 uses containerd)
+    containerd-monitor.json: |
+      {
+        "plugin": "journald",
+        "pluginConfig": {
+          "source": "containerd"
+        },
+        "logPath": "/var/log/journal",
+        "lookback": "5m",
+        "bufferSize": 10,
+        "source": "containerd-monitor",
+        "metricsReporting": true,
+        "conditions": [],
+        "rules": [
+          {
+            "type": "temporary",
+            "reason": "ContainerdUnhealthy",
+            "pattern": "level=error.*containerd",
+            "message": "containerd error detected"
+          },
+          {
+            "type": "temporary",
+            "reason": "ContainerdOOMKill",
+            "pattern": "oom.*containerd|containerd.*oom",
+            "message": "containerd process OOM killed"
+          }
+        ]
+      }
+
+    # Detect kubelet issues
+    kubelet-monitor.json: |
+      {
+        "plugin": "journald",
+        "pluginConfig": {
+          "source": "kubelet"
+        },
+        "logPath": "/var/log/journal",
+        "lookback": "5m",
+        "bufferSize": 10,
+        "source": "kubelet-monitor",
+        "metricsReporting": true,
+        "conditions": [],
+        "rules": [
+          {
+            "type": "temporary",
+            "reason": "KubeletUnhealthy",
+            "pattern": "level=error.*kubelet|kubelet.*error",
+            "message": "kubelet error detected"
+          },
+          {
+            "type": "temporary",
+            "reason": "KubeletPLEGUnhealthy",
+            "pattern": "PLEG is not healthy",
+            "message": "kubelet PLEG is unhealthy"
+          },
+          {
+            "type": "temporary",
+            "reason": "KubeletCNIError",
+            "pattern": "cni.*error|error.*cni",
+            "message": "kubelet CNI plugin error"
+          }
+        ]
+      }
+
+    # Detect RKE2 specific issues
+    rke2-monitor.json: |
+      {
+        "plugin": "journald",
+        "pluginConfig": {
+          "source": "rke2-server"
+        },
+        "logPath": "/var/log/journal",
+        "lookback": "5m",
+        "bufferSize": 10,
+        "source": "rke2-monitor",
+        "metricsReporting": true,
+        "conditions": [],
+        "rules": [
+          {
+            "type": "temporary",
+            "reason": "RKE2ServerError",
+            "pattern": "level=error|level=fatal",
+            "message": "RKE2 server error detected"
+          },
+          {
+            "type": "temporary",
+            "reason": "RKE2EtcdUnhealthy",
+            "pattern": "etcd.*unhealthy|etcd.*failed",
+            "message": "RKE2 etcd cluster unhealthy"
+          }
+        ]
+      }
+
+    # Detect NFS/storage mount issues
+    storage-monitor.json: |
+      {
+        "plugin": "journald",
+        "pluginConfig": {
+          "source": "kernel"
+        },
+        "logPath": "/var/log/journal",
+        "lookback": "5m",
+        "bufferSize": 10,
+        "source": "storage-monitor",
+        "metricsReporting": true,
+        "conditions": [],
+        "rules": [
+          {
+            "type": "temporary",
+            "reason": "NFSStale",
+            "pattern": "nfs.*stale|stale.*nfs",
+            "message": "NFS stale file handle detected"
+          },
+          {
+            "type": "temporary",
+            "reason": "DiskIOError",
+            "pattern": "I/O error|blk_update_request.*error",
+            "message": "Disk I/O error detected"
+          },
+          {
+            "type": "temporary",
+            "reason": "FilesystemError",
+            "pattern": "EXT4-fs error|XFS.*error|filesystem.*error",
+            "message": "Filesystem error detected"
+          }
+        ]
+      }
+
+    # Detect network issues
+    network-monitor.json: |
+      {
+        "plugin": "journald",
+        "pluginConfig": {
+          "source": "kernel"
+        },
+        "logPath": "/var/log/journal",
+        "lookback": "5m",
+        "bufferSize": 10,
+        "source": "network-monitor",
+        "metricsReporting": true,
+        "conditions": [],
+        "rules": [
+          {
+            "type": "temporary",
+            "reason": "NetworkInterfaceDown",
+            "pattern": "link.*down|carrier.*lost",
+            "message": "Network interface link down"
+          },
+          {
+            "type": "temporary",
+            "reason": "ConntrackFull",
+            "pattern": "nf_conntrack.*table full",
+            "message": "Connection tracking table full"
+          },
+          {
+            "type": "temporary",
+            "reason": "BridgeError",
+            "pattern": "bridge.*error",
+            "message": "Network bridge error detected"
+          }
+        ]
+      }
+
+    # Hardware health monitoring
+    hardware-monitor.json: |
+      {
+        "plugin": "journald",
+        "pluginConfig": {
+          "source": "kernel"
+        },
+        "logPath": "/var/log/journal",
+        "lookback": "10m",
+        "bufferSize": 10,
+        "source": "hardware-monitor",
+        "metricsReporting": true,
+        "conditions": [
+          {
+            "type": "HardwareError",
+            "reason": "HardwareHealthy",
+            "message": "Hardware is functioning properly"
+          }
+        ],
+        "rules": [
+          {
+            "type": "permanent",
+            "condition": "HardwareError",
+            "reason": "MCEError",
+            "pattern": "Machine check events logged|Hardware Error|mce:.*Bank",
+            "message": "Machine Check Exception detected - possible CPU/memory hardware error"
+          },
+          {
+            "type": "permanent",
+            "condition": "HardwareError",
+            "reason": "MemoryError",
+            "pattern": "EDAC.*error|CE memory.*error|UE memory.*error",
+            "message": "Memory ECC error detected"
+          },
+          {
+            "type": "temporary",
+            "reason": "ThermalThrottle",
+            "pattern": "cpu.*throttl|thermal.*throttl",
+            "message": "CPU thermal throttling detected"
+          },
+          {
+            "type": "temporary",
+            "reason": "FanFailure",
+            "pattern": "fan.*fail|fan.*error",
+            "message": "Fan failure detected"
+          }
+        ]
+      }

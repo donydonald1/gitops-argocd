@@ -1,0 +1,202 @@
+{{- if .Values.metrics.prometheusRule.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "node-problem-detector.fullname" . }}-alerts
+  labels:
+    {{- include "node-problem-detector.labels" . | nindent 4 }}
+    {{- with .Values.metrics.prometheusRule.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  groups:
+    # ===========================================
+    # Node Health Alerts
+    # ===========================================
+    - name: node-problem-detector.rules
+      rules:
+        # Critical: Node has hardware errors
+        - alert: NodeHardwareError
+          expr: |
+            problem_gauge{type="HardwareError"} == 1
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Hardware error detected on node {{ "{{" }} $labels.node {{ "}}" }}"
+            description: "Node {{ "{{" }} $labels.node {{ "}}" }} has detected a hardware error: {{ "{{" }} $labels.reason {{ "}}" }}"
+            runbook_url: "https://runbooks.techsecom.io/node-hardware-error"
+
+        # Critical: Node kernel has OOM kills
+        - alert: NodeKernelOOMKill
+          expr: |
+            increase(problem_counter{reason="OOMKilling"}[5m]) > 0
+          for: 0m
+          labels:
+            severity: warning
+          annotations:
+            summary: "OOM kills detected on node {{ "{{" }} $labels.node {{ "}}" }}"
+            description: "Node {{ "{{" }} $labels.node {{ "}}" }} has experienced OOM kills in the last 5 minutes"
+            runbook_url: "https://runbooks.techsecom.io/node-oom-kill"
+
+        # Warning: Kernel deadlock detected
+        - alert: NodeKernelDeadlock
+          expr: |
+            problem_gauge{type="KernelDeadlock"} == 1
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Kernel deadlock detected on node {{ "{{" }} $labels.node {{ "}}" }}"
+            description: "Node {{ "{{" }} $labels.node {{ "}}" }} has a kernel deadlock condition"
+            runbook_url: "https://runbooks.techsecom.io/kernel-deadlock"
+
+        # Warning: Filesystem is read-only
+        - alert: NodeReadonlyFilesystem
+          expr: |
+            problem_gauge{type="ReadonlyFilesystem"} == 1
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Read-only filesystem detected on node {{ "{{" }} $labels.node {{ "}}" }}"
+            description: "Node {{ "{{" }} $labels.node {{ "}}" }} has a read-only filesystem - possible disk failure"
+            runbook_url: "https://runbooks.techsecom.io/readonly-filesystem"
+
+        # Warning: Filesystem corruption
+        - alert: NodeFilesystemCorruption
+          expr: |
+            problem_gauge{type="CorruptDockerOverlay2"} == 1
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Filesystem corruption detected on node {{ "{{" }} $labels.node {{ "}}" }}"
+            description: "Node {{ "{{" }} $labels.node {{ "}}" }} has overlay2 filesystem corruption"
+            runbook_url: "https://runbooks.techsecom.io/filesystem-corruption"
+
+        # Warning: containerd unhealthy
+        - alert: NodeContainerdUnhealthy
+          expr: |
+            increase(problem_counter{reason="ContainerdUnhealthy"}[5m]) > 3
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "containerd errors detected on node {{ "{{" }} $labels.node {{ "}}" }}"
+            description: "Node {{ "{{" }} $labels.node {{ "}}" }} containerd is reporting errors"
+            runbook_url: "https://runbooks.techsecom.io/containerd-unhealthy"
+
+        # Critical: Kubelet PLEG unhealthy
+        - alert: NodeKubeletPLEGUnhealthy
+          expr: |
+            increase(problem_counter{reason="KubeletPLEGUnhealthy"}[5m]) > 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Kubelet PLEG unhealthy on node {{ "{{" }} $labels.node {{ "}}" }}"
+            description: "Node {{ "{{" }} $labels.node {{ "}}" }} kubelet PLEG is unhealthy - pods may not start"
+            runbook_url: "https://runbooks.techsecom.io/kubelet-pleg"
+
+        # Warning: Network interface down
+        - alert: NodeNetworkInterfaceDown
+          expr: |
+            increase(problem_counter{reason="NetworkInterfaceDown"}[5m]) > 0
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Network interface down on node {{ "{{" }} $labels.node {{ "}}" }}"
+            description: "Node {{ "{{" }} $labels.node {{ "}}" }} has a network interface that went down"
+            runbook_url: "https://runbooks.techsecom.io/network-interface-down"
+
+        # Warning: Connection tracking table full
+        - alert: NodeConntrackFull
+          expr: |
+            increase(problem_counter{reason="ConntrackFull"}[5m]) > 0
+          for: 1m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Conntrack table full on node {{ "{{" }} $labels.node {{ "}}" }}"
+            description: "Node {{ "{{" }} $labels.node {{ "}}" }} conntrack table is full - new connections may fail"
+            runbook_url: "https://runbooks.techsecom.io/conntrack-full"
+
+        # Warning: Disk I/O errors
+        - alert: NodeDiskIOError
+          expr: |
+            increase(problem_counter{reason="DiskIOError"}[10m]) > 0
+          for: 1m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Disk I/O errors on node {{ "{{" }} $labels.node {{ "}}" }}"
+            description: "Node {{ "{{" }} $labels.node {{ "}}" }} is experiencing disk I/O errors"
+            runbook_url: "https://runbooks.techsecom.io/disk-io-error"
+
+        # Warning: NFS stale handles
+        - alert: NodeNFSStale
+          expr: |
+            increase(problem_counter{reason="NFSStale"}[5m]) > 0
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "NFS stale file handles on node {{ "{{" }} $labels.node {{ "}}" }}"
+            description: "Node {{ "{{" }} $labels.node {{ "}}" }} has NFS stale file handles - check NFS server"
+            runbook_url: "https://runbooks.techsecom.io/nfs-stale"
+
+        # Critical: RKE2 etcd unhealthy
+        - alert: NodeRKE2EtcdUnhealthy
+          expr: |
+            increase(problem_counter{reason="RKE2EtcdUnhealthy"}[5m]) > 0
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "RKE2 etcd unhealthy on node {{ "{{" }} $labels.node {{ "}}" }}"
+            description: "Node {{ "{{" }} $labels.node {{ "}}" }} RKE2 etcd is reporting unhealthy status"
+            runbook_url: "https://runbooks.techsecom.io/rke2-etcd"
+
+        # Warning: CPU thermal throttling
+        - alert: NodeThermalThrottle
+          expr: |
+            increase(problem_counter{reason="ThermalThrottle"}[10m]) > 0
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "CPU thermal throttling on node {{ "{{" }} $labels.node {{ "}}" }}"
+            description: "Node {{ "{{" }} $labels.node {{ "}}" }} CPU is being thermally throttled - check cooling"
+            runbook_url: "https://runbooks.techsecom.io/thermal-throttle"
+
+        # Critical: Longhorn unhealthy
+        - alert: NodeLonghornUnhealthy
+          expr: |
+            problem_gauge{type="LonghornUnhealthy"} == 1
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Longhorn storage unhealthy on node {{ "{{" }} $labels.node {{ "}}" }}"
+            description: "Node {{ "{{" }} $labels.node {{ "}}" }} Longhorn storage is unhealthy: {{ "{{" }} $labels.reason {{ "}}" }}"
+            runbook_url: "https://runbooks.techsecom.io/longhorn-unhealthy"
+
+    # ===========================================
+    # Node Problem Detector Health
+    # ===========================================
+    - name: node-problem-detector-health.rules
+      rules:
+        # Warning: NPD not running on all nodes
+        - alert: NodeProblemDetectorDown
+          expr: |
+            up{job=~".*node-problem-detector.*"} == 0
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Node Problem Detector is down"
+            description: "Node Problem Detector is not running or not being scraped"
+            runbook_url: "https://runbooks.techsecom.io/npd-down"
+{{- end }}
