@@ -1,11 +1,12 @@
-{{- if .Values.metrics.prometheusRule.enabled }}
+{{- if (index .Values "node-problem-detector" "metrics" "prometheusRule" "enabled") }}
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  name: {{ include "node-problem-detector.fullname" . }}-alerts
+  name: {{ .Release.Name }}-alerts
   labels:
-    {{- include "node-problem-detector.labels" . | nindent 4 }}
-    {{- with .Values.metrics.prometheusRule.additionalLabels }}
+    app.kubernetes.io/name: node-problem-detector
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    {{- with (index .Values "node-problem-detector" "metrics" "prometheusRule" "additionalLabels") }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
