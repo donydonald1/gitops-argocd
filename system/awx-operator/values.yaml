@@ -31,38 +31,38 @@ AWX:
     # Production resources for AWX web
     web_resource_requirements:
       requests:
-        cpu: 500m
-        memory: 1Gi
+        cpu: "500m"
+        memory: "1Gi"
       limits:
-        cpu: 2
-        memory: 4Gi
+        cpu: "2"
+        memory: "4Gi"
 
     # Production resources for AWX task
     task_resource_requirements:
       requests:
-        cpu: 500m
-        memory: 1Gi
+        cpu: "500m"
+        memory: "1Gi"
       limits:
-        cpu: 2
-        memory: 4Gi
+        cpu: "2"
+        memory: "4Gi"
 
     # Production resources for AWX EE (Execution Environment)
     ee_resource_requirements:
       requests:
-        cpu: 250m
-        memory: 512Mi
+        cpu: "250m"
+        memory: "512Mi"
       limits:
-        cpu: 1
-        memory: 2Gi
+        cpu: "1"
+        memory: "2Gi"
 
     # Redis configuration
     redis_resource_requirements:
       requests:
-        cpu: 100m
-        memory: 128Mi
+        cpu: "100m"
+        memory: "128Mi"
       limits:
-        cpu: 500m
-        memory: 512Mi
+        cpu: "500m"
+        memory: "512Mi"
 
     # Replicas for high availability
     replicas: 1
