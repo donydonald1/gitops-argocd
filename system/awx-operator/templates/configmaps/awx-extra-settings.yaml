@@ -31,4 +31,7 @@ data:
     # Security Settings
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+
+    # Enable HTTPS redirect for social auth
+    SOCIAL_AUTH_REDIRECT_IS_HTTPS = True
 {{- end }}
