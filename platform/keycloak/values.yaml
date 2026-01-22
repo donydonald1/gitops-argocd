@@ -109,11 +109,12 @@ keycloakx:
     username: keycloak
 
   # Autoscaling configuration
+  # Note: maxReplicas limited to 3 due to pod anti-affinity and 3-node cluster
   autoscaling:
     enabled: true
     labels: {}
     minReplicas: 2
-    maxReplicas: 5
+    maxReplicas: 3
     metrics:
     - type: Resource
       resource:
