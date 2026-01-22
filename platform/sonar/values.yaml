@@ -117,11 +117,12 @@ sonarqube:
     storageClass: longhorn
     size: 20Gi
 
-  # Security context
+  # Security context - using default SonarQube user (1000)
   securityContext:
-    fsGroup: 0
+    fsGroup: 1000
   containerSecurityContext:
-    runAsUser: 0
+    runAsUser: 1000
+    runAsNonRoot: true
 
   # Service configuration
   service:
