@@ -55,7 +55,7 @@ sonarqube:
     - "https://github.com/sonar-auth-oidc/sonar-auth-oidc/releases/download/v3.0.0/sonar-auth-oidc-plugin-3.0.0.jar"
     # Java Code Quality Plugins
     - "https://github.com/checkstyle/sonar-checkstyle/releases/download/10.23.0/checkstyle-sonar-plugin-10.23.0.jar"
-    - "https://github.com/spotbugs/sonar-findbugs/releases/download/4.6.0/sonar-findbugs-plugin-4.6.0.jar"
+    - "https://github.com/spotbugs/sonar-findbugs/releases/download/v4.6.0/sonar-findbugs-plugin-v4.6.0.jar"
     - "https://github.com/jborgers/sonar-pmd/releases/download/4.2.0/sonar-pmd-plugin-4.2.0.jar"
     # DevOps/IaC Plugins
     - "https://github.com/sbaudoin/sonar-ansible/releases/download/v2.5.1/sonar-ansible-plugin-2.5.1.jar"
