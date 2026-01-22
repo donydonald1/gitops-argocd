@@ -28,34 +28,19 @@ botkube:
       enabled: true
       secretName: "botkube-tls"
 
-  # Communication platforms - credentials loaded from external secrets via env vars
+  # Communication platforms - config loaded from existingCommunicationsSecretName
+  # Teams integration requires Botkube Cloud - using Slack Socket Mode instead
   communications:
-    # Microsoft Teams configuration (uses default-group to match helm chart defaults)
     default-group:
-      teams:
+      # Slack Socket Mode - works with self-hosted Botkube
+      socketSlack:
         enabled: true
-        # Placeholder values - overridden by env vars from botkube-teams-secret
-        appID: "TEAMS_APP_ID_PLACEHOLDER"
-        appPassword: "TEAMS_APP_PASSWORD_PLACEHOLDER"
-        botName: KubeBot
-        port: 3978
-        bindings:
-          executors:
-            - kubectl-read-only
-            - kubectl-full-access
-            - helm-readonly
-          sources:
-            - k8s-events
-            - k8s-errors
-            - k8s-recommendations
-            - prometheus-alerts
-      # Slack configuration (disabled for now - enable when Slack app is created)
-      slack:
-        enabled: false
-        # Credentials will be injected via environment variables from botkube-slack-secret
+        # Placeholder - actual values come from botkube-comm-config secret
+        botToken: "SLACK_BOT_TOKEN_PLACEHOLDER"
+        appToken: "SLACK_APP_TOKEN_PLACEHOLDER"
         channels:
           default:
-            name: ""
+            name: kubebot-alerts
             bindings:
               executors:
                 - kubectl-read-only
@@ -66,6 +51,9 @@ botkube:
                 - k8s-errors
                 - k8s-recommendations
                 - prometheus-alerts
+      # Teams disabled - requires Botkube Cloud (not self-hosted compatible)
+      teams:
+        enabled: false
 
   # Service monitor for Prometheus
   serviceMonitor:
@@ -288,20 +276,20 @@ botkube:
             - name: cert-manager.io/v1/certificates
             - name: argoproj.io/v1alpha1/applications
 
-  # Extra environment variables for Teams credentials
+  # Extra environment variables for Slack Socket Mode credentials
   # Botkube uses env vars to override config values with pattern:
   # BOTKUBE_<PATH> where __ (double underscore) separates nested paths
   extraEnv:
-    - name: BOTKUBE_COMMUNICATIONS__DEFAULT-GROUP__TEAMS__APPID
+    - name: BOTKUBE_COMMUNICATIONS__DEFAULT-GROUP__SOCKETSLACK__BOTTOKEN
       valueFrom:
         secretKeyRef:
-          name: botkube-teams-secret
-          key: BOTKUBE_COMMUNICATIONS__DEFAULT-GROUP__TEAMS__APPID
-    - name: BOTKUBE_COMMUNICATIONS__DEFAULT-GROUP__TEAMS__APPPASSWORD
+          name: botkube-slack-secret
+          key: BOTKUBE_COMMUNICATIONS__DEFAULT-GROUP__SOCKETSLACK__BOTTOKEN
+    - name: BOTKUBE_COMMUNICATIONS__DEFAULT-GROUP__SOCKETSLACK__APPTOKEN
       valueFrom:
         secretKeyRef:
-          name: botkube-teams-secret
-          key: BOTKUBE_COMMUNICATIONS__DEFAULT-GROUP__TEAMS__APPPASSWORD
+          name: botkube-slack-secret
+          key: BOTKUBE_COMMUNICATIONS__DEFAULT-GROUP__SOCKETSLACK__APPTOKEN
 
 # External Secrets Operator configuration
 eso:
