@@ -10,10 +10,16 @@ spec:
   defaultClientScopes:
     - profile
     - email
+    - openid
   realmRef:
     kind: ClusterKeycloakRealm
     name: main
   webUrl: https://{{ (index .Values.sonarqube.ingress.hosts 0).name }}
+  redirectUris:
+    - https://{{ (index .Values.sonarqube.ingress.hosts 0).name }}/oauth2/callback/oidc
+    - https://{{ (index .Values.sonarqube.ingress.hosts 0).name }}/*
+  webOrigins:
+    - https://{{ (index .Values.sonarqube.ingress.hosts 0).name }}
   protocolMappers:
     - name: roles
       protocol: openid-connect
