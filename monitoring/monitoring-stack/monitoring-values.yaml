@@ -268,12 +268,28 @@ kube-prometheus-stack:
       scrapeConfigSelector: {}
       scrapeConfigNamespaceSelector: {}
 
+      # Probe configuration to prevent restarts during heavy load (chunk snapshots, rule evaluation)
+      # Default 3s timeout is too aggressive for 800k+ time series workloads
+      startupProbe:
+        failureThreshold: 60
+        periodSeconds: 15
+        timeoutSeconds: 10
+      livenessProbe:
+        failureThreshold: 10
+        periodSeconds: 10
+        timeoutSeconds: 10
+      readinessProbe:
+        failureThreshold: 5
+        periodSeconds: 10
+        timeoutSeconds: 10
+
       resources:
-        # requests:
-        #   cpu: 1000m
+        requests:
+          cpu: 1000m
+          memory: 4Gi
         limits:
-          memory: 6Gi
-          cpu: 2000m
+          memory: 8Gi
+          cpu: 4000m
 
       storageSpec:
         volumeClaimTemplate:
