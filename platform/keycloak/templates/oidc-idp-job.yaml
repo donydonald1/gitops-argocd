@@ -228,6 +228,30 @@ spec:
           fi
 
           echo ""
+          echo "Configuring realm default post-logout redirect URI..."
+
+          # Get current realm config and add defaultPostLogoutRedirectUri
+          REALM_CONFIG=$(curl -s "${KEYCLOAK_URL}/admin/realms/master" \
+            -H "Authorization: Bearer ${TOKEN}")
+
+          if ! echo "$REALM_CONFIG" | grep -q "defaultPostLogoutRedirectUri"; then
+            echo "Adding defaultPostLogoutRedirectUri to realm..."
+            UPDATED_REALM=$(printf '%s' "$REALM_CONFIG" | sed 's/"attributes":{/"attributes":{"defaultPostLogoutRedirectUri":"https:\/\/keycloak.ops.techsecom.io\/",/')
+            RESULT=$(curl -s -w "\n%{http_code}" -X PUT "${KEYCLOAK_URL}/admin/realms/master" \
+              -H "Authorization: Bearer ${TOKEN}" \
+              -H "Content-Type: application/json" \
+              -d "$UPDATED_REALM")
+            HTTP_CODE=$(echo "$RESULT" | tail -1)
+            if [ "$HTTP_CODE" = "204" ]; then
+              echo "Realm updated with defaultPostLogoutRedirectUri"
+            else
+              echo "Warning: Failed to update realm (HTTP $HTTP_CODE)"
+            fi
+          else
+            echo "defaultPostLogoutRedirectUri already configured"
+          fi
+
+          echo ""
           echo "Configuring post-logout redirect URIs for built-in clients..."
 
           LOGOUT_URI="https://keycloak.ops.techsecom.io/*"
@@ -282,9 +306,19 @@ spec:
             else
               echo "Warning: Failed to update ${CLIENT_ID_NAME} (HTTP ${HTTP_CODE})"
             fi
+
+            # Enable frontchannelLogout for proper logout flow
+            if echo "$CURRENT_CONFIG" | grep -q '"frontchannelLogout":false'; then
+              echo "Enabling frontchannelLogout for ${CLIENT_ID_NAME}..."
+              UPDATED_FC=$(printf '%s' "$CURRENT_CONFIG" | sed 's/"frontchannelLogout":false/"frontchannelLogout":true/')
+              curl -s -X PUT "${KEYCLOAK_URL}/admin/realms/master/clients/${CLIENT_UUID}" \
+                -H "Authorization: Bearer ${TOKEN}" \
+                -H "Content-Type: application/json" \
+                -d "$UPDATED_FC" > /dev/null && echo "frontchannelLogout enabled"
+            fi
           }
 
-          # Update built-in clients with post-logout redirect URIs
+          # Update built-in clients with post-logout redirect URIs and frontchannelLogout
           update_client_logout_uri "account-console"
           update_client_logout_uri "security-admin-console"
           update_client_logout_uri "account"
