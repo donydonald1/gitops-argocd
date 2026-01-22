@@ -420,7 +420,7 @@ data:
                 "uid": "loki"
               },
               "editorMode": "code",
-              "expr": "{job=\"kubernetes-events\", type=~\"$type\"} | json | namespace=~\"$namespace\" | line_format \"{{ "{{" }}.type{{ "}}" }} [{{ "{{" }}.namespace{{ "}}" }}/{{ "{{" }}.name{{ "}}" }}] {{ "{{" }}.reason{{ "}}" }}: {{ "{{" }}.message{{ "}}" }}\"",
+              "expr": "{job=\"kubernetes-events\"} | json | type=~\"$type\" | namespace=~\"$namespace\" | line_format \"{{ "{{" }}.type{{ "}}" }} [{{ "{{" }}.namespace{{ "}}" }}/{{ "{{" }}.name{{ "}}" }}] {{ "{{" }}.reason{{ "}}" }}: {{ "{{" }}.message{{ "}}" }}\"",
               "queryType": "range",
               "refId": "A"
             }
@@ -458,7 +458,7 @@ data:
                 "uid": "loki"
               },
               "editorMode": "code",
-              "expr": "{job=\"kubernetes-events\", type=\"Warning\"} | json | line_format \"⚠️ [{{ "{{" }}.namespace{{ "}}" }}/{{ "{{" }}.name{{ "}}" }}] {{ "{{" }}.reason{{ "}}" }}: {{ "{{" }}.message{{ "}}" }}\"",
+              "expr": "{job=\"kubernetes-events\"} | json | type=\"Warning\" | line_format \"⚠️ [{{ "{{" }}.namespace{{ "}}" }}/{{ "{{" }}.name{{ "}}" }}] {{ "{{" }}.reason{{ "}}" }}: {{ "{{" }}.message{{ "}}" }}\"",
               "queryType": "range",
               "refId": "A"
             }
