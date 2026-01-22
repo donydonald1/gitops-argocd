@@ -10,7 +10,6 @@ spec:
   defaultClientScopes:
     - profile
     - email
-    - openid
   realmRef:
     kind: ClusterKeycloakRealm
     name: main
