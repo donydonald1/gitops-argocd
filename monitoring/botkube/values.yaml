@@ -28,32 +28,10 @@ botkube:
       enabled: true
       secretName: "botkube-tls"
 
-  # Communication platforms - config loaded from existingCommunicationsSecretName
-  # Teams integration requires Botkube Cloud - using Slack Socket Mode instead
-  communications:
-    default-group:
-      # Slack Socket Mode - works with self-hosted Botkube
-      socketSlack:
-        enabled: true
-        # Placeholder - actual values come from botkube-comm-config secret
-        botToken: "SLACK_BOT_TOKEN_PLACEHOLDER"
-        appToken: "SLACK_APP_TOKEN_PLACEHOLDER"
-        channels:
-          default:
-            name: kubebot-alerts
-            bindings:
-              executors:
-                - kubectl-read-only
-                - kubectl-full-access
-                - helm-readonly
-              sources:
-                - k8s-events
-                - k8s-errors
-                - k8s-recommendations
-                - prometheus-alerts
-      # Teams disabled - requires Botkube Cloud (not self-hosted compatible)
-      teams:
-        enabled: false
+  # Communication platforms - fully managed by existingCommunicationsSecretName
+  # Do not define communications here - it will conflict with the external secret
+  # The botkube-comm-config secret contains the full communications config
+  communications: {}
 
   # Service monitor for Prometheus
   serviceMonitor:
