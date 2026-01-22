@@ -12,6 +12,10 @@ botkube:
   analytics:
     disable: true
 
+  # Use external secret for communications config
+  # This secret is created by the botkube-communication-override ExternalSecret
+  existingCommunicationsSecretName: "botkube-comm-config"
+
   # Ingress configuration
   ingress:
     create: true
