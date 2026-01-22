@@ -120,7 +120,6 @@ spec:
               "tokenUrl": "'"${OIDC_TOKEN_ENDPOINT}"'",
               "userInfoUrl": "'"${OIDC_USERINFO_ENDPOINT}"'",
               "jwksUrl": "'"${OIDC_JWKS_URI}"'",
-              "logoutUrl": "'"${OIDC_END_SESSION_ENDPOINT}"'",
               "backchannelSupported": "false",
               "validateSignature": "true",
               "useJwksUrl": "true",
