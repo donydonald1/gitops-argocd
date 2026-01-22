@@ -2,11 +2,12 @@ sonarqube:
   deploymentType: "Deployment"
   nameOverride: "sonar"
   fullnameOverride: "sonar"
+
   ingress:
     enabled: true
     ingressClassName: nginx
     hosts:
-    - name: sonar.dev.techsecoms.com
+    - name: sonar.ops.techsecoms.com
     annotations:
       # This property allows for reports up to a certain size to be uploaded to SonarQube
       nginx.ingress.kubernetes.io/proxy-body-size: "64m"
@@ -18,16 +19,19 @@ sonarqube:
       nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization"
     tls:
     - hosts:
-      - sonar.dev.techsecoms.com
+      - sonar.ops.techsecoms.com
       secretName: sonar-tls
+
+  # Resources tuned for SonarQube 2025.x
   resources:
     limits:
-      cpu: 700m
-      memory: 3Gi
+      cpu: 2
+      memory: 4Gi
     requests:
-      cpu: 100m
-      memory: 1.5Gi
+      cpu: 200m
+      memory: 2Gi
 
+  # Additional plugins (community branch plugin is now built-in for SonarQube 2025+)
   plugins:
     install:
     - "https://github.com/vaulttec/sonar-auth-oidc/releases/download/v2.1.1/sonar-auth-oidc-plugin-2.1.1.jar"
@@ -37,11 +41,6 @@ sonarqube:
     - "https://github.com/sbaudoin/sonar-ansible/releases/download/v2.5.1/sonar-ansible-plugin-2.5.1.jar"
     - "https://github.com/sbaudoin/sonar-yaml/releases/download/v1.7.0/sonar-yaml-plugin-1.7.0.jar"
     - "https://github.com/Inform-Software/sonar-groovy/releases/download/1.8/sonar-groovy-plugin-1.8.jar"
-    - "https://github.com/mc1arke/sonarqube-community-branch-plugin/releases/download/1.14.0/sonarqube-community-branch-plugin-1.14.0.jar"
-
-  # Community branch plugin configuration
-  jvmCeOpts: -javaagent:/opt/sonarqube/extensions/plugins/sonarqube-community-branch-plugin-1.14.0.jar=ce
-  jvmOpts: -javaagent:/opt/sonarqube/extensions/plugins/sonarqube-community-branch-plugin-1.14.0.jar=web
 
   env:
   - name: SONAR_TELEMETRY_ENABLE
@@ -53,12 +52,17 @@ sonarqube:
   postgresql:
     enabled: false
 
+  # Use CNPG cluster pooler for database connection
   jdbcOverwrite:
     enable: true
-    jdbcUrl: "jdbc:postgresql://sonar-primary.sonar:5432/sonar?socketTimeout=1500"
+    jdbcUrl: "jdbc:postgresql://cnpg-cluster-pooler-rw.cnpg-system.svc.cluster.local:5432/sonar?socketTimeout=1500"
     jdbcUsername: "sonar"
-    jdbcSecretName: sonar-pguser-sonar
+    jdbcSecretName: sonar-user-secret
     jdbcSecretPasswordKey: "password"
+
+# External Secrets Operator configuration for Vault integration
+eso:
+  enabled: true
 
 # -- Integration with keycloak
 oidc:

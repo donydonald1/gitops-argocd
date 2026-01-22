@@ -171,6 +171,14 @@ managedRoles:
   passwordSecret:
     name: n8n-user-secret
 
+- name: sonar
+  ensure: present
+  login: true
+  createrole: true
+  bypassrls: true
+  passwordSecret:
+    name: sonar-user-secret
+
 pooler:
   maxDbConnections: 2000
   maxClientConn: 2000
