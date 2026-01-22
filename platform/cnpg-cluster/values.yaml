@@ -179,6 +179,14 @@ managedRoles:
   passwordSecret:
     name: sonar-user-secret
 
+- name: awx
+  ensure: present
+  login: true
+  createrole: true
+  bypassrls: true
+  passwordSecret:
+    name: awx-user-secret
+
 pooler:
   maxDbConnections: 2000
   maxClientConn: 2000

@@ -1,0 +1,9 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: awx-db
+spec:
+  name: awx
+  owner: awx
+  cluster:
+    name: cnpg-cluster

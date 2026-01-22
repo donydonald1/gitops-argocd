@@ -1,46 +1,131 @@
 AWX:
-  # enable use of awx-deploy template
+  # Enable AWX deployment
   enabled: true
   name: awx
+
   spec:
-    # image_version: 24.6.1
+    # AWX image configuration
     image: quay.io/ansible/awx
+    image_pull_policy: IfNotPresent
+
+    # Admin user configuration
     admin_user: admin
     admin_password_secret: awx-admin-password
+    secret_key_secret: awx-secret-key
+
+    # Ingress configuration
     ingress_type: ingress
+    ingress_class_name: nginx
     ingress_path: /
     ingress_path_type: Prefix
     ingress_hosts:
-    - hostname: awx.dev.techsecoms.com
-  # configurations for external postgres instance
+      - hostname: awx.ops.techsecom.io
+    ingress_annotations: |
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+      nginx.ingress.kubernetes.io/proxy-connect-timeout: "300"
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+      nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    ingress_tls_secret: awx-tls
+
+    # Production resources for AWX web
+    web_resource_requirements:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: 2
+        memory: 4Gi
+
+    # Production resources for AWX task
+    task_resource_requirements:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: 2
+        memory: 4Gi
+
+    # Production resources for AWX EE (Execution Environment)
+    ee_resource_requirements:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: 1
+        memory: 2Gi
+
+    # Redis configuration
+    redis_resource_requirements:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+
+    # Replicas for high availability
+    replicas: 1
+    web_replicas: 1
+    task_replicas: 1
+
+    # Security context
+    security_context_settings:
+      runAsGroup: 0
+      runAsUser: 0
+      fsGroup: 0
+      fsGroupChangePolicy: OnRootMismatch
+
+    # Extra settings for OIDC and production
+    extra_settings:
+      - setting: SOCIAL_AUTH_KEYCLOAK_KEY
+        value: "awx"
+      - setting: SOCIAL_AUTH_KEYCLOAK_PUBLIC_KEY
+        value: ""
+      - setting: SOCIAL_AUTH_KEYCLOAK_AUTHORIZATION_URL
+        value: "https://keycloak.ops.techsecom.io/realms/master/protocol/openid-connect/auth"
+      - setting: SOCIAL_AUTH_KEYCLOAK_ACCESS_TOKEN_URL
+        value: "https://keycloak.ops.techsecom.io/realms/master/protocol/openid-connect/token"
+      - setting: SOCIAL_AUTH_KEYCLOAK_LOGOUT_URL
+        value: "https://keycloak.ops.techsecom.io/realms/master/protocol/openid-connect/logout"
+      - setting: SESSION_COOKIE_SECURE
+        value: "True"
+      - setting: CSRF_COOKIE_SECURE
+        value: "True"
+
+  # External PostgreSQL - CNPG Cluster
   postgres:
     enabled: true
-    host: "awx-primary.awx-operator.svc"
+    host: "cnpg-cluster-pooler-rw.cnpg-system.svc.cluster.local"
     port: 5432
     dbName: awx
     username: awx
     sslmode: prefer
     type: unmanaged
+    target_session_attrs: any
 
-# Configure components of the External Secrets Operator (ESO).
+# External Secrets Operator configuration for Vault integration
 eso:
-  # -- Install components of the ESO.
   enabled: true
-  # -- Defines provider type. One of `aws` or `generic`.
-  type: "generic"
-  # -- Defines Secret Store name.
-  secretStoreName: "aws-parameterstore"
-  # -- Value name in AWS ParameterStore, AWS SecretsManager or other Secret Store.
-  secretName: "/infra/core/addons/awx-operator"
-  # -- Role ARN for the ExternalSecretOperator to assume.
-  roleArn: arn:aws:iam::012345678910:role/AWSIRSA_Shared_ExternalSecretOperatorAccess
-  # Defines Secret Store configuration. Used when eso.type is set to "generic".
-  generic:
-    secretStore:
-      # -- Defines SecretStore provider configuration.
-      providerConfig: {}
-      #  gcpsm:
-      #    projectID: "alphabet-123"
 
+# Keycloak OIDC Client Configuration
 oidc:
-  enabled: false
+  enabled: true
+  clientId: awx
+  redirectUris:
+    - "https://awx.ops.techsecom.io/*"
+  webOrigins:
+    - "https://awx.ops.techsecom.io"
+
+# Node selector (optional)
+nodeSelector: {}
+
+# Tolerations (optional)
+tolerations: []
+
+# Vault secret keys required (path: secret/awx):
+# - adminPassword: AWX admin password
+# - secretKey: AWX secret key for encryption
+# - dbUsername: Database username (awx)
+# - dbPassword: Database password
+# - oidcClientSecret: Keycloak OIDC client secret

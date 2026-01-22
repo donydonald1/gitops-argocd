@@ -1,20 +1,22 @@
 {{- if and $.Values.AWX.enabled $.Values.AWX.postgres.enabled }}
-{{- $secretName := .Values.eso.secretName }}
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: {{ include "postgres.secretName" . }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-5"
 spec:
   refreshInterval: 1h
   secretStoreRef:
-    kind: SecretStore
-    name: {{ .Values.eso.secretStoreName }}
+    kind: ClusterSecretStore
+    name: vault
   data:
     - remoteRef:
-        key: {{ $secretName }}
-        property: awx-operator.postgresql-password
+        key: awx
+        property: dbPassword
       secretKey: postgresqlPassword
   target:
+    name: {{ include "postgres.secretName" . }}
     creationPolicy: Owner
     deletionPolicy: Retain
     template:
