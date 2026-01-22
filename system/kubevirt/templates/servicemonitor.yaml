@@ -25,36 +25,4 @@ spec:
       tlsConfig:
         insecureSkipVerify: true
       honorLabels: true
----
-{{- if .Values.cdi.enabled }}
-# Note: CDI operator creates its own ServiceMonitor (service-monitor-cdi)
-# This is disabled to avoid duplicate scraping with conflicting schemes
-# The operator's ServiceMonitor correctly uses HTTPS
-# apiVersion: monitoring.coreos.com/v1
-# kind: ServiceMonitor
-# metadata:
-#   name: cdi
-#   namespace: cdi
-#   labels:
-#     app.kubernetes.io/name: cdi
-#     app.kubernetes.io/component: monitoring
-#     {{- with .Values.monitoring.serviceMonitor.labels }}
-#     {{- toYaml . | nindent 4 }}
-#     {{- end }}
-#   annotations:
-#     argocd.argoproj.io/sync-wave: "10"
-# spec:
-#   namespaceSelector:
-#     matchNames:
-#       - cdi
-#   selector:
-#     matchLabels:
-#       prometheus.cdi.kubevirt.io: "true"
-#   endpoints:
-#     - port: metrics
-#       scheme: https
-#       tlsConfig:
-#         insecureSkipVerify: true
-#       honorLabels: true
-{{- end }}
 {{- end }}
