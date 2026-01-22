@@ -12,6 +12,13 @@ data:
     # AWX Extra Settings - Keycloak OIDC Configuration
     import os
 
+    # Enable Keycloak authentication backend
+    AUTHENTICATION_BACKENDS = [
+        'social_core.backends.keycloak.KeycloakOAuth2',
+        'awx.sso.backends.TACACSPlusBackend',
+        'awx.main.backends.AWXModelBackend',
+    ]
+
     # Keycloak OIDC settings
     SOCIAL_AUTH_KEYCLOAK_KEY = "{{ .Values.oidc.clientId }}"
     SOCIAL_AUTH_KEYCLOAK_SECRET = os.environ.get("SOCIAL_AUTH_KEYCLOAK_SECRET", "")
