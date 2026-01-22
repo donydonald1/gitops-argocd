@@ -81,8 +81,6 @@ AWX:
     extra_settings:
       - setting: SOCIAL_AUTH_KEYCLOAK_KEY
         value: "awx"
-      - setting: SOCIAL_AUTH_KEYCLOAK_PUBLIC_KEY
-        value: ""
       - setting: SOCIAL_AUTH_KEYCLOAK_AUTHORIZATION_URL
         value: "https://keycloak.ops.techsecom.io/realms/master/protocol/openid-connect/auth"
       - setting: SOCIAL_AUTH_KEYCLOAK_ACCESS_TOKEN_URL
