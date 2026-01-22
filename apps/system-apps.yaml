@@ -129,9 +129,11 @@ spec:
       #     values:
       #     - values.yaml
 
-      # - name: awx-operator
-      #   namespace: awx-operator
-      #   serverSideApply: true
+      - name: awx-operator
+        namespace: awx-operator
+        serverSideApply: true
+        wave: "1"  # After base infrastructure and operators
+        imageList: "awx=quay.io/ansible/awx, awx-operator=quay.io/ansible/awx-operator"
 
       # - name: external-dns
       #   namespace: external-dns
