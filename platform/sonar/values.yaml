@@ -15,7 +15,7 @@ sonarqube:
     enabled: true
     ingressClassName: nginx
     hosts:
-    - name: sonar.ops.techsecoms.com
+    - name: sonar.ops.techsecom.io
     annotations:
       # Allow large reports to be uploaded (up to 128MB)
       nginx.ingress.kubernetes.io/proxy-body-size: "128m"
@@ -31,7 +31,7 @@ sonarqube:
       nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
     tls:
     - hosts:
-      - sonar.ops.techsecoms.com
+      - sonar.ops.techsecom.io
       secretName: sonar-tls
 
   # Production resources for SonarQube 2025.x
