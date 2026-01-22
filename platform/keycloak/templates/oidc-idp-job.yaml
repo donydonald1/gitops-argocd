@@ -121,7 +121,7 @@ spec:
               "userInfoUrl": "'"${OIDC_USERINFO_ENDPOINT}"'",
               "jwksUrl": "'"${OIDC_JWKS_URI}"'",
               "logoutUrl": "'"${OIDC_END_SESSION_ENDPOINT}"'",
-              "backchannelSupported": "true",
+              "backchannelSupported": "false",
               "validateSignature": "true",
               "useJwksUrl": "true",
               "pkceEnabled": "true",
@@ -255,7 +255,9 @@ spec:
           echo ""
           echo "Configuring post-logout redirect URIs for built-in clients..."
 
-          LOGOUT_URI="https://keycloak.ops.techsecom.io/*"
+          # Comprehensive list of post-logout redirect URIs (+ is Keycloak separator)
+          # Include exact URLs and wildcards for proper logout redirect
+          LOGOUT_URI="https://keycloak.ops.techsecom.io+https://keycloak.ops.techsecom.io/+https://keycloak.ops.techsecom.io/*+https://keycloak.ops.techsecom.io/admin/master/console/"
 
           # Function to update client post-logout redirect URI
           update_client_logout_uri() {
