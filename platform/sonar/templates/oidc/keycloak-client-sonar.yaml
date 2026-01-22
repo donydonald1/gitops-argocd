@@ -19,6 +19,9 @@ spec:
     - https://{{ (index .Values.sonarqube.ingress.hosts 0).name }}/*
   webOrigins:
     - https://{{ (index .Values.sonarqube.ingress.hosts 0).name }}
+  # Post-logout redirect URIs for proper logout flow (Keycloak 26.x)
+  attributes:
+    post.logout.redirect.uris: https://{{ (index .Values.sonarqube.ingress.hosts 0).name }}/*
   protocolMappers:
     - name: roles
       protocol: openid-connect

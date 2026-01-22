@@ -25,6 +25,9 @@ spec:
   webOrigins:
     {{- toYaml . | nindent 4 }}
   {{- end }}
+  # Post-logout redirect URIs for proper logout flow (Keycloak 26.x)
+  attributes:
+    post.logout.redirect.uris: "{{ (first .Values.oidc.redirectUris) }}"
   # Protocol mappers for proper token claims
   protocolMappers:
     - name: audience

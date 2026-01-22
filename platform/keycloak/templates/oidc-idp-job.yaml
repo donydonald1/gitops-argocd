@@ -228,5 +228,51 @@ spec:
           fi
 
           echo ""
+          echo "Configuring post-logout redirect URIs for built-in clients..."
+
+          # Function to update client post-logout redirect URI
+          update_client_logout_uri() {
+            CLIENT_ID_NAME="$1"
+            LOGOUT_URI="$2"
+
+            # Get client UUID
+            CLIENT_DATA=$(curl -s "${KEYCLOAK_URL}/admin/realms/master/clients?clientId=${CLIENT_ID_NAME}" \
+              -H "Authorization: Bearer ${TOKEN}")
+            CLIENT_UUID=$(echo "$CLIENT_DATA" | sed 's/.*\[{.*"id":"\([^"]*\)".*/\1/')
+
+            if [ -n "$CLIENT_UUID" ] && [ "$CLIENT_UUID" != "$CLIENT_DATA" ] && [ "$CLIENT_UUID" != "[]" ]; then
+              echo "Updating ${CLIENT_ID_NAME} client (UUID: ${CLIENT_UUID})..."
+
+              # Get current client config
+              CURRENT_CONFIG=$(curl -s "${KEYCLOAK_URL}/admin/realms/master/clients/${CLIENT_UUID}" \
+                -H "Authorization: Bearer ${TOKEN}")
+
+              # Check if post.logout.redirect.uris already configured
+              if echo "$CURRENT_CONFIG" | grep -q "post.logout.redirect.uris"; then
+                echo "${CLIENT_ID_NAME} already has post-logout redirect URIs configured"
+              else
+                # Update using PUT with merged attributes (Keycloak requires full object)
+                RESULT=$(curl -s -w "\n%{http_code}" -X PUT "${KEYCLOAK_URL}/admin/realms/master/clients/${CLIENT_UUID}" \
+                  -H "Authorization: Bearer ${TOKEN}" \
+                  -H "Content-Type: application/json" \
+                  -d "$(echo "$CURRENT_CONFIG" | sed 's/"attributes":{/"attributes":{"post.logout.redirect.uris":"'"${LOGOUT_URI}"'",/')")
+                HTTP_CODE=$(echo "$RESULT" | tail -1)
+                if [ "$HTTP_CODE" = "204" ] || [ "$HTTP_CODE" = "200" ]; then
+                  echo "${CLIENT_ID_NAME} updated successfully"
+                else
+                  echo "Warning: Failed to update ${CLIENT_ID_NAME} (HTTP ${HTTP_CODE})"
+                fi
+              fi
+            else
+              echo "Warning: Could not find ${CLIENT_ID_NAME} client"
+            fi
+          }
+
+          # Update built-in clients with post-logout redirect URIs
+          update_client_logout_uri "account-console" "https://keycloak.ops.techsecom.io/*"
+          update_client_logout_uri "security-admin-console" "https://keycloak.ops.techsecom.io/*"
+          update_client_logout_uri "account" "https://keycloak.ops.techsecom.io/*"
+
+          echo ""
           echo "OIDC Identity Provider setup complete!"
 {{- end }}
