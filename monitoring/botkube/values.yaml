@@ -1,168 +1,310 @@
 botkube:
+  # Cluster settings
   settings:
-    clusterName: k8s
+    clusterName: ops-dc-tx-pl-hq-prd
     configWatcher: true
+    upgradeNotifier: true
+    log:
+      level: info
+      disableColors: false
 
+  # Disable analytics
   analytics:
     disable: true
 
+  # Ingress configuration
   ingress:
     create: true
-    host: "botkube.dev.techsecoms.com"
+    host: "kubebot.ops.techsecom.io"
+    className: nginx
     annotations:
-      cert-manager.io/cluster-issuer: "cluster-issuer"
+      cert-manager.io/cluster-issuer: "letsencrypt-prod"
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
     tls:
       enabled: true
-      secretName: "letsencrypt-prod"
+      secretName: "botkube-tls"
 
+  # Communication platforms - credentials loaded from external secrets
   communications:
-    default-group:
+    # Microsoft Teams configuration
+    teams-group:
       teams:
         enabled: true
+        # Credentials loaded from botkube-teams-secret
         appID: ""
         appPassword: ""
-        botName: Botkube
+        botName: KubeBot
+        port: 3978
         bindings:
           executors:
-          - k8s-default-tools
-          - bins-management
-          - ai
-          # -- Notification sources configuration for the webhook.
+            - kubectl-read-only
+            - kubectl-full-access
+            - helm-readonly
           sources:
-          - crds
-          - k8s-err-events
-          - k8s-create-events
-          - k8s-recommendation-events
-          - k8s-err-with-logs-events
-          - k8s-delete-events
-          - k8s-all-events
+            - k8s-events
+            - k8s-errors
+            - k8s-recommendations
+            - prometheus-alerts
 
+    # Slack configuration
+    slack-group:
+      slack:
+        enabled: true
+        # Credentials loaded from botkube-slack-secret
+        token: ""
+        channels:
+          default:
+            name: ""
+            bindings:
+              executors:
+                - kubectl-read-only
+                - kubectl-full-access
+                - helm-readonly
+              sources:
+                - k8s-events
+                - k8s-errors
+                - k8s-recommendations
+                - prometheus-alerts
+
+  # Service monitor for Prometheus
   serviceMonitor:
     enabled: true
+    labels:
+      release: kube-prometheus-stack
 
+  # Resource limits
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  # Pod security context
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+
+  # Executors configuration
   executors:
-    k8s-default-tools:
+    # Read-only kubectl access
+    kubectl-read-only:
       botkube/kubectl:
         enabled: true
+        config:
+          defaultNamespace: default
+          interactiveBuilder:
+            allowed:
+              namespaces:
+                - ".*"
+              verbs:
+                - get
+                - list
+                - describe
+                - logs
+                - top
+              resources:
+                - pods
+                - services
+                - deployments
+                - statefulsets
+                - daemonsets
+                - jobs
+                - cronjobs
+                - configmaps
+                - nodes
+                - namespaces
+                - events
+                - ingresses
+                - persistentvolumeclaims
+                - persistentvolumes
 
+    # Full kubectl access (restricted to admins)
+    kubectl-full-access:
+      botkube/kubectl:
+        enabled: true
+        config:
+          defaultNamespace: default
+          interactiveBuilder:
+            allowed:
+              namespaces:
+                - ".*"
+              verbs:
+                - get
+                - list
+                - describe
+                - logs
+                - top
+                - delete
+                - rollout
+                - scale
+                - exec
+              resources:
+                - pods
+                - services
+                - deployments
+                - statefulsets
+                - daemonsets
+                - jobs
+                - cronjobs
+                - configmaps
+                - secrets
+                - nodes
+                - namespaces
+                - events
+                - ingresses
+                - persistentvolumeclaims
+
+    # Helm executor (read-only)
+    helm-readonly:
+      botkube/helm:
+        enabled: true
+        config:
+          helmDriver: secret
+          helmCacheDir: /tmp/helm/.cache
+          helmConfigDir: /tmp/helm/
+
+  # Actions configuration
   actions:
     describe-created-resource:
-      enabled: false
+      enabled: true
+      displayName: "Describe created resource"
+      command: "kubectl describe {{ .Event.Kind }}/{{ .Event.Name }} -n {{ .Event.Namespace }}"
+      bindings:
+        sources:
+          - k8s-events
+        executors:
+          - kubectl-read-only
+
     show-logs-on-error:
       enabled: true
+      displayName: "Show logs on error"
+      command: "kubectl logs {{ .Event.Kind }}/{{ .Event.Name }} -n {{ .Event.Namespace }} --tail=100"
+      bindings:
+        sources:
+          - k8s-errors
+        executors:
+          - kubectl-read-only
 
+  # Sources configuration
   sources:
-    crds:
-      displayName: CRDS
+    # General Kubernetes events
+    k8s-events:
+      displayName: "Kubernetes Events"
       botkube/kubernetes:
-        context: &default-plugin-context
-          rbac:
-            group:
-              type: Static
-              prefix: ""
-              static:
-                values: botkube-plugins-default
         enabled: true
         config:
           namespaces:
             include:
-            - ".*"
-          events:
-          - create
-          - delete
-          - error
-          resources:
-          - name: monitoring.coreos.com/v1/podmonitors
-          - name: monitoring.coreos.com/v1/servicemonitors
-
-    k8s-recommendation-events:
-      botkube/kubernetes:
-        enabled: true
-    k8s-all-events:
-      botkube/kubernetes:
-        enabled: true
-        # event:
-        #   message:
-        #     include:
-        #       - ".*" # match all event messages...
-        #     exclude:
-        #       - ".*volsync.*" # ...except those containing 'volsync'
-        config:
-          resources:
-          - type: v1/pods
-          - type: v1/services
-          - type: networking.k8s.io/v1/ingresses
-          - type: v1/nodes
-          - type: v1/namespaces
-          - type: v1/configmaps
-          - type: rbac.authorization.k8s.io/v1/roles
-          - type: rbac.authorization.k8s.io/v1/rolebindings
-          - type: rbac.authorization.k8s.io/v1/clusterrolebindings
-          - type: rbac.authorization.k8s.io/v1/clusterroles
-          - type: apps/v1/daemonsets
-          - type: apps/v1/deployments
-          - type: apps/v1/statefulsets
-    k8s-create-events:
-      botkube/kubernetes:
-        enabled: true
-        config:
-          filters:
-            objectAnnotationChecker: true
-          resources:
-          - type: v1/pods
-          - type: v1/services
-          - type: networking.k8s.io/v1/ingresses
-          - type: v1/nodes
-          - type: v1/namespaces
-          - type: v1/configmaps
-          - type: apps/v1/deployments
-          - type: apps/v1/statefulsets
-          - type: apps/v1/daemonsets
-    #            - type: batch/v1/jobs
-    k8s-delete-events:
-      displayName: "Kubernetes Resource Delete Events"
-      botkube/kubernetes:
-        context: *default-plugin-context
-        enabled: true
-        config:
-          filters:
-            objectAnnotationChecker: true
-          namespaces:
-            include:
-            - ".*"
+              - ".*"
+            exclude:
+              - kube-system
+              - cattle-system
           event:
-            # -- Lists all event types to be watched.
             types:
-            - delete
+              - create
+              - update
           resources:
-          - type: v1/pods
-          - type: v1/services
-          - type: networking.k8s.io/v1/ingresses
-          - type: v1/nodes
-          - type: v1/namespaces
-          - type: v1/configmaps
-          - type: apps/v1/deployments
-          - type: apps/v1/statefulsets
-          - type: apps/v1/daemonsets
-          - type: batch/v1/jobs
+            - type: v1/pods
+            - type: v1/services
+            - type: apps/v1/deployments
+            - type: apps/v1/statefulsets
+            - type: apps/v1/daemonsets
+            - type: networking.k8s.io/v1/ingresses
+            - type: v1/nodes
+            - type: v1/namespaces
+            - type: batch/v1/jobs
 
-    k8s-err-events:
+    # Error events
+    k8s-errors:
+      displayName: "Kubernetes Errors"
       botkube/kubernetes:
         enabled: true
-        # event:
-        #   message:
-        #     include:
-        #       - ".*" # match all event messages...
-        #     exclude:
-        #       - ".*volsync.*" # ...except those containing 'volsync'
+        config:
+          namespaces:
+            include:
+              - ".*"
+          event:
+            types:
+              - error
+              - warning
+          resources:
+            - type: v1/pods
+            - type: v1/nodes
+            - type: apps/v1/deployments
+            - type: apps/v1/statefulsets
+            - type: apps/v1/daemonsets
+            - type: batch/v1/jobs
 
-    k8s-err-with-logs-events:
+    # Recommendation events
+    k8s-recommendations:
+      displayName: "Kubernetes Recommendations"
       botkube/kubernetes:
         enabled: true
-        # event:
-        #   message:
-        #     include:
-        #       - ".*" # match all event messages...
-        #     exclude:
-        #       - ".*volsync.*" # ...except those containing 'volsync'
+        config:
+          namespaces:
+            include:
+              - ".*"
+          recommendations:
+            pod:
+              noLatestImageTag: true
+              labelsSet: true
+            ingress:
+              backendServiceValid: true
+              tlsSecretValid: true
 
+    # Prometheus alerts source
+    prometheus-alerts:
+      displayName: "Prometheus Alerts"
+      botkube/prometheus:
+        enabled: true
+        config:
+          url: "http://kube-prometheus-stack-prometheus.monitoring:9090"
+          alertStates:
+            - firing
+            - pending
+          ignoreOldAlerts: true
+
+    # CRD monitoring
+    crds:
+      displayName: "Custom Resources"
+      botkube/kubernetes:
+        enabled: true
+        config:
+          namespaces:
+            include:
+              - ".*"
+          event:
+            types:
+              - create
+              - delete
+              - error
+          resources:
+            - name: monitoring.coreos.com/v1/podmonitors
+            - name: monitoring.coreos.com/v1/servicemonitors
+            - name: cert-manager.io/v1/certificates
+            - name: argoproj.io/v1alpha1/applications
+
+  # Extra environment variables from secrets
+  extraEnvFrom:
+    - secretRef:
+        name: botkube-teams-secret
+        optional: true
+    - secretRef:
+        name: botkube-slack-secret
+        optional: true
+
+# External Secrets Operator configuration
+eso:
+  enabled: true
+
+# Node selector (optional)
+nodeSelector: {}
+
+# Tolerations (optional)
+tolerations: []
+
+# Affinity (optional)
+affinity: {}

@@ -79,10 +79,13 @@ spec:
       #   wave: "1"
       #   serverSideApply: true
 
-      # - name: botkube
-      #   namespace: monitoring
-      #   wave: "2"  # After monitoring is ready
-      #   serverSideApply: true
+      - name: botkube
+        namespace: botkube
+        wave: "2"  # After monitoring is ready
+        serverSideApply: true
+        helm:
+          valueFiles:
+          - "values.yaml"
 
       # - name: karma
       #   namespace: monitoring
