@@ -27,6 +27,21 @@ descheduler:
       - monitoring
     profiles:
     - name: default
+      # Namespace filtering at profile level ensures all plugins respect it
+      namespaces:
+        exclude:
+        - kube-system
+        - kube-public
+        - kube-node-lease
+        - kubevirt
+        - cdi
+        - kubevirt-manager
+        - argocd
+        - vault
+        - external-secrets
+        - cnpg-system
+        - elastic-system
+        - monitoring
       pluginConfig:
       - name: DefaultEvictor
         args:
