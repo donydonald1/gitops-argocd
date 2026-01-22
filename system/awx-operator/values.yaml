@@ -78,15 +78,16 @@ AWX:
       fsGroupChangePolicy: OnRootMismatch
 
     # Extra settings for OIDC and production
+    # Note: Values must include Python quotes since AWX inserts them directly into settings.py
     extra_settings:
       - setting: SOCIAL_AUTH_KEYCLOAK_KEY
-        value: "awx"
+        value: '"awx"'
       - setting: SOCIAL_AUTH_KEYCLOAK_AUTHORIZATION_URL
-        value: "https://keycloak.ops.techsecom.io/realms/master/protocol/openid-connect/auth"
+        value: '"https://keycloak.ops.techsecom.io/realms/master/protocol/openid-connect/auth"'
       - setting: SOCIAL_AUTH_KEYCLOAK_ACCESS_TOKEN_URL
-        value: "https://keycloak.ops.techsecom.io/realms/master/protocol/openid-connect/token"
+        value: '"https://keycloak.ops.techsecom.io/realms/master/protocol/openid-connect/token"'
       - setting: SOCIAL_AUTH_KEYCLOAK_LOGOUT_URL
-        value: "https://keycloak.ops.techsecom.io/realms/master/protocol/openid-connect/logout"
+        value: '"https://keycloak.ops.techsecom.io/realms/master/protocol/openid-connect/logout"'
       - setting: SESSION_COOKIE_SECURE
         value: "True"
       - setting: CSRF_COOKIE_SECURE
