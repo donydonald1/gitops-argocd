@@ -166,6 +166,23 @@ harbor:
       limits:
         cpu: 4
         memory: 4Gi
+    # Probe configuration - default 1s timeout causes restarts under load
+    startupProbe:
+      enabled: true
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 10
+      failureThreshold: 30
+    livenessProbe:
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 10
+      failureThreshold: 10
+    readinessProbe:
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 10
+      failureThreshold: 5
     extraEnvVars:
     - name: OIDC_CLIENT_ID
       valueFrom:
@@ -214,6 +231,24 @@ harbor:
       limits:
         cpu: 2
         memory: 2Gi
+    # Probe configuration - default 1s timeout causes restarts under load
+    # initialDelaySeconds=300 because jobservice waits for core to be ready
+    startupProbe:
+      enabled: true
+      initialDelaySeconds: 60
+      periodSeconds: 10
+      timeoutSeconds: 10
+      failureThreshold: 30
+    livenessProbe:
+      initialDelaySeconds: 300
+      periodSeconds: 10
+      timeoutSeconds: 10
+      failureThreshold: 10
+    readinessProbe:
+      initialDelaySeconds: 60
+      periodSeconds: 10
+      timeoutSeconds: 10
+      failureThreshold: 5
 
   registry:
     # Using single replica to avoid "upload resumed at wrong offset" errors
