@@ -165,11 +165,19 @@ spec:
           - values.yaml
 
       # =============================================
+      # CODE QUALITY
+      # =============================================
+      - name: sonar
+        namespace: sonar
+        serverSideApply: true
+        wave: "2"  # Needs CNPG cluster and External Secrets
+        helm:
+          values:
+          - values.yaml
+
+      # =============================================
       # DISABLED APPLICATIONS
       # =============================================
-      # - name: sonar
-      #   namespace: sonar
-
       # - name: report-portal
       #   namespace: report-portal
       #   serverSideApply: true
