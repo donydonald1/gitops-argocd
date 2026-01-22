@@ -2,10 +2,10 @@ apiVersion: v2
 name: gitlab
 description: GitLab Helm Chart (Redis deployed separately to avoid global conflicts)
 type: application
-version: 0.1.2
-appVersion: "18.8.0"
+version: 0.1.3
+appVersion: "18.8.2"
 
 dependencies:
 - name: gitlab
-  version: "9.8.0"
+  version: "9.8.2"
   repository: https://charts.gitlab.io/
