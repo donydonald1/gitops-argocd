@@ -25,9 +25,8 @@ spec:
         - name: SONAR_ADMIN_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: sonar-admin-secret
-              key: password
-              optional: true
+              name: sonar-gitlab-secret
+              key: adminPassword
         - name: GITLAB_URL
           value: {{ .Values.gitlab.url | quote }}
         - name: GITLAB_CONFIG_NAME
