@@ -1,0 +1,41 @@
+# Manual Endpoints for RKE2 control plane components
+# These are needed because kube-prometheus-stack chart doesn't create them properly for RKE2
+# The control plane pods bind to node IPs, not 127.0.0.1, so they are accessible
+
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: kps-kube-controller-manager
+  namespace: kube-system
+  labels:
+    app: kube-prometheus-stack-kube-controller-manager
+    app.kubernetes.io/managed-by: Helm
+    release: kube-prometheus-stack
+subsets:
+- addresses:
+  - ip: 10.0.3.10
+  - ip: 10.0.3.11
+  - ip: 10.0.3.12
+  ports:
+  - name: http-metrics
+    port: 10257
+    protocol: TCP
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: kps-kube-scheduler
+  namespace: kube-system
+  labels:
+    app: kube-prometheus-stack-kube-scheduler
+    app.kubernetes.io/managed-by: Helm
+    release: kube-prometheus-stack
+subsets:
+- addresses:
+  - ip: 10.0.3.10
+  - ip: 10.0.3.11
+  - ip: 10.0.3.12
+  ports:
+  - name: http-metrics
+    port: 10259
+    protocol: TCP
