@@ -23,7 +23,4 @@ data:
 
     # Enable HTTPS redirect for social auth
     SOCIAL_AUTH_REDIRECT_IS_HTTPS = True
-
-    # Auto-redirect to OIDC login (bypass the local login page)
-    LOGIN_REDIRECT_OVERRIDE = "https://awx.ops.techsecom.io/sso/login/oidc/"
 {{- end }}
