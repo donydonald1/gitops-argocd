@@ -9,17 +9,10 @@ metadata:
     argocd.argoproj.io/sync-wave: "-4"
 data:
   settings.py: |
-    # AWX Extra Settings - Keycloak OIDC Configuration using Generic OIDC
+    # AWX Extra Settings - Generic OIDC Configuration for Keycloak
     import os
 
-    # Enable Generic OIDC authentication backend (better UI support than Keycloak-specific)
-    AUTHENTICATION_BACKENDS = [
-        'social_core.backends.open_id_connect.OpenIdConnectAuth',
-        'awx.sso.backends.TACACSPlusBackend',
-        'awx.main.backends.AWXModelBackend',
-    ]
-
-    # Generic OIDC settings for Keycloak
+    # Generic OIDC settings for Keycloak (shows "Sign in with OIDC" button)
     SOCIAL_AUTH_OIDC_KEY = "{{ .Values.oidc.clientId }}"
     SOCIAL_AUTH_OIDC_SECRET = os.environ.get("SOCIAL_AUTH_KEYCLOAK_SECRET", "")
     SOCIAL_AUTH_OIDC_OIDC_ENDPOINT = "https://keycloak.ops.techsecom.io/realms/master"

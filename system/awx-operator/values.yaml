@@ -120,6 +120,7 @@ oidc:
   clientId: awx
   redirectUris:
     - "https://awx.ops.techsecom.io/*"
+    - "https://awx.ops.techsecom.io/sso/complete/oidc/"
   webOrigins:
     - "https://awx.ops.techsecom.io"
 
