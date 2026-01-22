@@ -73,3 +73,6 @@ Plugins/**/Intermediate/*
 
 # Cache files for the editor to use
 DerivedDataCache/*
+platform/keycloak/charts/keycloakx-7.1.5.tgz
+.vscode/settings.json
+platform/keycloak/Chart.lock
