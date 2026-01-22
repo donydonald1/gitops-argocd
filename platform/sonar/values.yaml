@@ -87,10 +87,15 @@ sonarqube:
     value: "Login with Keycloak"
   - name: SONAR_AUTH_OIDC_SCOPES
     value: "openid profile email"
+  - name: SONAR_AUTH_OIDC_ALLOWUSERSTOSIGNUP
+    value: "true"
   - name: SONAR_AUTH_OIDC_GROUPSSYNC
     value: "true"
   - name: SONAR_AUTH_OIDC_GROUPSSYNC_CLAIMNAME
     value: "roles"
+  # Allow anonymous access to browse projects (can be changed later)
+  - name: SONAR_FORCEAUTHENTICATION
+    value: "false"
 
   # Monitoring passcode (required for SonarQube 2025.x)
   monitoringPasscode: "sonar-monitoring-secret"
