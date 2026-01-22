@@ -1,4 +1,8 @@
 sonarqube:
+  # Use SonarQube Community Build (free, open source)
+  community:
+    enabled: true
+
   deploymentType: "Deployment"
   nameOverride: "sonar"
   fullnameOverride: "sonar"
@@ -69,6 +73,9 @@ sonarqube:
     value: "-Xmx2g -Xms512m -XX:+HeapDumpOnOutOfMemoryError"
   - name: SONAR_SEARCH_JAVAOPTS
     value: "-Xmx1g -Xms512m -XX:MaxDirectMemorySize=256m -XX:+HeapDumpOnOutOfMemoryError"
+
+  # Monitoring passcode (required for SonarQube 2025.x)
+  monitoringPasscode: "sonar-monitoring-secret"
 
   # Monitoring and metrics
   prometheusExporter:
