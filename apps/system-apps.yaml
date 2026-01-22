@@ -150,9 +150,11 @@ spec:
       # - name: redis-operator
       #   serverSideApply: true
 
-      # - name: descheduler
-      #   namespace: descheduler
-      #   serverSideApply: true
+      - name: descheduler
+        namespace: descheduler
+        serverSideApply: true
+        wave: "-1"  # Deploy early - helps with pod scheduling optimization
+        imageList: "descheduler=registry.k8s.io/descheduler/descheduler"
 
       # - name: external-secrets
       #   namespace: external-secrets
