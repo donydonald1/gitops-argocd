@@ -28,9 +28,26 @@ botkube:
       enabled: true
       secretName: "botkube-tls"
 
-  # Communication platforms - fully managed by existingCommunicationsSecretName
-  # The botkube-comm-config secret contains the full communications config
-  # NOTE: Do NOT define a 'communications' key here - it will override the external secret
+  # Communication platforms - tokens injected via env vars from botkube-slack-secret
+  communications:
+    default-group:
+      socketSlack:
+        enabled: true
+        # Empty tokens - will be overridden by BOTKUBE_COMMUNICATIONS__ env vars
+        botToken: ""
+        appToken: ""
+        channels:
+          default:
+            name: kubebot-alerts
+            bindings:
+              executors:
+                - kubectl-read-only
+                - kubectl-full-access
+                - helm-readonly
+              sources:
+                - k8s-events
+                - k8s-errors
+                - k8s-recommendations
 
   # Service monitor for Prometheus
   serviceMonitor:
