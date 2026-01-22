@@ -1,20 +1,35 @@
 {{- if .Values.AWX.enabled }}
-apiVersion: v1
-kind: Secret
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
 metadata:
   name: awx-extra-settings
   annotations:
     argocd.argoproj.io/sync-wave: "-4"
-type: Opaque
-stringData:
-  settings.py: |
-    # AWX Extra Settings - Keycloak OIDC Configuration
-    SOCIAL_AUTH_KEYCLOAK_KEY = "{{ .Values.oidc.clientId }}"
-    SOCIAL_AUTH_KEYCLOAK_AUTHORIZATION_URL = "https://keycloak.ops.techsecom.io/realms/master/protocol/openid-connect/auth"
-    SOCIAL_AUTH_KEYCLOAK_ACCESS_TOKEN_URL = "https://keycloak.ops.techsecom.io/realms/master/protocol/openid-connect/token"
-    SOCIAL_AUTH_KEYCLOAK_LOGOUT_URL = "https://keycloak.ops.techsecom.io/realms/master/protocol/openid-connect/logout"
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: vault
+  data:
+    - secretKey: oidcClientSecret
+      remoteRef:
+        key: awx
+        property: oidcClientSecret
+  target:
+    name: awx-extra-settings
+    creationPolicy: Owner
+    template:
+      engineVersion: v2
+      data:
+        settings.py: |
+          # AWX Extra Settings - Keycloak OIDC Configuration
+          SOCIAL_AUTH_KEYCLOAK_KEY = "{{ .Values.oidc.clientId }}"
+          SOCIAL_AUTH_KEYCLOAK_SECRET = "{{ `{{ .oidcClientSecret }}` }}"
+          SOCIAL_AUTH_KEYCLOAK_AUTHORIZATION_URL = "https://keycloak.ops.techsecom.io/realms/master/protocol/openid-connect/auth"
+          SOCIAL_AUTH_KEYCLOAK_ACCESS_TOKEN_URL = "https://keycloak.ops.techsecom.io/realms/master/protocol/openid-connect/token"
+          SOCIAL_AUTH_KEYCLOAK_LOGOUT_URL = "https://keycloak.ops.techsecom.io/realms/master/protocol/openid-connect/logout"
 
-    # Security Settings
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
+          # Security Settings
+          SESSION_COOKIE_SECURE = True
+          CSRF_COOKIE_SECURE = True
 {{- end }}
