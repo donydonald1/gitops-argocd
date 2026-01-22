@@ -9,7 +9,7 @@ spec:
   # advancedProtocolMappers disabled - requires admin-fine-grained-authz feature in Keycloak
   advancedProtocolMappers: false
   clientId: {{ .Values.oidc.clientId }}
-  secret: $keycloak-client-awx-secret:clientSecret
+  # Let Keycloak auto-generate the client secret - will be stored in keycloak-client-awx-secret
   realmRef:
     kind: ClusterKeycloakRealm
     name: main

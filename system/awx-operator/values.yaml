@@ -78,12 +78,26 @@ AWX:
       fsGroupChangePolicy: OnRootMismatch
 
     # Extra settings file for OIDC and production
-    # Uses a Secret containing a Python settings file for proper string quoting
+    # Uses a ConfigMap containing a Python settings file that reads secrets from env vars
     extra_settings_files:
-      configmaps: []
-      secrets:
-        - name: awx-extra-settings
+      configmaps:
+        - name: awx-settings-configmap
           key: settings.py
+      secrets: []
+
+    # Inject Keycloak client secret as environment variable for web and task containers
+    web_extra_env: |
+      - name: SOCIAL_AUTH_KEYCLOAK_SECRET
+        valueFrom:
+          secretKeyRef:
+            name: keycloak-client-awx-secret
+            key: clientSecret
+    task_extra_env: |
+      - name: SOCIAL_AUTH_KEYCLOAK_SECRET
+        valueFrom:
+          secretKeyRef:
+            name: keycloak-client-awx-secret
+            key: clientSecret
 
   # External PostgreSQL - CNPG Cluster
   postgres:
