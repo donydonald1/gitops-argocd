@@ -43,7 +43,6 @@ botkube:
               executors:
                 - kubectl-read-only
                 - kubectl-full-access
-                - helm-readonly
               sources:
                 - k8s-events
                 - k8s-errors
@@ -140,14 +139,14 @@ botkube:
                 - ingresses
                 - persistentvolumeclaims
 
-    # Helm executor (read-only)
-    helm-readonly:
-      botkube/helm:
-        enabled: true
-        config:
-          helmDriver: secret
-          helmCacheDir: /tmp/helm/.cache
-          helmConfigDir: /tmp/helm/
+    # Helm executor (disabled - plugin not available in v1.14.0)
+    # helm-readonly:
+    #   botkube/helm:
+    #     enabled: true
+    #     config:
+    #       helmDriver: secret
+    #       helmCacheDir: /tmp/helm/.cache
+    #       helmConfigDir: /tmp/helm/
 
   # Actions configuration
   actions:
