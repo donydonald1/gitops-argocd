@@ -191,7 +191,7 @@ oidc:
 # Requires: gitlabToken in Vault at secret/sonar
 gitlab:
   enabled: true
-  # GitLab instance URL
-  url: "https://gitlab.ops.techsecom.io"
+  # GitLab API URL (SonarQube 2025.x requires /api/v4 path)
+  url: "https://gitlab.ops.techsecom.io/api/v4"
   # Configuration name (shown in SonarQube admin)
   configName: "gitlab"
