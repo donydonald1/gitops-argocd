@@ -46,10 +46,10 @@ botkube:
             - k8s-recommendations
             - prometheus-alerts
 
-    # Slack configuration
+    # Slack configuration (disabled for now - enable when Slack app is created)
     slack-group:
       slack:
-        enabled: true
+        enabled: false
         # Credentials loaded from botkube-slack-secret
         token: ""
         channels:
