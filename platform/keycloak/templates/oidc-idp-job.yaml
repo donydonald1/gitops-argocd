@@ -147,11 +147,45 @@ spec:
             echo "IDP created successfully"
           fi
 
-          # NOTE: Admin role mapper disabled due to Keycloak 26.x API changes
-          # Users logging in via Techsecoms SSO will need to be manually assigned admin role if needed
-          # Or configure role mappers via Keycloak admin console
+          # Configure IDP mapper to auto-assign admin role
+          echo ""
+          echo "Configuring role mapper for admin access..."
+
+          # Mapper configuration using oidc-hardcoded-role-idp-mapper (correct type for OIDC IDPs)
+          MAPPER_CONFIG='{
+            "name": "admin-role-mapper",
+            "identityProviderMapper": "oidc-hardcoded-role-idp-mapper",
+            "identityProviderAlias": "techsecoms-oidc",
+            "config": {
+              "syncMode": "INHERIT",
+              "role": "admin"
+            }
+          }'
+
+          # Check if admin-role-mapper exists
+          echo "Checking existing mappers..."
+          MAPPERS=$(curl -s "${KEYCLOAK_URL}/admin/realms/master/identity-provider/instances/techsecoms-oidc/mappers" \
+            -H "Authorization: Bearer ${TOKEN}")
+
+          MAPPER_EXISTS=$(echo "$MAPPERS" | grep -c '"name":"admin-role-mapper"' || true)
+
+          if [ "$MAPPER_EXISTS" -gt 0 ]; then
+            echo "Role mapper already exists, skipping creation."
+          else
+            echo "Creating role mapper..."
+            RESULT=$(curl -s -w "\n%{http_code}" -X POST "${KEYCLOAK_URL}/admin/realms/master/identity-provider/instances/techsecoms-oidc/mappers" \
+              -H "Authorization: Bearer ${TOKEN}" \
+              -H "Content-Type: application/json" \
+              -d "${MAPPER_CONFIG}")
+            HTTP_CODE=$(echo "$RESULT" | tail -1)
+            if [ "$HTTP_CODE" = "201" ] || [ "$HTTP_CODE" = "200" ]; then
+              echo "Role mapper created successfully"
+            else
+              echo "Warning: Failed to create mapper (HTTP $HTTP_CODE)"
+              echo "Users can be assigned admin role manually in Keycloak admin console"
+            fi
+          fi
 
           echo ""
           echo "OIDC Identity Provider setup complete!"
-          echo "Note: Users can login via Techsecoms SSO. Assign roles manually in Keycloak admin console."
 {{- end }}
