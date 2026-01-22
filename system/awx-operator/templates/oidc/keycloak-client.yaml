@@ -6,7 +6,8 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "-3"
 spec:
-  advancedProtocolMappers: true
+  # advancedProtocolMappers disabled - requires admin-fine-grained-authz feature in Keycloak
+  advancedProtocolMappers: false
   clientId: {{ .Values.oidc.clientId }}
   secret: $keycloak-client-awx-secret:clientSecret
   realmRef:
