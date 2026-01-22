@@ -9,24 +9,20 @@ metadata:
     argocd.argoproj.io/sync-wave: "-4"
 data:
   settings.py: |
-    # AWX Extra Settings - Keycloak OIDC Configuration
+    # AWX Extra Settings - Keycloak OIDC Configuration using Generic OIDC
     import os
 
-    # Enable Keycloak authentication backend
+    # Enable Generic OIDC authentication backend (better UI support than Keycloak-specific)
     AUTHENTICATION_BACKENDS = [
-        'social_core.backends.keycloak.KeycloakOAuth2',
+        'social_core.backends.open_id_connect.OpenIdConnectAuth',
         'awx.sso.backends.TACACSPlusBackend',
         'awx.main.backends.AWXModelBackend',
     ]
 
-    # Keycloak OIDC settings
-    SOCIAL_AUTH_KEYCLOAK_KEY = "{{ .Values.oidc.clientId }}"
-    SOCIAL_AUTH_KEYCLOAK_SECRET = os.environ.get("SOCIAL_AUTH_KEYCLOAK_SECRET", "")
-    SOCIAL_AUTH_KEYCLOAK_PUBLIC_KEY = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA9LYhKdPD/W/xgsacpmMgXpDmYP1VGxmwXCyVpHbJ82Kp6goWdtB2aPAw08RiidT7ESuPrcwCPWtvDolNDZd6hb6CF7KV2Ll3gRe4Kiy6PEEXLqaVWBT3kpvIOCFncDOLNSNSwsgztw2RtRyPT9kIBXWuSZx4KChUxiAUpwPp0DcOeUU0w8uMXUsHGyI8qFhToMpxGXQdsWRSN2l08oELY71P8srivF6M80mlQCt0aMSapIeTzfffa68I94MPIAfRtUdkfdmLRk+Q/DsI9p1RoQYUD9f3Sywj1wFwXju6b1Uzv6+0pnuUK2UFrNdRzjP4feseKRd0IExLZPh3wN4oHQIDAQAB"
-    SOCIAL_AUTH_KEYCLOAK_AUTHORIZATION_URL = "https://keycloak.ops.techsecom.io/realms/master/protocol/openid-connect/auth"
-    SOCIAL_AUTH_KEYCLOAK_ACCESS_TOKEN_URL = "https://keycloak.ops.techsecom.io/realms/master/protocol/openid-connect/token"
-    SOCIAL_AUTH_KEYCLOAK_LOGOUT_URL = "https://keycloak.ops.techsecom.io/realms/master/protocol/openid-connect/logout"
-    SOCIAL_AUTH_KEYCLOAK_ID_KEY = "preferred_username"
+    # Generic OIDC settings for Keycloak
+    SOCIAL_AUTH_OIDC_KEY = "{{ .Values.oidc.clientId }}"
+    SOCIAL_AUTH_OIDC_SECRET = os.environ.get("SOCIAL_AUTH_KEYCLOAK_SECRET", "")
+    SOCIAL_AUTH_OIDC_OIDC_ENDPOINT = "https://keycloak.ops.techsecom.io/realms/master"
 
     # Security Settings
     SESSION_COOKIE_SECURE = True
