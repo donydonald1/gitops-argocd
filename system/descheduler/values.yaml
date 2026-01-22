@@ -10,6 +10,21 @@ descheduler:
     operator: "Exists"
   deschedulerPolicy:
     evictLocalStoragePods: true
+    # Exclude critical system namespaces from descheduling
+    namespaces:
+      exclude:
+      - kube-system
+      - kube-public
+      - kube-node-lease
+      - kubevirt
+      - cdi
+      - kubevirt-manager
+      - argocd
+      - vault
+      - external-secrets
+      - cnpg-system
+      - elastic-system
+      - monitoring
     profiles:
     - name: default
       pluginConfig:
@@ -18,8 +33,15 @@ descheduler:
           #ignorePvcPods: true
           evictFailedBarePods: true
           evictLocalStoragePods: true
-          evictSystemCriticalPods: true
+          evictSystemCriticalPods: false  # Don't evict system critical pods
           nodeFit: true
+          # Exclude pods with specific labels
+          labelSelector:
+            matchExpressions:
+            - key: descheduler.alpha.kubernetes.io/evict
+              operator: NotIn
+              values:
+              - "false"
       - name: RemoveDuplicates
       - name: RemovePodsHavingTooManyRestarts
         args:
