@@ -30,9 +30,9 @@ botkube:
     default-group:
       teams:
         enabled: true
-        # Credentials injected via environment variables from botkube-teams-secret:
-        # BOTKUBE_COMMUNICATIONS_DEFAULT-GROUP_TEAMS_APPID
-        # BOTKUBE_COMMUNICATIONS_DEFAULT-GROUP_TEAMS_APPPASSWORD
+        # Placeholder values - overridden by env vars from botkube-teams-secret
+        appID: "TEAMS_APP_ID_PLACEHOLDER"
+        appPassword: "TEAMS_APP_PASSWORD_PLACEHOLDER"
         botName: KubeBot
         port: 3978
         bindings:
