@@ -231,21 +231,35 @@ harbor:
       limits:
         cpu: 2
         memory: 2Gi
+    # Init container to wait for core to be ready before starting jobservice
+    # This prevents CrashLoopBackOff during rolling updates
+    initContainers:
+    - name: wait-for-core
+      image: busybox:1.36
+      command:
+      - sh
+      - -c
+      - |
+        echo "Waiting for harbor-core to be ready..."
+        until wget -q --spider http://harbor-core:80/api/v2.0/ping 2>/dev/null; do
+          echo "harbor-core not ready, waiting 5s..."
+          sleep 5
+        done
+        echo "harbor-core is ready!"
     # Probe configuration - default 1s timeout causes restarts under load
-    # initialDelaySeconds=300 because jobservice waits for core to be ready
     startupProbe:
       enabled: true
-      initialDelaySeconds: 60
+      initialDelaySeconds: 30
       periodSeconds: 10
       timeoutSeconds: 10
       failureThreshold: 30
     livenessProbe:
-      initialDelaySeconds: 300
+      initialDelaySeconds: 60
       periodSeconds: 10
       timeoutSeconds: 10
       failureThreshold: 10
     readinessProbe:
-      initialDelaySeconds: 60
+      initialDelaySeconds: 30
       periodSeconds: 10
       timeoutSeconds: 10
       failureThreshold: 5
