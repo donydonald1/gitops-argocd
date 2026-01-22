@@ -24,15 +24,15 @@ botkube:
       enabled: true
       secretName: "botkube-tls"
 
-  # Communication platforms - credentials loaded from external secrets
+  # Communication platforms - credentials loaded from external secrets via env vars
   communications:
-    # Microsoft Teams configuration
-    teams-group:
+    # Microsoft Teams configuration (uses default-group to match helm chart defaults)
+    default-group:
       teams:
         enabled: true
-        # Credentials loaded from botkube-teams-secret
-        appID: ""
-        appPassword: ""
+        # Credentials injected via environment variables from botkube-teams-secret:
+        # BOTKUBE_COMMUNICATIONS_DEFAULT-GROUP_TEAMS_APPID
+        # BOTKUBE_COMMUNICATIONS_DEFAULT-GROUP_TEAMS_APPPASSWORD
         botName: KubeBot
         port: 3978
         bindings:
@@ -45,13 +45,10 @@ botkube:
             - k8s-errors
             - k8s-recommendations
             - prometheus-alerts
-
-    # Slack configuration (disabled for now - enable when Slack app is created)
-    slack-group:
+      # Slack configuration (disabled for now - enable when Slack app is created)
       slack:
         enabled: false
-        # Credentials loaded from botkube-slack-secret
-        token: ""
+        # Credentials will be injected via environment variables from botkube-slack-secret
         channels:
           default:
             name: ""
