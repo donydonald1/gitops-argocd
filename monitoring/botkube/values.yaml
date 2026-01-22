@@ -29,9 +29,8 @@ botkube:
       secretName: "botkube-tls"
 
   # Communication platforms - fully managed by existingCommunicationsSecretName
-  # Do not define communications here - it will conflict with the external secret
   # The botkube-comm-config secret contains the full communications config
-  communications: {}
+  # NOTE: Do NOT define a 'communications' key here - it will override the external secret
 
   # Service monitor for Prometheus
   serviceMonitor:
