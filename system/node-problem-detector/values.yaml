@@ -26,9 +26,7 @@ node-problem-detector:
     - key: "node-role.kubernetes.io/control-plane"
       operator: "Exists"
       effect: "NoSchedule"
-    - key: "node-role.kubernetes.io/master"
-      operator: "Exists"
-      effect: "NoSchedule"
+    # NOTE: node-role.kubernetes.io/master is deprecated, use control-plane instead
     - key: "node.kubernetes.io/not-ready"
       operator: "Exists"
       effect: "NoExecute"
@@ -75,12 +73,33 @@ node-problem-detector:
       - /config/docker-monitor.json
       - /config/systemd-monitor.json
 
-    custom_plugin_monitors:
-      - /config/health-checker-containerd.json
+    # IMPORTANT: Explicitly set to null/empty to prevent the default health-checker-containerd.json
+    # from being added. The default expects /usr/bin/crictl (RKE2 uses
+    # /var/lib/rancher/rke2/bin/crictl) and systemctl in PATH (not available in container).
+    # Setting to null ensures the --config.custom-plugin-monitor argument is not added at all.
+    custom_plugin_monitors: ~
 
   # === Extra Config Files ===
   # Custom monitors for production issues
   extraConfigFiles:
+    # Override the default health-checker-containerd.json with a no-op config
+    # The default expects /usr/bin/crictl and systemctl which don't exist in the container
+    # RKE2 uses /var/lib/rancher/rke2/bin/crictl instead
+    health-checker-containerd.json: |
+      {
+        "plugin": "custom",
+        "pluginConfig": {
+          "invoke_interval": "3600s",
+          "timeout": "1s",
+          "max_output_length": 80,
+          "concurrency": 1
+        },
+        "source": "health-checker-containerd-disabled",
+        "metricsReporting": false,
+        "conditions": [],
+        "rules": []
+      }
+
     # Detect Longhorn storage issues
     longhorn-monitor.json: |
       {
