@@ -286,18 +286,18 @@ botkube:
 
   # Extra environment variables for Teams credentials
   # Botkube uses env vars to override config values with pattern:
-  # BOTKUBE_<PATH> where path is config structure with _ separator
+  # BOTKUBE_<PATH> where __ (double underscore) separates nested paths
   extraEnv:
-    - name: BOTKUBE_COMMUNICATIONS_DEFAULT-GROUP_TEAMS_APPID
+    - name: BOTKUBE_COMMUNICATIONS__DEFAULT-GROUP__TEAMS__APPID
       valueFrom:
         secretKeyRef:
           name: botkube-teams-secret
-          key: BOTKUBE_COMMUNICATIONS_DEFAULT-GROUP_TEAMS_APPID
-    - name: BOTKUBE_COMMUNICATIONS_DEFAULT-GROUP_TEAMS_APPPASSWORD
+          key: BOTKUBE_COMMUNICATIONS__DEFAULT-GROUP__TEAMS__APPID
+    - name: BOTKUBE_COMMUNICATIONS__DEFAULT-GROUP__TEAMS__APPPASSWORD
       valueFrom:
         secretKeyRef:
           name: botkube-teams-secret
-          key: BOTKUBE_COMMUNICATIONS_DEFAULT-GROUP_TEAMS_APPPASSWORD
+          key: BOTKUBE_COMMUNICATIONS__DEFAULT-GROUP__TEAMS__APPPASSWORD
 
 # External Secrets Operator configuration
 eso:
