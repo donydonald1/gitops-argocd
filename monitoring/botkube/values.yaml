@@ -5,7 +5,7 @@ botkube:
     configWatcher: true
     upgradeNotifier: true
     log:
-      level: info
+      level: debug
       disableColors: false
 
   # Disable analytics
