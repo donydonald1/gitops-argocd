@@ -186,3 +186,12 @@ eso:
 oidc:
   # If set to true, the OIDC resources (KeycloakClient) will be created
   enabled: true
+
+# GitLab ALM Integration for project import
+# Requires: gitlabToken in Vault at secret/sonar
+gitlab:
+  enabled: true
+  # GitLab instance URL
+  url: "https://gitlab.ops.techsecom.io"
+  # Configuration name (shown in SonarQube admin)
+  configName: "gitlab"
