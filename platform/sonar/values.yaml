@@ -73,6 +73,9 @@ sonarqube:
     value: "-Xmx2g -Xms512m -XX:+HeapDumpOnOutOfMemoryError"
   - name: SONAR_SEARCH_JAVAOPTS
     value: "-Xmx1g -Xms1g -XX:MaxDirectMemorySize=256m -XX:+HeapDumpOnOutOfMemoryError"
+  # Server base URL (required for OAuth)
+  - name: SONAR_CORE_SERVERBASEURL
+    value: "https://sonar.ops.techsecom.io"
   # OIDC Authentication with Keycloak
   - name: SONAR_AUTH_OIDC_ENABLED
     value: "true"
