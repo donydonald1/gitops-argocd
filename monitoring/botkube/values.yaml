@@ -33,9 +33,9 @@ botkube:
     default-group:
       socketSlack:
         enabled: true
-        # Empty tokens - will be overridden by BOTKUBE_COMMUNICATIONS__ env vars
-        botToken: ""
-        appToken: ""
+        # Placeholder tokens (valid format) - overridden by env vars from botkube-slack-secret
+        botToken: "xoxb-placeholder-will-be-overridden"
+        appToken: "xapp-placeholder-will-be-overridden"
         channels:
           default:
             name: kubebot-alerts
