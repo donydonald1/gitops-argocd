@@ -284,14 +284,20 @@ botkube:
             - name: cert-manager.io/v1/certificates
             - name: argoproj.io/v1alpha1/applications
 
-  # Extra environment variables from secrets
-  extraEnvFrom:
-    - secretRef:
-        name: botkube-teams-secret
-        optional: true
-    - secretRef:
-        name: botkube-slack-secret
-        optional: true
+  # Extra environment variables for Teams credentials
+  # Botkube uses env vars to override config values with pattern:
+  # BOTKUBE_<PATH> where path is config structure with _ separator
+  extraEnv:
+    - name: BOTKUBE_COMMUNICATIONS_DEFAULT-GROUP_TEAMS_APPID
+      valueFrom:
+        secretKeyRef:
+          name: botkube-teams-secret
+          key: BOTKUBE_COMMUNICATIONS_DEFAULT-GROUP_TEAMS_APPID
+    - name: BOTKUBE_COMMUNICATIONS_DEFAULT-GROUP_TEAMS_APPPASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: botkube-teams-secret
+          key: BOTKUBE_COMMUNICATIONS_DEFAULT-GROUP_TEAMS_APPPASSWORD
 
 # External Secrets Operator configuration
 eso:
