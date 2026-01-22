@@ -186,6 +186,47 @@ spec:
             fi
           fi
 
+          # Assign admin role to all existing users from techsecoms-oidc IDP
+          echo ""
+          echo "Assigning admin role to existing Techsecoms SSO users..."
+
+          # Get admin role ID
+          ADMIN_ROLE=$(curl -s "${KEYCLOAK_URL}/admin/realms/master/roles/admin" \
+            -H "Authorization: Bearer ${TOKEN}")
+          ADMIN_ROLE_ID=$(echo "$ADMIN_ROLE" | sed 's/.*"id":"\([^"]*\)".*/\1/')
+
+          if [ -z "$ADMIN_ROLE_ID" ]; then
+            echo "Warning: Could not get admin role ID"
+          else
+            # Get all users linked to techsecoms-oidc IDP
+            USERS=$(curl -s "${KEYCLOAK_URL}/admin/realms/master/users?max=1000" \
+              -H "Authorization: Bearer ${TOKEN}")
+
+            # Extract user IDs (simple parsing)
+            echo "$USERS" | tr ',' '\n' | grep '"id"' | sed 's/.*"id":"\([^"]*\)".*/\1/' | while read USER_ID; do
+              if [ -n "$USER_ID" ]; then
+                # Check if user is linked to techsecoms-oidc
+                FEDERATED=$(curl -s "${KEYCLOAK_URL}/admin/realms/master/users/${USER_ID}/federated-identity" \
+                  -H "Authorization: Bearer ${TOKEN}")
+
+                if echo "$FEDERATED" | grep -q "techsecoms-oidc"; then
+                  # Check if user already has admin role
+                  USER_ROLES=$(curl -s "${KEYCLOAK_URL}/admin/realms/master/users/${USER_ID}/role-mappings/realm" \
+                    -H "Authorization: Bearer ${TOKEN}")
+
+                  if ! echo "$USER_ROLES" | grep -q '"name":"admin"'; then
+                    echo "Assigning admin role to user ${USER_ID}..."
+                    curl -s -X POST "${KEYCLOAK_URL}/admin/realms/master/users/${USER_ID}/role-mappings/realm" \
+                      -H "Authorization: Bearer ${TOKEN}" \
+                      -H "Content-Type: application/json" \
+                      -d "[${ADMIN_ROLE}]"
+                  fi
+                fi
+              fi
+            done
+            echo "Admin role assignment complete"
+          fi
+
           echo ""
           echo "OIDC Identity Provider setup complete!"
 {{- end }}
