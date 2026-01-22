@@ -48,44 +48,59 @@ spec:
           done
           echo "SonarQube is ready"
 
-          # Use default admin password if secret doesn't exist
-          ADMIN_PASS="${SONAR_ADMIN_PASSWORD:-admin}"
+          ADMIN_PASS="${SONAR_ADMIN_PASSWORD}"
 
-          echo "Checking existing GitLab ALM settings..."
-          EXISTING=$(curl -sf -u "admin:${ADMIN_PASS}" "${SONAR_URL}/api/alm_settings/list" 2>/dev/null || echo '{"almSettings":[]}')
+          # Normalize GitLab URL - remove trailing slash
+          GITLAB_URL_CLEAN=$(echo "${GITLAB_URL}" | sed 's:/*$::')
+          echo "Using GitLab URL: ${GITLAB_URL_CLEAN}"
 
-          if echo "$EXISTING" | grep -q "\"key\":\"${GITLAB_CONFIG_NAME}\""; then
-            echo "GitLab configuration '${GITLAB_CONFIG_NAME}' already exists, updating..."
-            RESULT=$(curl -s -w "\n%{http_code}" -u "admin:${ADMIN_PASS}" \
-              -X POST "${SONAR_URL}/api/alm_settings/update_gitlab" \
-              -d "key=${GITLAB_CONFIG_NAME}" \
-              -d "newKey=${GITLAB_CONFIG_NAME}" \
-              -d "url=${GITLAB_URL}" \
-              -d "personalAccessToken=${GITLAB_PAT}")
-            HTTP_CODE=$(echo "$RESULT" | tail -1)
-            if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "204" ]; then
-              echo "GitLab configuration updated successfully"
-            else
-              echo "Warning: Failed to update GitLab configuration (HTTP $HTTP_CODE)"
-              echo "$RESULT" | head -n -1
-            fi
+          # Verify GitLab API is accessible
+          echo "Verifying GitLab API access..."
+          if curl -sf -H "PRIVATE-TOKEN: ${GITLAB_PAT}" "${GITLAB_URL_CLEAN}/api/v4/user" >/dev/null 2>&1; then
+            echo "GitLab API is accessible"
           else
-            echo "Creating new GitLab configuration '${GITLAB_CONFIG_NAME}'..."
-            RESULT=$(curl -s -w "\n%{http_code}" -u "admin:${ADMIN_PASS}" \
-              -X POST "${SONAR_URL}/api/alm_settings/create_gitlab" \
-              -d "key=${GITLAB_CONFIG_NAME}" \
-              -d "url=${GITLAB_URL}" \
-              -d "personalAccessToken=${GITLAB_PAT}")
-            HTTP_CODE=$(echo "$RESULT" | tail -1)
-            if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "204" ]; then
-              echo "GitLab configuration created successfully"
-            else
-              echo "Warning: Failed to create GitLab configuration (HTTP $HTTP_CODE)"
-              echo "$RESULT" | head -n -1
-            fi
+            echo "Warning: Cannot access GitLab API - check token and URL"
+          fi
+
+          # Delete existing config to ensure clean state (avoid redirect issues)
+          echo "Removing any existing GitLab configuration..."
+          curl -sf -u "admin:${ADMIN_PASS}" -X POST "${SONAR_URL}/api/alm_settings/delete" \
+            -d "key=${GITLAB_CONFIG_NAME}" 2>/dev/null || true
+
+          # Create fresh GitLab configuration
+          echo "Creating GitLab configuration '${GITLAB_CONFIG_NAME}'..."
+          RESULT=$(curl -s -w "\n%{http_code}" -u "admin:${ADMIN_PASS}" \
+            -X POST "${SONAR_URL}/api/alm_settings/create_gitlab" \
+            -d "key=${GITLAB_CONFIG_NAME}" \
+            -d "url=${GITLAB_URL_CLEAN}" \
+            -d "personalAccessToken=${GITLAB_PAT}")
+          HTTP_CODE=$(echo "$RESULT" | tail -1)
+          BODY=$(echo "$RESULT" | head -n -1)
+
+          if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "204" ]; then
+            echo "GitLab configuration created successfully"
+          else
+            echo "Warning: Failed to create GitLab configuration (HTTP $HTTP_CODE)"
+            echo "$BODY"
+          fi
+
+          # Validate the connection
+          echo ""
+          echo "Validating GitLab connection..."
+          VALIDATE=$(curl -s -w "\n%{http_code}" -u "admin:${ADMIN_PASS}" \
+            -X POST "${SONAR_URL}/api/alm_settings/validate" \
+            -d "key=${GITLAB_CONFIG_NAME}")
+          VAL_CODE=$(echo "$VALIDATE" | tail -1)
+          VAL_BODY=$(echo "$VALIDATE" | head -n -1)
+
+          if [ "$VAL_CODE" = "200" ] || [ "$VAL_CODE" = "204" ]; then
+            echo "GitLab connection validated successfully"
+          else
+            echo "Warning: GitLab validation returned HTTP $VAL_CODE"
+            echo "$VAL_BODY"
           fi
 
           echo ""
           echo "GitLab ALM setup complete!"
-          echo "Users can now import projects from GitLab at: ${GITLAB_URL}"
+          echo "Users can now import projects from GitLab at: ${GITLAB_URL_CLEAN}"
 {{- end }}
