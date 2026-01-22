@@ -255,9 +255,9 @@ spec:
           echo ""
           echo "Configuring post-logout redirect URIs for built-in clients..."
 
-          # Comprehensive list of post-logout redirect URIs (+ is Keycloak separator)
-          # Include exact URLs and wildcards for proper logout redirect
-          LOGOUT_URI="https://keycloak.ops.techsecom.io+https://keycloak.ops.techsecom.io/+https://keycloak.ops.techsecom.io/*+https://keycloak.ops.techsecom.io/admin/master/console/"
+          # Post-logout redirect URI - use + as wildcard to allow all redirects
+          # In Keycloak, a single + means "allow any redirect URI"
+          LOGOUT_URI="+"
 
           # Function to update client post-logout redirect URI
           update_client_logout_uri() {
