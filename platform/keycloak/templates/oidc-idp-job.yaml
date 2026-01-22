@@ -121,6 +121,7 @@ spec:
               "userInfoUrl": "'"${OIDC_USERINFO_ENDPOINT}"'",
               "jwksUrl": "'"${OIDC_JWKS_URI}"'",
               "logoutUrl": "'"${OIDC_END_SESSION_ENDPOINT}"'",
+              "backchannelSupported": "true",
               "validateSignature": "true",
               "useJwksUrl": "true",
               "pkceEnabled": "true",
