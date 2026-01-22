@@ -3,52 +3,139 @@ sonarqube:
   nameOverride: "sonar"
   fullnameOverride: "sonar"
 
+  # Production image configuration
+  image:
+    pullPolicy: IfNotPresent
+
   ingress:
     enabled: true
     ingressClassName: nginx
     hosts:
     - name: sonar.ops.techsecoms.com
     annotations:
-      # This property allows for reports up to a certain size to be uploaded to SonarQube
-      nginx.ingress.kubernetes.io/proxy-body-size: "64m"
+      # Allow large reports to be uploaded (up to 128MB)
+      nginx.ingress.kubernetes.io/proxy-body-size: "128m"
       cert-manager.io/cluster-issuer: letsencrypt-prod
-      # This property allows for CORS requests to be made to SonarQube (we use it on the EDP Portal Widget)
+      # CORS configuration for EDP Portal integration
       nginx.ingress.kubernetes.io/enable-cors: "true"
       nginx.ingress.kubernetes.io/cors-allow-origin: "*"
-      nginx.ingress.kubernetes.io/cors-allow-methods: "OPTIONS, GET"
+      nginx.ingress.kubernetes.io/cors-allow-methods: "OPTIONS, GET, POST, PUT, DELETE"
       nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization"
+      # Connection timeouts for long-running analysis
+      nginx.ingress.kubernetes.io/proxy-connect-timeout: "300"
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+      nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
     tls:
     - hosts:
       - sonar.ops.techsecoms.com
       secretName: sonar-tls
 
-  # Resources tuned for SonarQube 2025.x
+  # Production resources for SonarQube 2025.x
   resources:
     limits:
-      cpu: 2
-      memory: 4Gi
+      cpu: 4
+      memory: 6Gi
     requests:
-      cpu: 200m
-      memory: 2Gi
+      cpu: 500m
+      memory: 3Gi
 
-  # Additional plugins (community branch plugin is now built-in for SonarQube 2025+)
+  # JVM configuration for production
+  jvmOpts: "-Xmx4g -Xms2g -XX:+HeapDumpOnOutOfMemoryError -XX:MaxMetaspaceSize=512m"
+  jvmCeOpts: "-Xmx2g -Xms512m -XX:+HeapDumpOnOutOfMemoryError"
+
+  # Latest plugins for SonarQube 2025.x
+  # Note: Branch analysis is now built-in for SonarQube 2025+
   plugins:
     install:
-    - "https://github.com/vaulttec/sonar-auth-oidc/releases/download/v2.1.1/sonar-auth-oidc-plugin-2.1.1.jar"
-    - "https://github.com/checkstyle/sonar-checkstyle/releases/download/10.12.1/checkstyle-sonar-plugin-10.12.1.jar"
-    - "https://github.com/spotbugs/sonar-findbugs/releases/download/4.2.9/sonar-findbugs-plugin-4.2.9.jar"
-    - "https://github.com/jborgers/sonar-pmd/releases/download/3.4.0/sonar-pmd-plugin-3.4.0.jar"
+    # OIDC Authentication (v3.0.0 for SonarQube 2025.x compatibility)
+    - "https://github.com/sonar-auth-oidc/sonar-auth-oidc/releases/download/v3.0.0/sonar-auth-oidc-plugin-3.0.0.jar"
+    # Java Code Quality Plugins
+    - "https://github.com/checkstyle/sonar-checkstyle/releases/download/10.23.0/checkstyle-sonar-plugin-10.23.0.jar"
+    - "https://github.com/spotbugs/sonar-findbugs/releases/download/4.6.0/sonar-findbugs-plugin-4.6.0.jar"
+    - "https://github.com/jborgers/sonar-pmd/releases/download/4.2.0/sonar-pmd-plugin-4.2.0.jar"
+    # DevOps/IaC Plugins
     - "https://github.com/sbaudoin/sonar-ansible/releases/download/v2.5.1/sonar-ansible-plugin-2.5.1.jar"
-    - "https://github.com/sbaudoin/sonar-yaml/releases/download/v1.7.0/sonar-yaml-plugin-1.7.0.jar"
+    - "https://github.com/sbaudoin/sonar-yaml/releases/download/v1.8.0/sonar-yaml-plugin-1.8.0.jar"
+    # Groovy support
     - "https://github.com/Inform-Software/sonar-groovy/releases/download/1.8/sonar-groovy-plugin-1.8.jar"
 
+  # Environment variables for production
   env:
   - name: SONAR_TELEMETRY_ENABLE
     value: "false"
+  - name: SONAR_WEB_JAVAOPTS
+    value: "-Xmx2g -Xms512m -XX:+HeapDumpOnOutOfMemoryError"
+  - name: SONAR_CE_JAVAOPTS
+    value: "-Xmx2g -Xms512m -XX:+HeapDumpOnOutOfMemoryError"
+  - name: SONAR_SEARCH_JAVAOPTS
+    value: "-Xmx1g -Xms512m -XX:MaxDirectMemorySize=256m -XX:+HeapDumpOnOutOfMemoryError"
 
+  # Monitoring and metrics
   prometheusExporter:
-    enabled: false
+    enabled: true
+    version: "0.17.2"
 
+  # Prometheus ServiceMonitor
+  serviceMonitor:
+    enabled: true
+    labels:
+      release: kps
+
+  # Pod annotations for monitoring
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9000"
+    prometheus.io/path: "/api/monitoring/metrics"
+
+  # Liveness and readiness probes - Production tuned
+  livenessProbe:
+    initialDelaySeconds: 120
+    periodSeconds: 30
+    failureThreshold: 10
+    timeoutSeconds: 10
+  readinessProbe:
+    initialDelaySeconds: 90
+    periodSeconds: 10
+    failureThreshold: 6
+    timeoutSeconds: 10
+  startupProbe:
+    initialDelaySeconds: 60
+    periodSeconds: 10
+    failureThreshold: 30
+    timeoutSeconds: 10
+
+  # Persistence for temporary files and caches
+  persistence:
+    enabled: true
+    storageClass: longhorn
+    size: 20Gi
+
+  # Security context
+  securityContext:
+    fsGroup: 0
+  containerSecurityContext:
+    runAsUser: 0
+
+  # Service configuration
+  service:
+    type: ClusterIP
+    externalPort: 9000
+    internalPort: 9000
+
+  # Pod disruption budget for high availability
+  podDisruptionBudget:
+    minAvailable: 1
+
+  # Node selector for dedicated nodes (optional)
+  nodeSelector: {}
+
+  # Tolerations
+  tolerations: []
+
+  # Affinity rules
+  affinity: {}
+
+  # Disable embedded PostgreSQL - using external CNPG
   postgresql:
     enabled: false
 
@@ -64,7 +151,7 @@ sonarqube:
 eso:
   enabled: true
 
-# -- Integration with keycloak
+# Integration with Keycloak (EDP Operator)
 oidc:
-  # If set to true, the OIDC resources will be created.
+  # If set to true, the OIDC resources (KeycloakClient) will be created
   enabled: true
