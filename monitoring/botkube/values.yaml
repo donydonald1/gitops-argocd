@@ -12,9 +12,9 @@ botkube:
   analytics:
     disable: true
 
-  # Use external secret for communications config
-  # This secret is created by the botkube-communication-override ExternalSecret
-  existingCommunicationsSecretName: "botkube-comm-config"
+  # NOTE: Do NOT use existingCommunicationsSecretName - the runtime config's
+  # empty communications: section will override it. Instead, use values.yaml
+  # with env vars to inject tokens from secrets.
 
   # Ingress configuration
   ingress:
