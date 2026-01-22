@@ -73,6 +73,21 @@ sonarqube:
     value: "-Xmx2g -Xms512m -XX:+HeapDumpOnOutOfMemoryError"
   - name: SONAR_SEARCH_JAVAOPTS
     value: "-Xmx1g -Xms1g -XX:MaxDirectMemorySize=256m -XX:+HeapDumpOnOutOfMemoryError"
+  # OIDC Authentication with Keycloak
+  - name: SONAR_AUTH_OIDC_ENABLED
+    value: "true"
+  - name: SONAR_AUTH_OIDC_ISSUERURI
+    value: "https://keycloak.ops.techsecom.io/realms/master"
+  - name: SONAR_AUTH_OIDC_CLIENTID_SECURED
+    value: "sonar"
+  - name: SONAR_AUTH_OIDC_LOGINBUTTONTEXT
+    value: "Login with Keycloak"
+  - name: SONAR_AUTH_OIDC_SCOPES
+    value: "openid profile email"
+  - name: SONAR_AUTH_OIDC_GROUPSSYNC
+    value: "true"
+  - name: SONAR_AUTH_OIDC_GROUPSSYNC_CLAIMNAME
+    value: "roles"
 
   # Monitoring passcode (required for SonarQube 2025.x)
   monitoringPasscode: "sonar-monitoring-secret"
