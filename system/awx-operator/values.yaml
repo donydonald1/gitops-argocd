@@ -6,6 +6,7 @@ AWX:
   spec:
     # AWX image configuration
     image: quay.io/ansible/awx
+    image_version: "24.6.1"
     image_pull_policy: IfNotPresent
 
     # Admin user configuration
