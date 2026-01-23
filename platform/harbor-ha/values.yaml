@@ -231,8 +231,11 @@ harbor:
       limits:
         cpu: 2
         memory: 2Gi
-    # Init container to wait for core to be ready before starting jobservice
-    # This prevents CrashLoopBackOff during rolling updates
+    # Init container to wait for core to be fully ready before starting jobservice
+    # This prevents CrashLoopBackOff during rolling updates by ensuring:
+    # 1. Core ping endpoint responds
+    # 2. Core health endpoint reports healthy status
+    # 3. Additional delay to ensure internal APIs are initialized
     initContainers:
     - name: wait-for-core
       image: busybox:1.36
@@ -241,11 +244,22 @@ harbor:
       - -c
       - |
         echo "Waiting for harbor-core to be ready..."
+        # Wait for ping endpoint
         until wget -q --spider http://harbor-core:80/api/v2.0/ping 2>/dev/null; do
-          echo "harbor-core not ready, waiting 5s..."
+          echo "harbor-core ping not ready, waiting 5s..."
           sleep 5
         done
-        echo "harbor-core is ready!"
+        echo "harbor-core ping is responding"
+        # Wait for health endpoint to report healthy
+        until wget -qO- http://harbor-core:80/api/v2.0/health 2>/dev/null | grep -q '"status":"healthy"'; do
+          echo "harbor-core health not ready, waiting 5s..."
+          sleep 5
+        done
+        echo "harbor-core health check passed"
+        # Additional delay to ensure internal config API is fully initialized
+        echo "Waiting 10s for internal APIs to initialize..."
+        sleep 10
+        echo "harbor-core is fully ready!"
     # Probe configuration - default 1s timeout causes restarts under load
     startupProbe:
       enabled: true
