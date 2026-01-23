@@ -135,7 +135,7 @@ atlantis:
 
   # Persistence for Atlantis data (plans, locks)
   dataStorage: 10Gi
-  storageClassName: nfs-csi
+  storageClassName: longhorn
 
   # StatefulSet configuration for production
   statefulSet:
