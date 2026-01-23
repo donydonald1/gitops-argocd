@@ -44,7 +44,7 @@ spec:
   # Also add descheduler eviction prevention annotations
   customizeComponents:
     patches:
-      # virt-api - CPU requests and descheduler eviction prevention
+      # virt-api - CPU requests and descheduler eviction prevention (label + annotation)
       - resourceType: Deployment
         resourceName: virt-api
         patch: '[{"op": "replace", "path": "/spec/template/spec/containers/0/resources/requests/cpu", "value": "100m"}]'
@@ -53,7 +53,11 @@ spec:
         resourceName: virt-api
         patch: '[{"op": "add", "path": "/spec/template/metadata/annotations/descheduler.alpha.kubernetes.io~1evict", "value": "false"}]'
         type: json
-      # virt-controller - CPU requests and descheduler eviction prevention
+      - resourceType: Deployment
+        resourceName: virt-api
+        patch: '[{"op": "add", "path": "/spec/template/metadata/labels/descheduler.alpha.kubernetes.io~1evict", "value": "false"}]'
+        type: json
+      # virt-controller - CPU requests and descheduler eviction prevention (label + annotation)
       - resourceType: Deployment
         resourceName: virt-controller
         patch: '[{"op": "replace", "path": "/spec/template/spec/containers/0/resources/requests/cpu", "value": "100m"}]'
@@ -62,7 +66,11 @@ spec:
         resourceName: virt-controller
         patch: '[{"op": "add", "path": "/spec/template/metadata/annotations/descheduler.alpha.kubernetes.io~1evict", "value": "false"}]'
         type: json
-      # virt-handler - CPU requests and descheduler eviction prevention
+      - resourceType: Deployment
+        resourceName: virt-controller
+        patch: '[{"op": "add", "path": "/spec/template/metadata/labels/descheduler.alpha.kubernetes.io~1evict", "value": "false"}]'
+        type: json
+      # virt-handler - CPU requests and descheduler eviction prevention (label + annotation)
       - resourceType: DaemonSet
         resourceName: virt-handler
         patch: '[{"op": "replace", "path": "/spec/template/spec/containers/0/resources/requests/cpu", "value": "100m"}]'
@@ -71,7 +79,11 @@ spec:
         resourceName: virt-handler
         patch: '[{"op": "add", "path": "/spec/template/metadata/annotations/descheduler.alpha.kubernetes.io~1evict", "value": "false"}]'
         type: json
-      # virt-exportproxy - CPU requests and descheduler eviction prevention
+      - resourceType: DaemonSet
+        resourceName: virt-handler
+        patch: '[{"op": "add", "path": "/spec/template/metadata/labels/descheduler.alpha.kubernetes.io~1evict", "value": "false"}]'
+        type: json
+      # virt-exportproxy - CPU requests and descheduler eviction prevention (label + annotation)
       - resourceType: Deployment
         resourceName: virt-exportproxy
         patch: '[{"op": "replace", "path": "/spec/template/spec/containers/0/resources/requests/cpu", "value": "100m"}]'
@@ -79,6 +91,10 @@ spec:
       - resourceType: Deployment
         resourceName: virt-exportproxy
         patch: '[{"op": "add", "path": "/spec/template/metadata/annotations/descheduler.alpha.kubernetes.io~1evict", "value": "false"}]'
+        type: json
+      - resourceType: Deployment
+        resourceName: virt-exportproxy
+        patch: '[{"op": "add", "path": "/spec/template/metadata/labels/descheduler.alpha.kubernetes.io~1evict", "value": "false"}]'
         type: json
   imagePullPolicy: IfNotPresent
   workloadUpdateStrategy:
