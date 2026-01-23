@@ -99,7 +99,9 @@ descheduler:
       plugins:
         balance:
           enabled:
-          - RemoveDuplicates
+          # RemoveDuplicates disabled - does not respect namespace/label filtering
+          # and causes critical pods on single-node control planes to cycle
+          # - RemoveDuplicates
           - RemovePodsViolatingTopologySpreadConstraint
         #              - LowNodeUtilization
         deschedule:
