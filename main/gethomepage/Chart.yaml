@@ -1,7 +1,7 @@
 name: gethomepage
 apiVersion: v2
-version: 1.0.0
+version: 1.1.0
 dependencies:
   - name: homepage
-    version: 2.0.1
+    version: 2.1.0
     repository: https://jameswynn.github.io/helm-charts

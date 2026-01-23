@@ -189,14 +189,16 @@ argo-cd:
     ingress:
       enabled: true
       annotations:
+        # Homepage dashboard integration
+        gethomepage.dev/enabled: "true"
+        gethomepage.dev/name: "ArgoCD"
+        gethomepage.dev/description: "GitOps Continuous Delivery"
+        gethomepage.dev/group: "Platform"
+        gethomepage.dev/icon: "argocd.png"
+        gethomepage.dev/href: "https://argocd.dev.techsecoms.com"
         cert-manager.io/cluster-issuer: letsencrypt-prod
         nginx.ingress.kubernetes.io/ssl-passthrough: "true"
         external-dns.alpha.kubernetes.io/enabled: "true"
-        # nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
-        # nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-        # nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
-        # cert-manager.io/renew-before: "720h"
-        # cert-manager.io/duration: "2160h"
       ingressClassName: nginx
       hostname: argocd.dev.techsecoms.com
       tls: true

@@ -3,10 +3,16 @@ ingress:
   enabled: true
   ingressClassName: "nginx"
   annotations:
+    # Homepage dashboard integration
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "Kroki"
+    gethomepage.dev/description: "Diagrams as Code"
+    gethomepage.dev/group: "Tools"
+    gethomepage.dev/icon: "kroki.png"
+    gethomepage.dev/href: "https://kroki.ops.techsecom.io"
     kubernetes.io/ingress.class: nginx
     cert-manager.io/cluster-issuer: letsencrypt-prod
     external-dns.alpha.kubernetes.io/enabled: "true"
-    # kubernetes.io/tls-acme: "true"
   hosts:
   - host: kroki.ops.techsecom.io
     paths:

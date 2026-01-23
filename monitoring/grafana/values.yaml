@@ -118,6 +118,13 @@ grafana:
     enabled: true
     ingressClassName: nginx
     annotations:
+      # Homepage dashboard integration
+      gethomepage.dev/enabled: "true"
+      gethomepage.dev/name: "Grafana"
+      gethomepage.dev/description: "Metrics & Dashboards"
+      gethomepage.dev/group: "Monitoring"
+      gethomepage.dev/icon: "grafana.png"
+      gethomepage.dev/href: "https://grafana.ops.techsecom.io"
       kubernetes.io/ingress.class: "nginx"
       cert-manager.io/cluster-issuer: "letsencrypt-prod"
       cert-manager.io/revision-history-limit: "3"

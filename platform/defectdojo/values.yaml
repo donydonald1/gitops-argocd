@@ -16,6 +16,13 @@ defectdojo:
       enabled: true
       activateTLS: false
       annotations:
+        # Homepage dashboard integration
+        gethomepage.dev/enabled: "true"
+        gethomepage.dev/name: "DefectDojo"
+        gethomepage.dev/description: "Security Vulnerability Management"
+        gethomepage.dev/group: "Platform"
+        gethomepage.dev/icon: "defectdojo.png"
+        gethomepage.dev/href: "https://defectdojo.ops.techsecom.io"
         cert-manager.io/cluster-issuer: letsencrypt-prod
     uwsgi:
       livenessProbe:

@@ -17,6 +17,13 @@ sonarqube:
     hosts:
     - name: sonar.ops.techsecom.io
     annotations:
+      # Homepage dashboard integration
+      gethomepage.dev/enabled: "true"
+      gethomepage.dev/name: "SonarQube"
+      gethomepage.dev/description: "Code Quality & Security"
+      gethomepage.dev/group: "Platform"
+      gethomepage.dev/icon: "sonarqube.png"
+      gethomepage.dev/href: "https://sonar.ops.techsecom.io"
       # Allow large reports to be uploaded (up to 128MB)
       nginx.ingress.kubernetes.io/proxy-body-size: "128m"
       cert-manager.io/cluster-issuer: letsencrypt-prod

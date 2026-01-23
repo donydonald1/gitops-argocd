@@ -60,6 +60,13 @@ minio:
     enabled: true
     ingressClassName: nginx
     annotations:
+      # Homepage dashboard integration
+      gethomepage.dev/enabled: "true"
+      gethomepage.dev/name: "MinIO"
+      gethomepage.dev/description: "Object Storage Console"
+      gethomepage.dev/group: "Platform"
+      gethomepage.dev/icon: "minio.png"
+      gethomepage.dev/href: "https://minio.ops.techsecom.io"
       cert-manager.io/cluster-issuer: letsencrypt-prod
       # Disabled - using wildcard CNAME *.ops.techsecom.io managed by Terraform
       external-dns.alpha.kubernetes.io/enabled: "false"

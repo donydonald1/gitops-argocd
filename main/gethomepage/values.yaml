@@ -1,7 +1,7 @@
 homepage:
   image:
     repository: ghcr.io/gethomepage/homepage
-    tag: v0.10.9
+    tag: v1.9.0
 
   resources:
     requests:
@@ -26,8 +26,10 @@ homepage:
         cert-manager.io/duration: "2160h"
         cert-manager.io/renew-before: "720h"
         gethomepage.dev/enabled: 'false'
-        # nginx.ingress.kubernetes.io/auth-url: "http://oauth2-proxy.kube-system.svc.cluster.local:80/oauth2/auth"
-        # nginx.ingress.kubernetes.io/auth-signin: https://auth.rsr.net/oauth2/start
+        # OIDC Authentication via oauth2-proxy (requires oauth2-proxy configured for techsecom.io)
+        # nginx.ingress.kubernetes.io/auth-url: "http://oauth2-proxy.oauth2-proxy.svc.cluster.local:80/oauth2/auth"
+        # nginx.ingress.kubernetes.io/auth-signin: https://auth.ops.techsecom.io/oauth2/start?rd=$scheme://$host$escaped_request_uri
+        # nginx.ingress.kubernetes.io/auth-response-headers: "X-Auth-Request-User, X-Auth-Request-Email, X-Auth-Request-Groups"
       hosts:
       - host: home.ops.techsecom.io
         paths:
@@ -51,62 +53,277 @@ homepage:
       enabled: false
 
   config:
+    # ===========================================
+    # BOOKMARKS - Quick access links organized by category
+    # ===========================================
     bookmarks:
     - Developer:
       - Github:
-        - abbr: GH
+        - icon: github.png
           href: https://github.com/
+      - GitLab:
+        - icon: gitlab.png
+          href: https://gitlab.ops.techsecom.io/
+      - Anthropic Claude:
+        - icon: https://www.anthropic.com/favicon.ico
+          href: https://console.anthropic.com/
+      - Terraform Registry:
+        - icon: terraform.png
+          href: https://registry.terraform.io/
+    - Documentation:
+      - Kubernetes:
+        - icon: kubernetes.png
+          href: https://kubernetes.io/docs/
+      - ArgoCD:
+        - icon: argocd.png
+          href: https://argo-cd.readthedocs.io/
+      - Helm:
+        - icon: helm.png
+          href: https://helm.sh/docs/
+      - Homepage:
+        - icon: homepage.png
+          href: https://gethomepage.dev/
+    - Cloud Providers:
+      - AWS Console:
+        - icon: aws.png
+          href: https://console.aws.amazon.com/
+      - Azure Portal:
+        - icon: azure.png
+          href: https://portal.azure.com/
+      - Google Cloud:
+        - icon: google-cloud.png
+          href: https://console.cloud.google.com/
+    - Social:
+      - Reddit:
+        - icon: reddit.png
+          href: https://reddit.com/r/selfhosted
+      - Hacker News:
+        - icon: hackernews.png
+          href: https://news.ycombinator.com/
+
+    # ===========================================
+    # SERVICES - Static/external services with widgets
+    # ===========================================
     services:
+    # Monitoring group with service widgets
+    - Monitoring:
+      - Uptime Kuma:
+          icon: uptime-kuma.png
+          href: https://uptime.dev.techsecoms.com
+          description: Service Status Monitoring
+          siteMonitor: https://uptime.dev.techsecoms.com
+          widget:
+            type: uptimekuma
+            url: http://uptime-kuma.monitoring.svc.cluster.local:3001
+            slug: default
+      - Prometheus:
+          icon: prometheus.png
+          href: https://prometheus.ops.techsecom.io
+          description: Metrics Collection
+          widget:
+            type: prometheus
+            url: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
+      - Alertmanager:
+          icon: alertmanager.png
+          href: https://alertmanager.ops.techsecom.io
+          description: Alert Management
+    # Infrastructure group
     - Infrastructure:
       - HomeDashboard:
+          icon: https://raw.githubusercontent.com/donydonald1/gitops-argocd/main/assets/logo-techsecom.png
           href: https://grafana.ops.techsecom.io/goto/ub9IH-GNR?orgId=1
-          icon: https://raw.githubusercontent.com/rogerrum/icons/refs/heads/main/images/rsr-logo.png
+          description: Home Infrastructure Overview
+      - Longhorn:
+          icon: longhorn.png
+          href: https://longhorn.ops.techsecom.io
+          description: Distributed Block Storage
+          widget:
+            type: longhorn
+            url: http://longhorn-frontend.longhorn-system.svc.cluster.local
+      - Vault:
+          icon: vault.png
+          href: https://vault.ops.techsecom.io
+          description: Secrets Management
+
+    # ===========================================
+    # WIDGETS - Info widgets displayed in header
+    # ===========================================
     widgets:
-    # show the kubernetes widget, with the cluster summary and individual nodes
+    # Logo widget (left aligned)
+    - logo:
+        icon: https://raw.githubusercontent.com/donydonald1/gitops-argocd/main/assets/logo-techsecom.png
+    # Greeting with dynamic time-based message
+    - greeting:
+        text_size: xl
+        text: "Welcome to TechSecom Ops"
+    # Kubernetes cluster status
     - kubernetes:
         cluster:
           show: true
           cpu: true
           memory: true
           showLabel: true
-          label: "cluster"
+          label: "ops-dc-tx-pl-hq-prd"
         nodes:
           show: true
           cpu: true
           memory: true
           showLabel: true
+    # Longhorn storage widget
+    - longhorn:
+        url: http://longhorn-frontend.longhorn-system.svc.cluster.local
+        total: true
+        labels: true
+        nodes: false
+    # System resources widget
+    - resources:
+        cpu: true
+        memory: true
+        cputemp: true
+        uptime: true
+        units: imperial
+        refresh: 3000
+        disk:
+          - /
+    # Date and time with locale
+    - datetime:
+        text_size: xl
+        format:
+          dateStyle: full
+          timeStyle: short
+          hourCycle: h23
+    # Weather widget - Dallas, TX
+    - openmeteo:
+        label: Dallas
+        latitude: 32.7767
+        longitude: -96.7970
+        timezone: America/Chicago
+        units: imperial
+        cache: 15
+    # Search widget with multiple providers
     - search:
-        provider: duckduckgo
+        provider:
+          - duckduckgo
+          - google
+        focus: false
+        showSearchSuggestions: true
         target: _blank
-    #      - unifi_console:
-    #          url:
-    #          username: "{{HOMEPAGE_VAR_UNIFI_USERNAME}}"
-    #          password: "{{HOMEPAGE_VAR_UNIFI_PASSWORD}}"
-    #          site: "{{HOMEPAGE_VAR_UNIFI_SITE}}"
+
+    # ===========================================
+    # KUBERNETES SERVICE DISCOVERY
+    # ===========================================
     kubernetes:
       mode: cluster
+
+    # ===========================================
+    # SETTINGS - Visual and behavioral configuration
+    # ===========================================
     settings:
+      # Page metadata
+      title: TechSecom Ops Dashboard
+      description: Kubernetes Operations Dashboard for TechSecom Infrastructure
+      # Branding
+      favicon: https://raw.githubusercontent.com/donydonald1/gitops-argocd/main/assets/logo-techsecom.png
+      logo: https://raw.githubusercontent.com/donydonald1/gitops-argocd/main/assets/logo-techsecom.png
+      # Header style: underlined, boxed, clean, boxedWidgets
+      headerStyle: boxedWidgets
+      # Theme configuration
+      theme: dark
+      # Color palette: slate, gray, zinc, neutral, stone, red, orange, amber, yellow, lime, green, emerald, teal, cyan, sky, blue, indigo, violet, purple, fuchsia, pink, rose
+      color: cyan
+      # Card visual effects
+      cardBlur: md
+      # Status indicator: dot, basic
+      statusStyle: dot
+      # Hide version in footer
+      hideVersion: true
+      # Show/hide errors
+      hideErrors: false
+      # Collapse behavior
+      disableCollapse: false
+      # Use equal heights for cards in rows
+      useEqualHeights: true
+      # Full width layout
+      # fullWidth: true
+      # Maximum columns for service groups
+      maxGroupColumns: 4
+      # Maximum columns for bookmark groups
+      maxBookmarkGroupColumns: 4
+      # Start with groups collapsed
+      groupsInitiallyCollapsed: false
+      # Show stats for discovered services
+      showStats: true
+      # Link target behavior
+      target: _blank
+      # Quick launch configuration (keyboard shortcut: /)
+      quicklaunch:
+        searchDescriptions: true
+        hideInternetSearch: false
+        showSearchSuggestions: true
+        hideVisitURL: false
+      # Providers for shared API credentials (optional)
+      # providers:
+      #   longhorn:
+      #     url: http://longhorn-frontend.longhorn-system.svc.cluster.local
+      # Layout configuration for discovered service groups
       layout:
-        Home:
+        Platform:
           style: row
-          columns: 6
-        Tools:
+          columns: 4
+          icon: mdi-application-cog
+          useEqualHeights: true
+        Monitoring:
           style: row
-          columns: 6
+          columns: 4
+          icon: mdi-chart-line
+          useEqualHeights: true
         Infrastructure:
           style: row
           columns: 3
-        Monitoring:
+          icon: mdi-server
+          useEqualHeights: true
+        System:
           style: row
           columns: 3
+          icon: mdi-cog
+          useEqualHeights: true
+        Tools:
+          style: row
+          columns: 4
+          icon: mdi-tools
+          useEqualHeights: true
+        Applications:
+          style: row
+          columns: 4
+          icon: mdi-apps
+          useEqualHeights: true
+        Services:
+          style: row
+          columns: 4
+          icon: mdi-wrench
+          useEqualHeights: true
+        Storage:
+          style: row
+          columns: 3
+          icon: mdi-database
+          useEqualHeights: true
+        Security:
+          style: row
+          columns: 3
+          icon: mdi-shield-lock
+          useEqualHeights: true
+      # Background configuration
       background:
-        image: https://images.unsplash.com/photo-1502790671504-542ad42d5189?auto=format&fit=crop&w=2560&q=80
-        blur: sm # sm, "", md, xl... see https://tailwindcss.com/docs/backdrop-blur
-        saturate: 50 # 0, 50, 100... see https://tailwindcss.com/docs/backdrop-saturate
-        brightness: 50 # 0, 50, 75... see https://tailwindcss.com/docs/backdrop-brightness
-        opacity: 50 # 0-100
-  #  envFrom:
-  #    - secretRef:
-  #        name: "gethomepage-secret"
+        image: https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=2560&q=80
+        blur: sm
+        saturate: 50
+        brightness: 40
+        opacity: 40
+
+  # Environment variables
   env:
     TZ: America/Chicago
+    # Required for v1.x - set allowed hosts
+    HOMEPAGE_ALLOWED_HOSTS: home.ops.techsecom.io
+    # Log level for debugging
+    LOG_LEVEL: info

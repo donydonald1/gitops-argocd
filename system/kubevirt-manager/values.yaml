@@ -60,6 +60,13 @@ ingress:
   enabled: true
   className: nginx
   annotations:
+    # Homepage dashboard integration
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "KubeVirt Manager"
+    gethomepage.dev/description: "Virtual Machine Management"
+    gethomepage.dev/group: "System"
+    gethomepage.dev/icon: "kubevirt.png"
+    gethomepage.dev/href: "https://kubevirt.ops.techsecom.io"
     # WebSocket support for VNC console
     nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"

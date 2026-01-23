@@ -23,13 +23,20 @@ app-template:
       enabled: true
       # ClassName: nginx
       annotations:
+        # Homepage dashboard integration
+        gethomepage.dev/enabled: "true"
+        gethomepage.dev/name: "Uptime Kuma"
+        gethomepage.dev/description: "Service Status Monitoring"
+        gethomepage.dev/group: "Monitoring"
+        gethomepage.dev/icon: "uptime-kuma.png"
+        gethomepage.dev/href: "https://uptime.dev.techsecoms.com"
+        gethomepage.dev/widget.type: "uptimekuma"
+        gethomepage.dev/widget.url: "http://uptime-kuma.monitoring.svc.cluster.local:3001"
+        gethomepage.dev/widget.slug: "default"
         kubernetes.io/ingress.class: nginx
         cert-manager.io/cluster-issuer: letsencrypt-prod
-        nginx.ingress.kubernetes.io/ssl-redirect: true
+        nginx.ingress.kubernetes.io/ssl-redirect: "true"
         nginx.ingress.kubernetes.io/ssl-passthrough: "true"
-        # cert-manager.io/revision-history-limit: "3"
-        # cert-manager.io/duration: "2160h"
-        # cert-manager.io/renew-before: "720h"
       hosts:
       - host: uptime.dev.techsecoms.com
         paths:

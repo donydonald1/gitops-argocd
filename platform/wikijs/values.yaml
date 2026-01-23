@@ -63,6 +63,13 @@ wikijs:
       enabled: true
       className: nginx
       annotations:
+        # Homepage dashboard integration
+        gethomepage.dev/enabled: "true"
+        gethomepage.dev/name: "Wiki.js"
+        gethomepage.dev/description: "Documentation Wiki"
+        gethomepage.dev/group: "Platform"
+        gethomepage.dev/icon: "wikijs.png"
+        gethomepage.dev/href: "https://wiki.ops.techsecom.io"
         cert-manager.io/cluster-issuer: "letsencrypt-prod"
         cert-manager.io/revision-history-limit: "3"
         external-dns.alpha.kubernetes.io/enabled: "true"
