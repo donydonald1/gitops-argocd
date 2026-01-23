@@ -235,21 +235,8 @@ atlantis:
     app.kubernetes.io/part-of: atlantis
     environment: production
 
-  # Lifecycle hooks to fix terraform binary permissions after download
-  lifecycle:
-    postStart:
-      exec:
-        command:
-          - sh
-          - -c
-          - |
-            # Background process to fix terraform binary permissions
-            (while true; do
-              if ls /atlantis-data/bin/terraform* 1>/dev/null 2>&1; then
-                chmod +x /atlantis-data/bin/terraform* 2>/dev/null || true
-              fi
-              sleep 30
-            done) &
+  # Lifecycle hooks removed - Longhorn doesn't have NFS permission issues
+  # The init container handles terraform binary permissions at startup
 
 # External Secrets Operator configuration for Vault integration
 eso:
