@@ -1,0 +1,130 @@
+{{- if .Values.eso.enabled }}
+---
+# ServiceAccount for the sync job with cross-namespace secret access
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vault-approle-sync
+  annotations:
+    argocd.argoproj.io/sync-wave: "-15"
+---
+# Role to read vault-unseal-keys secret from vault namespace
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: vault-secret-reader
+  namespace: vault
+  annotations:
+    argocd.argoproj.io/sync-wave: "-15"
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames: ["vault-unseal-keys"]
+    verbs: ["get"]
+---
+# RoleBinding to allow atlantis ServiceAccount to read vault secret
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: atlantis-vault-secret-reader
+  namespace: vault
+  annotations:
+    argocd.argoproj.io/sync-wave: "-15"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: vault-secret-reader
+subjects:
+  - kind: ServiceAccount
+    name: vault-approle-sync
+    namespace: {{ .Release.Namespace }}
+---
+# Job to sync Vault AppRole credentials to KV secret
+# Runs as an ArgoCD hook on every sync to ensure credentials are valid
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: vault-approle-sync
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  ttlSecondsAfterFinished: 300
+  backoffLimit: 3
+  template:
+    spec:
+      restartPolicy: OnFailure
+      serviceAccountName: vault-approle-sync
+      containers:
+        - name: vault-sync
+          image: bitnami/kubectl:latest
+          env:
+            - name: VAULT_ADDR
+              value: "https://vault.vault.svc.cluster.local:8200"
+            - name: VAULT_SKIP_VERIFY
+              value: "true"
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+              echo "=== Vault AppRole Sync for Atlantis ==="
+
+              # Install vault CLI
+              echo "Installing Vault CLI..."
+              cd /tmp
+              wget -q https://releases.hashicorp.com/vault/1.18.3/vault_1.18.3_linux_amd64.zip
+              unzip -q vault_1.18.3_linux_amd64.zip
+              chmod +x vault
+              export PATH="/tmp:$PATH"
+
+              # Get Vault root token from vault namespace
+              echo "Getting Vault token..."
+              export VAULT_TOKEN=$(kubectl get secret vault-unseal-keys -n vault -o jsonpath='{.data.vault-root}' | base64 -d)
+
+              if [ -z "$VAULT_TOKEN" ]; then
+                echo "ERROR: Could not get Vault root token"
+                exit 1
+              fi
+              echo "Vault token retrieved successfully"
+
+              # Get the AppRole role_id
+              echo "Fetching AppRole role_id..."
+              ROLE_ID=$(vault read -field=role_id auth/approle/role/atlantis/role-id)
+              if [ -z "$ROLE_ID" ]; then
+                echo "ERROR: Could not get role_id. AppRole 'atlantis' may not exist."
+                echo "Please ensure the infrastructure Terraform has been applied."
+                exit 1
+              fi
+              echo "Role ID: $ROLE_ID"
+
+              # Generate a new secret_id
+              echo "Generating new AppRole secret_id..."
+              SECRET_ID=$(vault write -field=secret_id -f auth/approle/role/atlantis/secret-id)
+              if [ -z "$SECRET_ID" ]; then
+                echo "ERROR: Could not generate secret_id"
+                exit 1
+              fi
+              echo "Secret ID generated successfully"
+
+              # Update the Vault KV secret
+              echo "Updating Vault KV secret at secret/atlantis..."
+              vault kv patch secret/atlantis \
+                vault_role_id="$ROLE_ID" \
+                vault_secret_id="$SECRET_ID"
+
+              echo "=== AppRole credentials synced successfully! ==="
+
+              # Verify the update
+              echo "Verifying update..."
+              STORED_ROLE_ID=$(vault kv get -field=vault_role_id secret/atlantis)
+              if [ "$STORED_ROLE_ID" = "$ROLE_ID" ]; then
+                echo "Verification PASSED: role_id matches"
+              else
+                echo "Verification FAILED: role_id mismatch"
+                exit 1
+              fi
+
+              echo "Done! External Secrets will pick up the new credentials on next refresh."
+{{- end }}
