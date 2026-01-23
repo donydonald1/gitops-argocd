@@ -160,12 +160,6 @@ homepage:
           cpu: true
           memory: true
           showLabel: true
-    # Longhorn storage widget
-    - longhorn:
-        url: http://longhorn-frontend.longhorn-system.svc.cluster.local:80
-        total: true
-        labels: true
-        nodes: false
     # System resources widget
     - resources:
         cpu: true
