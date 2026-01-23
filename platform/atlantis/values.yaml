@@ -95,6 +95,10 @@ atlantis:
     ATLANTIS_EMOJI_REACTION: "true"
     # Maximum concurrent jobs
     ATLANTIS_PARALLEL_POOL_SIZE: "5"
+    # Use Redis instead of BoltDB for locking and caching
+    # This avoids BoltDB file locking issues on Longhorn volumes
+    ATLANTIS_REDIS_HOST: "argocd-redis-ha-haproxy.argocd.svc.cluster.local"
+    ATLANTIS_REDIS_PORT: "6379"
 
   # Note: ATLANTIS_GITLAB_TOKEN and ATLANTIS_GITLAB_WEBHOOK_SECRET are automatically
   # set by the upstream chart when vcsSecretName is configured (see above)
