@@ -97,6 +97,7 @@ atlantis:
     ATLANTIS_PARALLEL_POOL_SIZE: "5"
     # Use Redis instead of BoltDB for locking and caching
     # This avoids BoltDB file locking issues on Longhorn volumes
+    ATLANTIS_LOCKING_DB_TYPE: "redis"
     ATLANTIS_REDIS_HOST: "argocd-redis-ha-haproxy.argocd.svc.cluster.local"
     ATLANTIS_REDIS_PORT: "6379"
 
