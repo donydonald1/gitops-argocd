@@ -65,7 +65,7 @@ homepage:
         - icon: gitlab.png
           href: https://gitlab.ops.techsecom.io/
       - Anthropic Claude:
-        - icon: https://www.anthropic.com/favicon.ico
+        - icon: si-anthropic
           href: https://console.anthropic.com/
       - Terraform Registry:
         - icon: terraform.png
@@ -81,7 +81,7 @@ homepage:
         - icon: helm.png
           href: https://helm.sh/docs/
       - Homepage:
-        - icon: homepage.png
+        - icon: gethomepage.png
           href: https://gethomepage.dev/
     - Cloud Providers:
       - AWS Console:
