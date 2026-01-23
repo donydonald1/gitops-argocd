@@ -320,13 +320,12 @@ harbor:
       className: nginx
       annotations:
         gethomepage.dev/enabled: "true"
-        gethomepage.dev/group: Home
-        gethomepage.dev/icon: harbor
-        gethomepage.dev/name: Harbor
-        gethomepage.dev/widget.type: harbor
-        gethomepage.dev/widget.url: harbor.ops.techsecom.io
+        gethomepage.dev/name: "Harbor"
+        gethomepage.dev/description: "Container Registry"
+        gethomepage.dev/group: "Platform"
+        gethomepage.dev/icon: "harbor.png"
         gethomepage.dev/href: "https://harbor.ops.techsecom.io"
-        gethomepage.dev/app: harbor-ingress
+        gethomepage.dev/pod-selector: "app=harbor"
         ingress.kubernetes.io/ssl-redirect: "true"
         cert-manager.io/cluster-issuer: letsencrypt-prod
         ingress.kubernetes.io/proxy-body-size: "0"
