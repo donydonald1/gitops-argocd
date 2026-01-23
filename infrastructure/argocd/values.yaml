@@ -194,7 +194,7 @@ argo-cd:
         gethomepage.dev/name: "ArgoCD"
         gethomepage.dev/description: "GitOps Continuous Delivery"
         gethomepage.dev/group: "Platform"
-        gethomepage.dev/icon: "argo-cd.png"
+        gethomepage.dev/icon: "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/argocd.png"
         gethomepage.dev/href: "https://argocd.dev.techsecoms.com"
         cert-manager.io/cluster-issuer: letsencrypt-prod
         nginx.ingress.kubernetes.io/ssl-passthrough: "true"
