@@ -49,8 +49,9 @@ botkube:
               executors:
                 - kubectl-read-only
               sources:
-                # Only alert on errors/warnings - k8s-events is too noisy
-                - k8s-errors
+                - k8s-errors      # Errors and warnings
+                - k8s-critical    # Deletions of important resources
+                - k8s-nodes       # Node status changes
 
   # Service monitor for Prometheus
   serviceMonitor:
@@ -195,32 +196,56 @@ botkube:
 
   # Sources configuration
   sources:
-    # General Kubernetes events - DISABLED (too noisy)
-    # Uncomment and adjust if you want create/update notifications
-    # k8s-events:
-    #   displayName: "Kubernetes Events"
-    #   botkube/kubernetes:
-    #     enabled: true
-    #     config:
-    #       namespaces:
-    #         include:
-    #           - "production"  # Only specific namespaces
-    #         exclude:
-    #           - kube-system
-    #           - cattle-system
-    #       event:
-    #         types:
-    #           - create  # Remove 'update' to reduce noise
-    #       resources:
-    #         - type: apps/v1/deployments  # Only critical resources
-    #         - type: v1/nodes
-    #     context:
-    #       rbac:
-    #         group:
-    #           type: Static
-    #           static:
-    #             values:
-    #               - botkube-plugins-default
+    # Critical events only - node issues and resource deletions
+    k8s-critical:
+      displayName: "Critical Kubernetes Events"
+      botkube/kubernetes:
+        enabled: true
+        config:
+          namespaces:
+            include:
+              - ".*"
+            exclude:
+              - kube-system
+              - cattle-system
+              - cattle-fleet-system
+              - cattle-impersonation-system
+          event:
+            types:
+              - delete  # Only deletions (accidental deletes, scaling down)
+          resources:
+            - type: apps/v1/deployments
+            - type: apps/v1/statefulsets
+            - type: v1/namespaces
+            - type: v1/persistentvolumeclaims
+        context:
+          rbac:
+            group:
+              type: Static
+              static:
+                values:
+                  - botkube-plugins-default
+
+    # Node status changes (critical for cluster health)
+    k8s-nodes:
+      displayName: "Node Events"
+      botkube/kubernetes:
+        enabled: true
+        config:
+          event:
+            types:
+              - create
+              - delete
+              - error
+          resources:
+            - type: v1/nodes
+        context:
+          rbac:
+            group:
+              type: Static
+              static:
+                values:
+                  - botkube-plugins-default
 
     # Error events
     k8s-errors:
