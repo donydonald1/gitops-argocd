@@ -130,7 +130,7 @@ homepage:
           description: Distributed Block Storage
           widget:
             type: longhorn
-            url: http://longhorn-frontend.longhorn-system.svc.cluster.local
+            url: http://longhorn-frontend.longhorn-system.svc.cluster.local:80
       - Vault:
           icon: vault.png
           href: https://vault.ops.techsecom.io
@@ -162,7 +162,7 @@ homepage:
           showLabel: true
     # Longhorn storage widget
     - longhorn:
-        url: http://longhorn-frontend.longhorn-system.svc.cluster.local
+        url: http://longhorn-frontend.longhorn-system.svc.cluster.local:80
         total: true
         labels: true
         nodes: false
