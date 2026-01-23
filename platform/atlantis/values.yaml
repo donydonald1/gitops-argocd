@@ -194,7 +194,7 @@ atlantis:
   extraVolumeMounts: []
 
   # Init containers (for setup tasks)
-  # Fix terraform binary permissions on NFS storage
+  # Fix terraform binary permissions and clean up stale BoltDB locks
   initContainers:
     - name: fix-terraform-permissions
       image: busybox:latest
@@ -202,6 +202,13 @@ atlantis:
         - sh
         - -c
         - |
+          echo "Listing data directory contents..."
+          ls -la /atlantis-data/
+          echo "Removing any stale BoltDB lock files..."
+          rm -f /atlantis-data/*.db.lock /atlantis-data/atlantis.db.lock 2>/dev/null || true
+          # Also check for flock files in the db directory
+          find /atlantis-data -name "*.lock" -delete 2>/dev/null || true
+          find /atlantis-data -name "*.db" -exec flock -u {} \; 2>/dev/null || true
           echo "Ensuring /atlantis-data/bin directory exists with proper permissions..."
           mkdir -p /atlantis-data/bin
           chmod 755 /atlantis-data/bin
