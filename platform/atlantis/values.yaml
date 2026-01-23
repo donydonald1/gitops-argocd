@@ -194,12 +194,49 @@ atlantis:
   extraVolumeMounts: []
 
   # Init containers (for setup tasks)
-  initContainers: []
+  # Fix terraform binary permissions on NFS storage
+  initContainers:
+    - name: fix-terraform-permissions
+      image: busybox:latest
+      command:
+        - sh
+        - -c
+        - |
+          echo "Ensuring /atlantis-data/bin directory exists with proper permissions..."
+          mkdir -p /atlantis-data/bin
+          chmod 755 /atlantis-data/bin
+          if ls /atlantis-data/bin/terraform* 1>/dev/null 2>&1; then
+            echo "Fixing execute permissions on existing terraform binaries..."
+            chmod +x /atlantis-data/bin/terraform*
+            ls -la /atlantis-data/bin/
+          else
+            echo "No terraform binaries found yet, will be downloaded on first use"
+          fi
+          echo "Init container completed"
+      volumeMounts:
+        - name: atlantis-data
+          mountPath: /atlantis-data
 
   # Common labels applied to all resources
   commonLabels:
     app.kubernetes.io/part-of: atlantis
     environment: production
+
+  # Lifecycle hooks to fix terraform binary permissions after download
+  lifecycle:
+    postStart:
+      exec:
+        command:
+          - sh
+          - -c
+          - |
+            # Background process to fix terraform binary permissions
+            (while true; do
+              if ls /atlantis-data/bin/terraform* 1>/dev/null 2>&1; then
+                chmod +x /atlantis-data/bin/terraform* 2>/dev/null || true
+              fi
+              sleep 30
+            done) &
 
 # External Secrets Operator configuration for Vault integration
 eso:
