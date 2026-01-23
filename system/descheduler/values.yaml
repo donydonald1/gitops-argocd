@@ -50,6 +50,21 @@ descheduler:
           evictLocalStoragePods: true
           evictSystemCriticalPods: false  # Don't evict system critical pods
           nodeFit: true
+          # Namespace filtering in DefaultEvictor args (required for v1alpha2 API)
+          namespaces:
+            exclude:
+            - kube-system
+            - kube-public
+            - kube-node-lease
+            - kubevirt
+            - cdi
+            - kubevirt-manager
+            - argocd
+            - vault
+            - external-secrets
+            - cnpg-system
+            - elastic-system
+            - monitoring
           # Exclude pods with specific labels
           labelSelector:
             matchExpressions:
