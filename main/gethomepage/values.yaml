@@ -81,7 +81,7 @@ homepage:
         - icon: helm.png
           href: https://helm.sh/docs/
       - Homepage:
-        - icon: gethomepage.png
+        - icon: homepage.png
           href: https://gethomepage.dev/
     - Cloud Providers:
       - AWS Console:
