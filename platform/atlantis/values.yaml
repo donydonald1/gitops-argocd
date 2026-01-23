@@ -26,6 +26,7 @@ atlantis:
       gethomepage.dev/group: "Platform"
       gethomepage.dev/icon: "runatlantis.png"
       gethomepage.dev/href: "https://atlantis.ops.techsecom.io"
+      gethomepage.dev/pod-selector: "app=atlantis"
       cert-manager.io/cluster-issuer: letsencrypt-prod
       nginx.ingress.kubernetes.io/ssl-redirect: "true"
       # Rate limiting for security

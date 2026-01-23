@@ -153,6 +153,7 @@ consoleIngress:
     gethomepage.dev/group: "Platform"
     gethomepage.dev/icon: "keycloak.png"
     gethomepage.dev/href: "https://keycloak.ops.techsecom.io"
+    gethomepage.dev/pod-selector: "app.kubernetes.io/name=keycloakx"
     nginx.ingress.kubernetes.io/proxy-buffer-size: 256k
     nginx.ingress.kubernetes.io/proxy-body-size: "10m"
     cert-manager.io/cluster-issuer: letsencrypt-prod

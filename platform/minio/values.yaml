@@ -67,6 +67,7 @@ minio:
       gethomepage.dev/group: "Platform"
       gethomepage.dev/icon: "minio.png"
       gethomepage.dev/href: "https://minio.ops.techsecom.io"
+      gethomepage.dev/pod-selector: "app=minio"
       cert-manager.io/cluster-issuer: letsencrypt-prod
       # Disabled - using wildcard CNAME *.ops.techsecom.io managed by Terraform
       external-dns.alpha.kubernetes.io/enabled: "false"
