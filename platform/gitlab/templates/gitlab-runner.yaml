@@ -95,7 +95,7 @@ spec:
             poll_timeout = 2000
             node_selector_overwrite_allowed = ".*"
             namespace = "gitlab"
-            image = "ubuntu:22.04"
+            image = "docker.io/techsecoms/gitlab-runners:amd64"
             service_account = "default"
 
           [runners.cache]
