@@ -75,7 +75,7 @@ homepage:
         - icon: kubernetes.png
           href: https://kubernetes.io/docs/
       - ArgoCD:
-        - icon: argocd.png
+        - icon: argo-cd.png
           href: https://argo-cd.readthedocs.io/
       - Helm:
         - icon: helm.png
@@ -128,9 +128,6 @@ homepage:
           icon: longhorn.png
           href: https://longhorn.ops.techsecom.io
           description: Distributed Block Storage
-          widget:
-            type: longhorn
-            url: http://longhorn-frontend.longhorn-system.svc.cluster.local:80
       - Vault:
           icon: vault.png
           href: https://vault.ops.techsecom.io

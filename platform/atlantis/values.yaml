@@ -24,7 +24,7 @@ atlantis:
       gethomepage.dev/name: "Atlantis"
       gethomepage.dev/description: "Terraform PR Automation"
       gethomepage.dev/group: "Platform"
-      gethomepage.dev/icon: "runatlantis.png"
+      gethomepage.dev/icon: "https://raw.githubusercontent.com/runatlantis/atlantis/main/runatlantis.io/public/hero.png"
       gethomepage.dev/href: "https://atlantis.ops.techsecom.io"
       gethomepage.dev/pod-selector: "app=atlantis"
       cert-manager.io/cluster-issuer: letsencrypt-prod
