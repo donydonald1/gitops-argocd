@@ -79,13 +79,15 @@ spec:
       #   wave: "1"
       #   serverSideApply: true
 
-      - name: botkube
-        namespace: botkube
-        wave: "2"  # After monitoring is ready
-        serverSideApply: true
-        helm:
-          valueFiles:
-          - "values.yaml"
+      # Botkube is managed as a standalone Application with AVP plugin
+      # See: monitoring/botkube/application.yaml
+      # - name: botkube
+      #   namespace: botkube
+      #   wave: "2"
+      #   serverSideApply: true
+      #   helm:
+      #     valueFiles:
+      #     - "values.yaml"
 
       # - name: karma
       #   namespace: monitoring

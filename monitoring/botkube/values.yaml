@@ -12,9 +12,13 @@ botkube:
   analytics:
     disable: true
 
-  # NOTE: Do NOT use existingCommunicationsSecretName - the runtime config's
-  # empty communications: section will override it. Instead, use values.yaml
-  # with env vars to inject tokens from secrets.
+  # NOTE: Slack Socket Mode tokens must be provided directly in the config.
+  # The env var override mechanism (BOTKUBE_COMMUNICATIONS__*) does NOT work
+  # for Slack credentials. For production, use ArgoCD Vault Plugin (AVP) to
+  # inject secrets into values at sync time.
+  #
+  # The tokens are stored in Vault at: secret/botkube
+  # Keys: slackBotToken, slackAppToken
 
   # Ingress configuration
   ingress:
@@ -28,25 +32,25 @@ botkube:
       enabled: true
       secretName: "botkube-tls"
 
-  # Communication platforms - tokens injected via env vars from botkube-slack-secret
+  # Communication platforms configuration
+  # For production: Use ArgoCD Vault Plugin (AVP) to inject real tokens
+  # Example with AVP: botToken: <path:secret/data/botkube#slackBotToken>
   communications:
     default-group:
       socketSlack:
         enabled: true
-        # Placeholder tokens (valid format) - overridden by env vars from botkube-slack-secret
-        botToken: "xoxb-placeholder-will-be-overridden"
-        appToken: "xapp-placeholder-will-be-overridden"
+        # IMPORTANT: Replace these with real tokens or use AVP for production
+        botToken: "<path:secret/data/botkube#slackBotToken>"
+        appToken: "<path:secret/data/botkube#slackAppToken>"
         channels:
           default:
             name: kubebot-alerts
             bindings:
               executors:
                 - kubectl-read-only
-                - kubectl-full-access
               sources:
                 - k8s-events
                 - k8s-errors
-                - k8s-recommendations
 
   # Service monitor for Prometheus
   serviceMonitor:
@@ -81,6 +85,7 @@ botkube:
             allowed:
               namespaces:
                 - ".*"
+                - "default"
               verbs:
                 - get
                 - list
@@ -102,6 +107,14 @@ botkube:
                 - ingresses
                 - persistentvolumeclaims
                 - persistentvolumes
+        # RBAC context - required for kubectl plugin to work
+        context:
+          rbac:
+            group:
+              type: Static
+              static:
+                values:
+                  - botkube-plugins-default
 
     # Full kubectl access (restricted to admins)
     kubectl-full-access:
@@ -113,6 +126,7 @@ botkube:
             allowed:
               namespaces:
                 - ".*"
+                - "default"
               verbs:
                 - get
                 - list
@@ -138,6 +152,14 @@ botkube:
                 - events
                 - ingresses
                 - persistentvolumeclaims
+        # RBAC context - required for kubectl plugin to work
+        context:
+          rbac:
+            group:
+              type: Static
+              static:
+                values:
+                  - botkube-plugins-default
 
     # Helm executor (disabled - plugin not available in v1.14.0)
     # helm-readonly:
@@ -198,6 +220,13 @@ botkube:
             - type: v1/nodes
             - type: v1/namespaces
             - type: batch/v1/jobs
+        context:
+          rbac:
+            group:
+              type: Static
+              static:
+                values:
+                  - botkube-plugins-default
 
     # Error events
     k8s-errors:
@@ -219,6 +248,13 @@ botkube:
             - type: apps/v1/statefulsets
             - type: apps/v1/daemonsets
             - type: batch/v1/jobs
+        context:
+          rbac:
+            group:
+              type: Static
+              static:
+                values:
+                  - botkube-plugins-default
 
     # Recommendation events
     k8s-recommendations:
@@ -236,6 +272,13 @@ botkube:
             ingress:
               backendServiceValid: true
               tlsSecretValid: true
+        context:
+          rbac:
+            group:
+              type: Static
+              static:
+                values:
+                  - botkube-plugins-default
 
     # Prometheus alerts source
     prometheus-alerts:
@@ -248,6 +291,13 @@ botkube:
             - firing
             - pending
           ignoreOldAlerts: true
+        context:
+          rbac:
+            group:
+              type: Static
+              static:
+                values:
+                  - botkube-plugins-default
 
     # CRD monitoring
     crds:
@@ -268,21 +318,17 @@ botkube:
             - name: monitoring.coreos.com/v1/servicemonitors
             - name: cert-manager.io/v1/certificates
             - name: argoproj.io/v1alpha1/applications
+        context:
+          rbac:
+            group:
+              type: Static
+              static:
+                values:
+                  - botkube-plugins-default
 
-  # Extra environment variables for Slack Socket Mode credentials
-  # Botkube uses env vars to override config values with pattern:
-  # BOTKUBE_<PATH> where __ (double underscore) separates nested paths
-  extraEnv:
-    - name: BOTKUBE_COMMUNICATIONS__DEFAULT-GROUP__SOCKETSLACK__BOTTOKEN
-      valueFrom:
-        secretKeyRef:
-          name: botkube-slack-secret
-          key: BOTKUBE_COMMUNICATIONS__DEFAULT-GROUP__SOCKETSLACK__BOTTOKEN
-    - name: BOTKUBE_COMMUNICATIONS__DEFAULT-GROUP__SOCKETSLACK__APPTOKEN
-      valueFrom:
-        secretKeyRef:
-          name: botkube-slack-secret
-          key: BOTKUBE_COMMUNICATIONS__DEFAULT-GROUP__SOCKETSLACK__APPTOKEN
+  # NOTE: extraEnv for BOTKUBE_COMMUNICATIONS__* does NOT work for Slack tokens.
+  # The env var override mechanism fails to properly apply to nested communication
+  # config. Use AVP (ArgoCD Vault Plugin) to inject secrets directly into values.
 
 # External Secrets Operator configuration
 eso:

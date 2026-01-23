@@ -1,0 +1,6 @@
+dependencies:
+- name: botkube
+  repository: https://charts.botkube.io
+  version: v1.14.0
+digest: sha256:e384da37d046133bdabc9ea0c2cb2e47d35191539b84d921b6bf0dbf4038241e
+generated: "2026-01-22T18:00:16.846601-06:00"

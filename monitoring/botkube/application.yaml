@@ -1,0 +1,49 @@
+# Standalone ArgoCD Application for Botkube with AVP plugin
+# This uses ArgoCD Vault Plugin to inject Slack tokens from Vault at sync time
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: botkube
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: monitoring
+  source:
+    repoURL: https://github.com/donydonald1/gitops-argocd.git
+    targetRevision: HEAD
+    path: monitoring/botkube
+    # Use AVP plugin to inject Vault secrets into Helm values
+    plugin:
+      name: avp-helm
+  destination:
+    name: in-cluster
+    namespace: botkube
+  ignoreDifferences:
+    - group: apps
+      kind: "*"
+      jqPathExpressions:
+        - .spec.template.spec.hostUsers
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    managedNamespaceMetadata:
+      labels:
+        goldilocks.fairwinds.com/enabled: "true"
+        pod-security.kubernetes.io/enforce: privileged
+        pod-security.kubernetes.io/enforce-version: latest
+        pod-security.kubernetes.io/audit: privileged
+        pod-security.kubernetes.io/audit-version: latest
+        pod-security.kubernetes.io/warn: privileged
+        pod-security.kubernetes.io/warn-version: latest
+    syncOptions:
+      - CreateNamespace=true
+      - RespectIgnoreDifferences=true
+      - PruneLast=true
+      - PrunePropagationPolicy=foreground
+      - SkipDryRunOnMissingResource=true
+      - ServerSideApply=true
+      - ServerSideDiff=true
