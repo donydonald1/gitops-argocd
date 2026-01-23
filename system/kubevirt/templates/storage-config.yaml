@@ -1,0 +1,49 @@
+# VolumeSnapshotClass for Longhorn to enable CSI snapshot-based cloning
+# This enables smart cloning in CDI for faster VM disk cloning
+apiVersion: snapshot.storage.k8s.io/v1
+kind: VolumeSnapshotClass
+metadata:
+  name: longhorn-snapshot
+  labels:
+    app.kubernetes.io/name: longhorn
+    app.kubernetes.io/component: storage
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+    # Set as default snapshot class for Longhorn
+    snapshot.storage.kubernetes.io/is-default-class: "true"
+driver: driver.longhorn.io
+deletionPolicy: Delete
+parameters:
+  # Use Longhorn's snapshot type
+  type: snap
+---
+# StorageProfile to configure CDI to use snapshot-based cloning for Longhorn
+# This tells CDI how to optimally use the Longhorn storage class
+apiVersion: cdi.kubevirt.io/v1beta1
+kind: StorageProfile
+metadata:
+  name: longhorn
+  labels:
+    app.kubernetes.io/name: longhorn
+    app.kubernetes.io/component: storage
+  annotations:
+    argocd.argoproj.io/sync-wave: "6"
+spec:
+  # Use snapshot-based cloning for faster disk cloning
+  cloneStrategy: snapshot
+  # Reference the Longhorn VolumeSnapshotClass
+  snapshotClass: longhorn-snapshot
+  # Claim property sets define how PVCs should be created
+  claimPropertySets:
+    # Block mode with ReadWriteMany (Longhorn supports RWX for block volumes)
+    - accessModes:
+        - ReadWriteMany
+      volumeMode: Block
+    # Block mode with ReadWriteOnce
+    - accessModes:
+        - ReadWriteOnce
+      volumeMode: Block
+    # Filesystem mode with ReadWriteOnce (default for most use cases)
+    - accessModes:
+        - ReadWriteOnce
+      volumeMode: Filesystem
