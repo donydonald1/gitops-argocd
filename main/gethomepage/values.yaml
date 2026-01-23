@@ -107,22 +107,13 @@ homepage:
     services:
     # Monitoring group with service widgets
     - Monitoring:
-      - Uptime Kuma:
-          icon: uptime-kuma.png
-          href: https://uptime.dev.techsecoms.com
-          description: Service Status Monitoring
-          siteMonitor: https://uptime.dev.techsecoms.com
-          widget:
-            type: uptimekuma
-            url: http://uptime-kuma.monitoring.svc.cluster.local:3001
-            slug: default
       - Prometheus:
           icon: prometheus.png
           href: https://prometheus.ops.techsecom.io
           description: Metrics Collection
           widget:
             type: prometheus
-            url: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
+            url: http://kps-prometheus.monitoring.svc.cluster.local:9090
       - Alertmanager:
           icon: alertmanager.png
           href: https://alertmanager.ops.techsecom.io

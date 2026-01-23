@@ -65,7 +65,7 @@ ingress:
     gethomepage.dev/name: "KubeVirt Manager"
     gethomepage.dev/description: "Virtual Machine Management"
     gethomepage.dev/group: "System"
-    gethomepage.dev/icon: "kubevirt.png"
+    gethomepage.dev/icon: "https://raw.githubusercontent.com/kubevirt/community/main/logo/KubeVirt_icon.svg"
     gethomepage.dev/href: "https://kubevirt.ops.techsecom.io"
     # WebSocket support for VNC console
     nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"

@@ -24,7 +24,7 @@ atlantis:
       gethomepage.dev/name: "Atlantis"
       gethomepage.dev/description: "Terraform PR Automation"
       gethomepage.dev/group: "Platform"
-      gethomepage.dev/icon: "atlantis.png"
+      gethomepage.dev/icon: "runatlantis.png"
       gethomepage.dev/href: "https://atlantis.ops.techsecom.io"
       cert-manager.io/cluster-issuer: letsencrypt-prod
       nginx.ingress.kubernetes.io/ssl-redirect: "true"
