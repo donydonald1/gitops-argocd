@@ -58,7 +58,7 @@ spec:
       serviceAccountName: vault-approle-sync
       containers:
         - name: vault-sync
-          image: bitnami/kubectl:latest
+          image: hashicorp/vault:1.18
           env:
             - name: VAULT_ADDR
               value: "https://vault.vault.svc.cluster.local:8200"
@@ -71,12 +71,11 @@ spec:
               set -e
               echo "=== Vault AppRole Sync for Atlantis ==="
 
-              # Install vault CLI
-              echo "Installing Vault CLI..."
+              # Install kubectl
+              echo "Installing kubectl..."
               cd /tmp
-              wget -q https://releases.hashicorp.com/vault/1.18.3/vault_1.18.3_linux_amd64.zip
-              unzip -q vault_1.18.3_linux_amd64.zip
-              chmod +x vault
+              curl -sLO "https://dl.k8s.io/release/$(curl -sL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+              chmod +x kubectl
               export PATH="/tmp:$PATH"
 
               # Get Vault root token from vault namespace
