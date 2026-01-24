@@ -35,7 +35,7 @@ redis:
         memory: 10Gi
     persistence:
       enabled: true
-      storageClass: nfs-csi
+      storageClass: longhorn
       size: 60Gi
     terminationGracePeriodSeconds: 60
     startupProbe:
@@ -67,7 +67,7 @@ redis:
     terminationGracePeriodSeconds: 60
     persistence:
       enabled: true
-      storageClass: nfs-csi
+      storageClass: longhorn
       size: 60Gi
     startupProbe:
       enabled: true
@@ -87,11 +87,10 @@ redis:
       periodSeconds: 15
       timeoutSeconds: 10
       failureThreshold: 10
-  # Disable volumePermissions - not supported on NFS storage
-  # Instead, use podSecurityContext to run as correct user
+  # Disable volumePermissions init container (not needed with Longhorn)
   volumePermissions:
     enabled: false
-  # Run Redis as user 1001 (bitnami default) to avoid permission issues on NFS
+  # Run Redis as user 1001 (bitnami default)
   podSecurityContext:
     enabled: true
     fsGroup: 1001

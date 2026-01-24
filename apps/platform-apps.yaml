@@ -16,27 +16,27 @@ spec:
       # =============================================
       # WAVE -1: Storage Infrastructure (MinIO must be ready before other apps)
       # =============================================
-      - name: minio
-        namespace: minio
-        serverSideApply: true
-        wave: "-1"  # Deploy MinIO first - storage backend for all apps
-        imageList: "minio=minio/minio"
-        skipHooks: "false"  # Enable Helm hooks for bucket/user creation jobs
-        helm:
-          values:
-          - values.yaml
+      # - name: minio
+      #   namespace: minio
+      #   serverSideApply: true
+      #   wave: "-1"  # Deploy MinIO first - storage backend for all apps
+      #   imageList: "minio=minio/minio"
+      #   skipHooks: "false"  # Enable Helm hooks for bucket/user creation jobs
+      #   helm:
+      #     values:
+      #     - values.yaml
 
-      # =============================================
-      # WAVE 0: Database Cluster (requires CNPG operator from system wave -2)
-      # =============================================
-      - name: cnpg-cluster
-        namespace: cnpg-system
-        wave: "0"  # Deploy after CNPG operator is ready
-        imageList: "postgresql=ghcr.io/cloudnative-pg/postgresql"
-        helm:
-          values:
-          - values.yaml
-        serverSideApply: true
+      # # =============================================
+      # # WAVE 0: Database Cluster (requires CNPG operator from system wave -2)
+      # # =============================================
+      # - name: cnpg-cluster
+      #   namespace: cnpg-system
+      #   wave: "0"  # Deploy after CNPG operator is ready
+      #   imageList: "postgresql=ghcr.io/cloudnative-pg/postgresql"
+      #   helm:
+      #     values:
+      #     - values.yaml
+      #   serverSideApply: true
 
       # =============================================
       # WAVE 1: Services depending on storage/database foundation
@@ -44,26 +44,26 @@ spec:
       - name: velero
         namespace: velero
         serverSideApply: true
-        wave: "1"  # Backup solution - needs MinIO ready
+        wave: "1" # Backup solution - needs MinIO ready
         imageList: "velero=velero/velero, velero-aws=velero/velero-plugin-for-aws"
         helm:
           values:
           - values.yaml
 
       - name: gitlab-redis-main
-        wave: "1"  # Redis for GitLab - deploy before GitLab
+        wave: "1" # Redis for GitLab - deploy before GitLab
         namespace: gitlab
         serverSideApply: true
-        imageList: "redis=bitnami/redis"
+        imageList: "redis=bitnamilegacy/redis"
         helm:
           values:
           - values.yaml
 
       - name: gitlab-redis-cache
-        wave: "1"  # Redis cache for GitLab - deploy before GitLab
+        wave: "1" # Redis cache for GitLab - deploy before GitLab
         namespace: gitlab
         serverSideApply: true
-        imageList: "redis=bitnami/redis"
+        imageList: "redis=bitnamilegacy/redis"
         helm:
           values:
           - values.yaml
@@ -81,13 +81,13 @@ spec:
       - name: wikijs
         namespace: wikijs
         serverSideApply: true
-        wave: "1"  # Wiki - needs database ready
+        wave: "1" # Wiki - needs database ready
         imageList: "wikijs=ghcr.io/requarks/wiki"
 
       - name: it-tools
         namespace: it-tools
         serverSideApply: true
-        wave: "1"  # Utility app - minimal dependencies
+        wave: "1" # Utility app - minimal dependencies
         imageList: "it-tools=corentinth/it-tools"
         helm:
           values:
@@ -96,7 +96,7 @@ spec:
       - name: kroki
         namespace: kroki
         serverSideApply: true
-        wave: "1"  # Diagram service - minimal dependencies
+        wave: "1" # Diagram service - minimal dependencies
         imageList: "kroki=yuzutech/kroki"
         helm:
           values:
@@ -108,9 +108,9 @@ spec:
       - name: keycloak
         namespace: keycloak
         serverSideApply: true
-        wave: "2"  # Identity provider - needs CNPG database
+        wave: "2" # Identity provider - needs CNPG database
         imageList: "keycloak=quay.io/keycloak/keycloak"
-        skipHooks: "false"  # Enable PostSync hook for OIDC IDP setup
+        skipHooks: "false" # Enable PostSync hook for OIDC IDP setup
         helm:
           values:
           - values.yaml
@@ -119,14 +119,14 @@ spec:
         namespace: harbor
         serverSideApply: true
         SkipCRDs: true
-        wave: "2"  # Container registry - needs database + storage
+        wave: "2" # Container registry - needs database + storage
         imageList: "harbor-core=goharbor/harbor-core, harbor-portal=goharbor/harbor-portal, harbor-jobservice=goharbor/harbor-jobservice, harbor-registry=goharbor/registry-photon, harbor-trivy=goharbor/trivy-adapter-photon"
         helm:
           values:
           - values.yaml
 
       - name: gitlab
-        wave: "2"  # GitLab - needs CNPG, MinIO, and Redis
+        wave: "2" # GitLab - needs CNPG, MinIO, and Redis
         namespace: gitlab
         serverSideApply: true
         imageList: "gitlab=gitlab/gitlab-ee"
@@ -137,7 +137,7 @@ spec:
       - name: n8n
         namespace: n8n
         serverSideApply: true
-        wave: "2"  # Workflow automation - needs database
+        wave: "2" # Workflow automation - needs database
         imageList: "n8n=n8nio/n8n"
         helm:
           values:
@@ -149,7 +149,7 @@ spec:
       - name: gitlab-agent
         namespace: gitlab
         serverSideApply: true
-        wave: "3"  # GitLab Agent - needs GitLab fully ready
+        wave: "3" # GitLab Agent - needs GitLab fully ready
         imageList: "gitlab-agent=registry.gitlab.com/gitlab-org/cluster-integration/gitlab-agent"
         helm:
           values:
@@ -158,7 +158,7 @@ spec:
       - name: atlantis
         namespace: atlantis
         serverSideApply: true
-        wave: "3"  # Atlantis - needs GitLab webhooks configured
+        wave: "3" # Atlantis - needs GitLab webhooks configured
         imageList: "atlantis=ghcr.io/runatlantis/atlantis"
         helm:
           values:
@@ -170,11 +170,10 @@ spec:
       - name: sonar
         namespace: sonar
         serverSideApply: true
-        wave: "2"  # Needs CNPG cluster and External Secrets
+        wave: "2" # Needs CNPG cluster and External Secrets
         helm:
           values:
           - values.yaml
-
       # =============================================
       # DISABLED APPLICATIONS
       # =============================================

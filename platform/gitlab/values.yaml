@@ -23,8 +23,8 @@ gitlab:
         - key: safe.directory
           value: "*"
       persistence:
-        size: 300Gi
-        storageClass: nfs-csi
+        size: 150Gi
+        storageClass: longhorn
       # Gitaly performance tuning
       resources:
         requests:

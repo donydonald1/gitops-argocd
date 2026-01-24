@@ -1,7 +1,21 @@
+# ===========================================
+# ArgoCD Umbrella Chart
+# ===========================================
+# GitOps continuous delivery tool for Kubernetes
+# Reference: https://argo-cd.readthedocs.io/
+# Helm Chart: https://github.com/argoproj/argo-helm/tree/main/charts/argo-cd
+#
+# Features:
+# - Vault integration via argocd-vault-plugin (AVP)
+# - Redis HA for high availability
+# - OIDC authentication (Keycloak)
+# - Custom health checks for CNPG, ExternalSecrets, Keycloak
+# - Server-side diff for better performance
+# ===========================================
 apiVersion: v2
 name: argocd
 version: 0.0.0
 dependencies:
 - name: argo-cd
-  version: 7.8.13
+  version: 7.8.28
   repository: https://argoproj.github.io/argo-helm

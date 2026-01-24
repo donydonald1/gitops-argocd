@@ -1,3 +1,14 @@
+# ===========================================
+# ArgoCD Vault Plugin (AVP) ConfigMap
+# ===========================================
+# Config Management Plugins for secret injection
+# Reference: https://argocd-vault-plugin.readthedocs.io/
+#
+# Plugins:
+# - avp-helm: Helm charts with Vault secrets
+# - avp-k8s: Plain YAML manifests with Vault secrets
+# - avp-kustomize: Kustomize with Vault secrets
+# ===========================================
 apiVersion: v1
 data:
     avp-helm.yaml: |-
@@ -18,7 +29,20 @@ data:
                   - sh
                   - "-c"
                   - |
-                    helm dependency build
+                    # Extract required repos from Chart.yaml and add only those
+                    if [ -f Chart.yaml ]; then
+                      repos=$(grep -E '^\s*repository:' Chart.yaml | awk '{print $2}' | tr -d '"' | tr -d "'" | sort -u)
+                      for repo in $repos; do
+                        # Skip file:// and oci:// repos
+                        case "$repo" in
+                          file://*|oci://*) continue ;;
+                        esac
+                        # Generate a short name from URL
+                        name=$(echo "$repo" | sed 's|https://||;s|http://||;s|/.*||;s|\..*||')
+                        helm repo add "$name" "$repo" --force-update --insecure-skip-tls-verify 2>/dev/null || true
+                      done
+                    fi
+                    helm dependency build --skip-refresh 2>/dev/null || helm dependency build 2>/dev/null || true
             generate:
                 command:
                   - sh

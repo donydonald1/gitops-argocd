@@ -1,6 +1,22 @@
+# ===========================================
+# ArgoCD Configuration
+# ===========================================
+# Reference: https://argo-cd.readthedocs.io/
+# Chart values: https://github.com/argoproj/argo-helm/blob/main/charts/argo-cd/values.yaml
+#
+# Architecture:
+# - Redis HA for state/caching
+# - Vault Plugin (AVP) for secret injection
+# - Server-side diff enabled for performance
+# - OIDC via Keycloak
+# ===========================================
+
 argo-cd:
   global:
     domain: argocd.dev.techsecoms.com
+    # ===========================================
+    # Global Environment Variables
+    # ===========================================
     env:
     - name: TZ
       value: America/Chicago
@@ -272,6 +288,9 @@ argo-cd:
     install: true
     keep: false
 
+  # ===========================================
+  # Application Controller
+  # ===========================================
   controller:
     resources:
       requests:
@@ -281,6 +300,12 @@ argo-cd:
         memory: 4Gi
     args:
       repoServerTimeoutSeconds: 300
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+        additionalLabels:
+          release: kube-prometheus-stack
 
   dex:
     enabled: false
@@ -295,6 +320,9 @@ argo-cd:
       limits:
         memory: 1Gi
 
+  # ===========================================
+  # API Server
+  # ===========================================
   server:
     resources:
       requests:
@@ -302,6 +330,12 @@ argo-cd:
         memory: 64Mi
       limits:
         memory: 1Gi
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+        additionalLabels:
+          release: kube-prometheus-stack
     autoscaling:
       enabled: false
       minReplicas: 1
@@ -326,8 +360,23 @@ argo-cd:
       tls: true
       https: true
 
+  # ===========================================
+  # Repo Server
+  # ===========================================
   repoServer:
     replicas: 2
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 2Gi
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+        additionalLabels:
+          release: kube-prometheus-stack
     rbac:
     - verbs:
       - get
@@ -356,11 +405,21 @@ argo-cd:
       args:
       - >-
         curl -L https://github.com/argoproj-labs/argocd-vault-plugin/releases/download/v$(AVP_VERSION)/argocd-vault-plugin_$(AVP_VERSION)_linux_amd64 -o argocd-vault-plugin && chmod +x argocd-vault-plugin && mv argocd-vault-plugin /custom-tools/
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          memory: 256Mi
       volumeMounts:
       - mountPath: /custom-tools
         name: custom-tools
 
     extraContainers:
+    # ===========================================
+    # ArgoCD Vault Plugin (AVP) Sidecar Containers
+    # Reference: https://argocd-vault-plugin.readthedocs.io/
+    # ===========================================
     # argocd-vault-plugin with plain YAML
     - name: avp-k8s
       command:
@@ -369,6 +428,12 @@ argo-cd:
       securityContext:
         runAsNonRoot: true
         runAsUser: 999
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          memory: 512Mi
       volumeMounts:
       - mountPath: /var/run/argocd
         name: var-files
@@ -376,11 +441,9 @@ argo-cd:
         name: plugins
       - mountPath: /tmp
         name: tmp
-
       - mountPath: /home/argocd/cmp-server/config/plugin.yaml
         subPath: avp-k8s.yaml
         name: avp-cmp-plugin
-
       - name: custom-tools
         subPath: argocd-vault-plugin
         mountPath: /usr/local/bin/argocd-vault-plugin
@@ -388,13 +451,19 @@ argo-cd:
       - secretRef:
           name: avp-plugin-credentials
 
-    # argocd-vault-plugin with plain Kustomize
+    # argocd-vault-plugin with Kustomize
     - name: avp-kustomize
       command: [ /var/run/argocd/argocd-cmp-server ]
       image: quay.io/argoproj/argocd
       securityContext:
         runAsNonRoot: true
         runAsUser: 999
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          memory: 512Mi
       volumeMounts:
       - mountPath: /var/run/argocd
         name: var-files
@@ -402,24 +471,28 @@ argo-cd:
         name: plugins
       - mountPath: /tmp
         name: tmp
-
       - mountPath: /home/argocd/cmp-server/config/plugin.yaml
         subPath: avp-kustomize.yaml
         name: avp-cmp-plugin
-
       - name: custom-tools
         subPath: argocd-vault-plugin
         mountPath: /usr/local/bin/argocd-vault-plugin
       envFrom:
       - secretRef:
           name: avp-plugin-credentials
-      # argocd-vault-plugin with Helm
+    # argocd-vault-plugin with Helm
     - name: avp-helm
       command: [ /var/run/argocd/argocd-cmp-server ]
       image: quay.io/argoproj/argocd
       securityContext:
         runAsNonRoot: true
         runAsUser: 999
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          memory: 1Gi
       volumeMounts:
       - mountPath: /var/run/argocd
         name: var-files
@@ -427,12 +500,10 @@ argo-cd:
         name: plugins
       - mountPath: /tmp
         name: tmp
-
       # Register plugins into sidecar
       - mountPath: /home/argocd/cmp-server/config/plugin.yaml
         subPath: avp-helm.yaml
         name: avp-cmp-plugin
-
       - name: custom-tools
         subPath: argocd-vault-plugin
         mountPath: /usr/local/bin/argocd-vault-plugin
@@ -447,5 +518,21 @@ argo-cd:
         memory: 64Mi
       limits:
         memory: 1Gi
-
     argocdUrl: argocd.dev.techsecoms.com
+
+  # ===========================================
+  # Notifications Controller
+  # ===========================================
+  notifications:
+    enabled: true
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        memory: 256Mi
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+

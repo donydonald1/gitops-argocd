@@ -118,13 +118,13 @@ reportportal:
       nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
       nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
     hosts:
-      - reportportal.ops.techsecom.io
+    - reportportal.ops.techsecom.io
     # TLS configuration for cert-manager
     tls:
       certificates:
-        - hosts:
-            - reportportal.ops.techsecom.io
-          secretName: reportportal-tls
+      - hosts:
+        - reportportal.ops.techsecom.io
+        secretName: reportportal-tls
 
   # External PostgreSQL - CNPG Cluster
   database:
@@ -135,7 +135,7 @@ reportportal:
     dbName: reportportal
     # Password comes from secret
 
-  # Disable embedded PostgreSQL - using external CNPG
+    # Disable embedded PostgreSQL - using external CNPG
   postgresql:
     install: false
 
@@ -149,7 +149,7 @@ reportportal:
     # Using SSL with verification disabled for internal cluster communication
     # User/password come from secret
 
-  # Disable embedded OpenSearch - using external Elasticsearch
+    # Disable embedded OpenSearch - using external Elasticsearch
   opensearch:
     install: false
 
@@ -182,10 +182,7 @@ reportportal:
       existingErlangSecretName: reportportal-rabbitmq-creds
       existingSecretErlangKey: erlang-cookie
     extraPlugins: >
-      rabbitmq_auth_backend_ldap
-      rabbitmq_consistent_hash_exchange
-      rabbitmq_shovel
-      rabbitmq_shovel_management
+      rabbitmq_auth_backend_ldap rabbitmq_consistent_hash_exchange rabbitmq_shovel rabbitmq_shovel_management
     extraConfiguration: |-
       max_message_size = 134217728
     persistence:
