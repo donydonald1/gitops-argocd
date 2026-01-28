@@ -24,7 +24,7 @@ gitlab:
           value: "*"
       persistence:
         size: 150Gi
-        storageClass: longhorn
+        storageClass: longhorn-nvme
       # Gitaly performance tuning
       resources:
         requests:

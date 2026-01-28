@@ -28,7 +28,7 @@ clickhouse:
       repository: bitnamilegacy/clickhouse-keeper
     persistence:
       enabled: true
-      storageClass: longhorn
+      storageClass: longhorn-nvme
       size: 10Gi
     resources:
       requests:
@@ -53,7 +53,7 @@ clickhouse:
   # Persistence
   persistence:
     enabled: true
-    storageClass: longhorn
+    storageClass: longhorn-nvme
     size: 100Gi
 
   # Service

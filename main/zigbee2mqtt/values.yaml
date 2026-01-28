@@ -74,7 +74,7 @@ app-template:
     config:
       enabled: true
       mountPath: /config
-      storageClass: "longhorn"
+      storageClass: "longhorn-fast"
       accessMode: ReadWriteOnce
       size: "1Gi"
       skipuninstall: true

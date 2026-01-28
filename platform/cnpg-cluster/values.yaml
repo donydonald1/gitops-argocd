@@ -42,7 +42,7 @@ connections:
   # Automatically calculated as: max_connections - reserved - pooler
   # direct: auto
 
-storageClass: longhorn
+storageClass: longhorn-nvme
 storageSize: 100Gi
 maxConnections: 2000
 objectStore:

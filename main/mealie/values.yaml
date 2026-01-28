@@ -74,7 +74,7 @@ app-template:
   persistence:
     api-data:
       enabled: true
-      storageClass: "longhorn"
+      storageClass: "longhorn-fast"
       accessMode: ReadWriteOnce
       size: "1Gi"
       skipuninstall: true

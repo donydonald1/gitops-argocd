@@ -145,7 +145,7 @@ sonarqube:
   # Persistence for temporary files and caches
   persistence:
     enabled: true
-    storageClass: longhorn
+    storageClass: longhorn-nvme
     size: 20Gi
 
   # Security context - using default SonarQube user (1000)

@@ -97,7 +97,7 @@ app-template:
     config:
       enabled: true
       accessMode: ReadWriteOnce
-      storageClass: "longhorn"
+      storageClass: "longhorn-fast"
       size: 10Gi
       advancedMounts:
         main:

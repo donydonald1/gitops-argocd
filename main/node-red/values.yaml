@@ -45,7 +45,7 @@ app-template:
   persistence:
     data:
       enabled: true
-      storageClass: "longhorn"
+      storageClass: "longhorn-fast"
       accessMode: ReadWriteOnce
       size: "5Gi"
       skipuninstall: true

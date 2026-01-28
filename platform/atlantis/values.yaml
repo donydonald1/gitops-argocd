@@ -141,7 +141,7 @@ atlantis:
 
   # Persistence for Atlantis data (plans, locks)
   dataStorage: 10Gi
-  storageClassName: longhorn
+  storageClassName: longhorn-fast
 
   # StatefulSet configuration for production
   statefulSet:

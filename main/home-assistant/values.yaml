@@ -71,7 +71,7 @@ app-template:
     config:
       enabled: true
 #      existingClaim: home-assistant-pvc
-      storageClass: "longhorn"
+      storageClass: "longhorn-fast"
       accessMode: ReadWriteOnce
       skipuninstall: true
       size: "10Gi"

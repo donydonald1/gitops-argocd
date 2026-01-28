@@ -53,7 +53,7 @@ rancher-monitoring:
     persistence:
       enabled: true
       type: statefulset
-      storageClassName: longhorn
+      storageClassName: longhorn-ha
       accessModes:
         - ReadWriteOnce
       size: 10Gi
@@ -351,7 +351,7 @@ rancher-monitoring:
             resources:
               requests:
                 storage: 50Gi
-            storageClassName: longhorn
+            storageClassName: longhorn-ha
 
       securityContext:
         fsGroup: 2000
@@ -555,7 +555,7 @@ rancher-monitoring:
       storage:
         volumeClaimTemplate:
           spec:
-            storageClassName: longhorn
+            storageClassName: longhorn-ha
             resources:
               requests:
                 storage: 10Gi
@@ -914,7 +914,7 @@ thanos:
       tls: true
     persistence:
       enabled: true
-      storageClass: longhorn
+      storageClass: longhorn-ha
       size: 20Gi
 
   storegateway:
@@ -932,7 +932,7 @@ thanos:
       tls: true
     persistence:
       enabled: true
-      storageClass: longhorn
+      storageClass: longhorn-ha
       size: 7Gi
 
   ruler:
@@ -1053,7 +1053,7 @@ loki:
     replicas: 3
     persistence:
       size: 10Gi
-      storageClass: "longhorn"
+      storageClass: "longhorn-ha"
 
   read:
     replicas: 2
@@ -1061,7 +1061,7 @@ loki:
   backend:
     replicas: 2
     persistence:
-      storageClass: "longhorn"
+      storageClass: "longhorn-ha"
 
   ingress:
     enabled: true
@@ -1172,7 +1172,7 @@ tempo:
   persistence:
     enabled: true
     size: 20Gi
-    storageClassName: longhorn
+    storageClassName: longhorn-ha
 
 # ────────────────────────────────────────────────────────────────────────────────
 # Promtail (Log Collection)

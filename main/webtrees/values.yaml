@@ -74,7 +74,7 @@ app-template:
     config:
       enabled: true
       mountPath: /var/www/webtrees/data/
-      storageClass: "longhorn"
+      storageClass: "longhorn-fast"
       accessMode: ReadWriteOnce
       skipuninstall: true
       size: "1Gi"
