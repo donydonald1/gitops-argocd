@@ -1,0 +1,40 @@
+{{- if .Values.keycloak.enabled }}
+# KeycloakClient for MinIO OIDC SSO integration
+# Requires EDP Keycloak Operator and ClusterKeycloakRealm 'main' to be available
+apiVersion: v1.edp.epam.com/v1
+kind: KeycloakClient
+metadata:
+  name: minio
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-3"
+spec:
+  clientId: {{ .Values.keycloak.clientId }}
+  enabled: true
+  clientAuthenticatorType: client-secret
+  secret: {{ .Values.keycloak.clientSecret }}
+  directAccess: true
+  implicitFlowEnabled: false
+  standardFlowEnabled: true
+  fullScopeAllowed: true
+  targetRealm: main
+  realmRef:
+    kind: ClusterKeycloakRealm
+    name: main
+  webUrl: https://{{ .Values.keycloak.consoleHostname }}
+  redirectUris:
+    - https://{{ .Values.keycloak.consoleHostname }}/oauth_callback
+  attributes:
+    post.logout.redirect.uris: https://{{ .Values.keycloak.consoleHostname }}/*
+  # Protocol mapper to add 'policy' claim for MinIO authorization
+  protocolMappers:
+    - name: policy
+      protocol: openid-connect
+      protocolMapper: oidc-hardcoded-claim-mapper
+      config:
+        claim.name: policy
+        claim.value: {{ .Values.keycloak.defaultPolicy | default "consoleAdmin" }}
+        id.token.claim: "true"
+        access.token.claim: "true"
+        userinfo.token.claim: "true"
+{{- end }}
