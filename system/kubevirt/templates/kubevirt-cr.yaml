@@ -92,6 +92,15 @@ spec:
         resourceName: virt-handler
         patch: '[{"op": "add", "path": "/spec/template/spec/initContainers/0/volumeMounts/-", "value": {"name": "host-dev", "mountPath": "/dev"}}]'
         type: json
+      # virt-handler - Add cgroup volume mount for init container (libvirt needs cgroups for QEMU process management)
+      - resourceType: DaemonSet
+        resourceName: virt-handler
+        patch: '[{"op": "add", "path": "/spec/template/spec/volumes/-", "value": {"name": "host-cgroup", "hostPath": {"path": "/sys/fs/cgroup", "type": "Directory"}}}]'
+        type: json
+      - resourceType: DaemonSet
+        resourceName: virt-handler
+        patch: '[{"op": "add", "path": "/spec/template/spec/initContainers/0/volumeMounts/-", "value": {"name": "host-cgroup", "mountPath": "/sys/fs/cgroup"}}]'
+        type: json
       # virt-exportproxy - CPU requests and descheduler eviction prevention (label + annotation)
       - resourceType: Deployment
         resourceName: virt-exportproxy
