@@ -1,0 +1,52 @@
+# CiliumNetworkPolicy to allow egress for KubeVirt components
+# Required for installer job to download operator from GitHub
+# and for virt-operator to function properly
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: kubevirt-allow-egress
+  namespace: {{ .Values.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-15"
+spec:
+  endpointSelector: {}
+  egress:
+  - toEntities:
+    - world
+    - cluster
+  - toEndpoints:
+    - matchLabels:
+        io.kubernetes.pod.namespace: kube-system
+        k8s-app: kube-dns
+    toPorts:
+    - ports:
+      - port: "53"
+        protocol: UDP
+      - port: "53"
+        protocol: TCP
+{{- if .Values.cdi.enabled }}
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: cdi-allow-egress
+  namespace: cdi
+  annotations:
+    argocd.argoproj.io/sync-wave: "-15"
+spec:
+  endpointSelector: {}
+  egress:
+  - toEntities:
+    - world
+    - cluster
+  - toEndpoints:
+    - matchLabels:
+        io.kubernetes.pod.namespace: kube-system
+        k8s-app: kube-dns
+    toPorts:
+    - ports:
+      - port: "53"
+        protocol: UDP
+      - port: "53"
+        protocol: TCP
+{{- end }}
