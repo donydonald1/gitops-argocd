@@ -101,6 +101,15 @@ spec:
         resourceName: virt-handler
         patch: '[{"op": "add", "path": "/spec/template/spec/initContainers/0/volumeMounts/-", "value": {"name": "host-cgroup", "mountPath": "/sys/fs/cgroup"}}]'
         type: json
+      # virt-handler - Add custom libvirt qemu.conf to run QEMU as root (fixes permission issues in containers)
+      - resourceType: DaemonSet
+        resourceName: virt-handler
+        patch: '[{"op": "add", "path": "/spec/template/spec/volumes/-", "value": {"name": "libvirt-config", "configMap": {"name": "kubevirt-libvirt-config"}}}]'
+        type: json
+      - resourceType: DaemonSet
+        resourceName: virt-handler
+        patch: '[{"op": "add", "path": "/spec/template/spec/initContainers/0/volumeMounts/-", "value": {"name": "libvirt-config", "mountPath": "/etc/libvirt/qemu.conf", "subPath": "qemu.conf"}}]'
+        type: json
       # virt-exportproxy - CPU requests and descheduler eviction prevention (label + annotation)
       - resourceType: Deployment
         resourceName: virt-exportproxy

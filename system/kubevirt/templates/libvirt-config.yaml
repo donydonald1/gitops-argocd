@@ -1,0 +1,27 @@
+# ConfigMap with custom libvirt qemu.conf for virt-handler
+# This fixes the issue where libvirt can't start QEMU as the 'qemu' user
+# in containerized environments due to permission issues.
+# Running QEMU as root resolves the capability probing failure.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kubevirt-libvirt-config
+  namespace: {{ .Values.namespace }}
+  labels:
+    app.kubernetes.io/name: kubevirt
+    app.kubernetes.io/component: libvirt-config
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
+data:
+  qemu.conf: |
+    stdio_handler = "logd"
+    vnc_listen = "0.0.0.0"
+    vnc_tls = 0
+    vnc_sasl = 0
+    # Run QEMU as root to avoid permission issues in containerized environments
+    user = "root"
+    group = "root"
+    dynamic_ownership = 0
+    remember_owner = 0
+    namespaces = [ ]
+    cgroup_controllers = [ ]
