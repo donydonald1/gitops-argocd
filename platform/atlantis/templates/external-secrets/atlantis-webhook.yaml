@@ -45,4 +45,9 @@ spec:
       remoteRef:
         key: {{ .Values.eso.vaultPath }}
         property: vault_secret_id
+    # Redis password for Atlantis locking backend
+    - secretKey: redis_password
+      remoteRef:
+        key: {{ .Values.eso.vaultPath }}
+        property: redis_password
 {{- end }}

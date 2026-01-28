@@ -100,13 +100,17 @@ atlantis:
     ATLANTIS_LOCKING_DB_TYPE: "redis"
     ATLANTIS_REDIS_HOST: "argocd-redis-ha-haproxy.argocd.svc.cluster.local"
     ATLANTIS_REDIS_PORT: "6379"
-    ATLANTIS_REDIS_PASSWORD: "pLoZlkhbLiKLm3Dq"
+    # Redis password moved to environmentSecrets (sourced from Vault via ExternalSecret)
 
   # Note: ATLANTIS_GITLAB_TOKEN and ATLANTIS_GITLAB_WEBHOOK_SECRET are automatically
   # set by the upstream chart when vcsSecretName is configured (see above)
 
   # Environment variables from secrets (AWS/S3 credentials for MinIO backend)
   environmentSecrets:
+    - name: ATLANTIS_REDIS_PASSWORD
+      secretKeyRef:
+        name: atlantis-vcs-secret
+        key: redis_password
     - name: AWS_ACCESS_KEY_ID
       secretKeyRef:
         name: atlantis-vcs-secret

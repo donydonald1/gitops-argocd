@@ -514,7 +514,7 @@ gitlab:
         cert-manager.io/revision-history-limit: "3"
         external-dns.alpha.kubernetes.io/enabled: "true"
         external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
-        external-dns.alpha.kubernetes.io/target: 58067734-fa98-4c9b-81c2-83fed112fc48.cfargotunnel.com
+        external-dns.alpha.kubernetes.io/target: tunnel.ops.techsecom.io
         nginx.ingress.kubernetes.io/enable-access-log: "true"
         nginx.ingress.kubernetes.io/proxy-ssl-protocols: TLSv1.3 TLSv1.2
         nginx.ingress.kubernetes.io/ssl-redirect: "true"
