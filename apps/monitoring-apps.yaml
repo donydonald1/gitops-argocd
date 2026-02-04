@@ -116,7 +116,7 @@ spec:
         argocd-image-updater.argoproj.io/git-branch: main
         # notifications.argoproj.io/subscribe.on-sync-succeeded.telegram: "-1001726711150"
     spec:
-      project: monitoring
+      project: observability
       source:
         repoURL: https://github.com/donydonald1/gitops-argocd.git
         targetRevision: HEAD
