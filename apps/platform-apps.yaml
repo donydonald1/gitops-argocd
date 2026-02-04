@@ -119,8 +119,7 @@ spec:
 
       - name: harbor-ha
         namespace: harbor
-        serverSideApply: true
-        SkipCRDs: true
+        serverSideApply: "false"  # Disabled: --force incompatible with --server-side
         wave: "2" # Container registry - needs database + storage
         imageList: "harbor-core=goharbor/harbor-core, harbor-portal=goharbor/harbor-portal, harbor-jobservice=goharbor/harbor-jobservice, harbor-registry=goharbor/registry-photon, harbor-trivy=goharbor/trivy-adapter-photon"
         helm:
