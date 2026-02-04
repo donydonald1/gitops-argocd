@@ -131,6 +131,7 @@ spec:
         wave: "2" # GitLab - needs CNPG, MinIO, and Redis
         namespace: gitlab
         serverSideApply: true
+        skipHooks: "false"  # Enable Helm hooks for gitlab-shared-secrets job
         imageList: "gitlab=gitlab/gitlab-ee"
         helm:
           values:
