@@ -428,9 +428,12 @@ gitlab:
         enabled: true
         proxy_download: true
       omniauth:
-        autoSignInWithProvider: openid_connect
+        # Removed autoSignInWithProvider to allow username/password login option
+        # autoSignInWithProvider: openid_connect
+        allowSingleSignOn: ["openid_connect"]  # Allow SSO but don't force it
         allowBypassTwoFactor: []
         autoLinkUser: ["openid_connect"]
+        blockAutoCreatedUsers: false  # Allow auto-created users to login immediately
         enabled: true
         providers:
         - secret: gitlab-oidc-provider
