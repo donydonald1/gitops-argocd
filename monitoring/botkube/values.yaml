@@ -81,9 +81,9 @@ botkube:
                 - k8s-errors           # Errors and warnings
                 - k8s-critical         # Deletions of important resources
                 - k8s-nodes            # Node status changes
-                - prometheus-alerts    # Prometheus firing alerts
                 - k8s-recommendations  # Best practice recommendations
                 - argocd-notifications # ArgoCD sync and health status
+                # Note: prometheus-alerts disabled (plugin not in v1.14.0)
 
           # Admin channel - full access for operations team
           admin:
@@ -95,9 +95,9 @@ botkube:
                 - k8s-errors
                 - k8s-critical
                 - k8s-nodes
-                - prometheus-alerts
                 - crds
                 - argocd-notifications
+                # Note: prometheus-alerts disabled (plugin not in v1.14.0)
 
   # Service monitor for Prometheus
   serviceMonitor:
@@ -414,24 +414,24 @@ botkube:
                 values:
                   - botkube-plugins-default
 
-    # Prometheus alerts source
-    prometheus-alerts:
-      displayName: "Prometheus Alerts"
-      botkube/prometheus:
-        enabled: true
-        config:
-          url: "http://kube-prometheus-stack-prometheus.monitoring:9090"
-          alertStates:
-            - firing
-            - pending
-          ignoreOldAlerts: true
-        context:
-          rbac:
-            group:
-              type: Static
-              static:
-                values:
-                  - botkube-plugins-default
+    # Prometheus alerts source - DISABLED (plugin not in v1.14.0)
+    # prometheus-alerts:
+    #   displayName: "Prometheus Alerts"
+    #   botkube/prometheus:
+    #     enabled: true
+    #     config:
+    #       url: "http://kube-prometheus-stack-prometheus.monitoring:9090"
+    #       alertStates:
+    #         - firing
+    #         - pending
+    #       ignoreOldAlerts: true
+    #     context:
+    #       rbac:
+    #         group:
+    #           type: Static
+    #           static:
+    #             values:
+    #               - botkube-plugins-default
 
     # CRD monitoring
     crds:
