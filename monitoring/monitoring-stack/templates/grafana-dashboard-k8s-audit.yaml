@@ -132,7 +132,7 @@ data:
                 "uid": "loki"
               },
               "expr": "sum by (verb) (count_over_time({job=\"rancher-audit\", verb=~\"$verb\"} [$__interval]))",
-              "legendFormat": "{{ "{{" }}verb{{ "}}" }}",
+              "legendFormat": "{{`{{`}}verb{{`}}`}}",
               "refId": "A"
             }
           ],
@@ -223,7 +223,7 @@ data:
                 "uid": "loki"
               },
               "expr": "sum by (resource) (count_over_time({job=\"rancher-audit\", resource=~\"$resource\"} [$__interval]))",
-              "legendFormat": "{{ "{{" }}resource{{ "}}" }}",
+              "legendFormat": "{{`{{`}}resource{{`}}`}}",
               "refId": "A"
             }
           ],
@@ -322,7 +322,7 @@ data:
                 "uid": "loki"
               },
               "expr": "sum by (resource) (count_over_time({job=\"rancher-audit\", resource=~\"secrets|clusterroles|clusterrolebindings|roles|rolebindings|pods/exec|pods/attach\"} [$__interval]))",
-              "legendFormat": "{{ "{{" }}resource{{ "}}" }}",
+              "legendFormat": "{{`{{`}}resource{{`}}`}}",
               "refId": "A"
             }
           ],
@@ -429,7 +429,7 @@ data:
                 "type": "loki",
                 "uid": "loki"
               },
-              "expr": "count_over_time({job=\"rancher-audit\"} |~ \"\\\"code\\\":403\" [$__interval])",
+              "expr": "count_over_time({job=\"rancher-audit\"} |~ `\"code\":403` [$__interval])",
               "legendFormat": "Forbidden",
               "refId": "A"
             },
@@ -438,7 +438,7 @@ data:
                 "type": "loki",
                 "uid": "loki"
               },
-              "expr": "count_over_time({job=\"rancher-audit\"} |~ \"\\\"code\\\":401\" [$__interval])",
+              "expr": "count_over_time({job=\"rancher-audit\"} |~ `\"code\":401` [$__interval])",
               "legendFormat": "Unauthorized",
               "refId": "B"
             }
@@ -530,7 +530,7 @@ data:
                 "uid": "loki"
               },
               "expr": "sum by (resource, verb) (count_over_time({job=\"rancher-audit\", resource=~\"deployments|statefulsets|daemonsets|replicasets|pods\", verb=~\"create|update|patch|delete\"} [$__interval]))",
-              "legendFormat": "{{ "{{" }}resource{{ "}}" }}-{{ "{{" }}verb{{ "}}" }}",
+              "legendFormat": "{{`{{`}}resource{{`}}`}}-{{`{{`}}verb{{`}}`}}",
               "refId": "A"
             }
           ],
