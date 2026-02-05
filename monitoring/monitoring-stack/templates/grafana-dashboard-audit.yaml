@@ -35,7 +35,7 @@ data:
             "type": "loki",
             "uid": "loki"
           },
-          "description": "Kubernetes API audit events over time",
+          "description": "Linux audit events by type over time",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -89,7 +89,7 @@ data:
             "overrides": []
           },
           "gridPos": {
-            "h": 6,
+            "h": 8,
             "w": 24,
             "x": 0,
             "y": 0
@@ -113,12 +113,12 @@ data:
                 "type": "loki",
                 "uid": "loki"
               },
-              "expr": "sum by (verb) (count_over_time({log_type=\"audit\"} [$__interval]))",
-              "legendFormat": "{{ "{{" }}verb{{ "}}" }}",
+              "expr": "sum by (audit_type) (count_over_time({log_type=\"audit\", audit_type=~\"$audit_type\"} [$__interval]))",
+              "legendFormat": "{{ "{{" }}audit_type{{ "}}" }}",
               "refId": "A"
             }
           ],
-          "title": "Audit Events by Verb",
+          "title": "Audit Events by Type",
           "type": "timeseries"
         },
         {
@@ -126,7 +126,7 @@ data:
             "type": "loki",
             "uid": "loki"
           },
-          "description": "Failed API requests (4xx/5xx status codes)",
+          "description": "Authentication related events (USER_AUTH, USER_LOGIN, etc.)",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -174,8 +174,8 @@ data:
                     "value": null
                   },
                   {
-                    "color": "red",
-                    "value": 1
+                    "color": "yellow",
+                    "value": 10
                   }
                 ]
               },
@@ -187,7 +187,7 @@ data:
             "h": 6,
             "w": 12,
             "x": 0,
-            "y": 6
+            "y": 8
           },
           "id": 2,
           "options": {
@@ -208,12 +208,12 @@ data:
                 "type": "loki",
                 "uid": "loki"
               },
-              "expr": "sum by (statusCode) (count_over_time({log_type=\"audit\"} | json | statusCode >= 400 [$__interval]))",
-              "legendFormat": "{{ "{{" }}statusCode{{ "}}" }}",
+              "expr": "sum by (audit_type) (count_over_time({log_type=\"audit\", audit_type=~\"USER_AUTH|USER_LOGIN|USER_LOGOUT|USER_START|USER_END|USER_ACCT|CRED_ACQ|CRED_DISP\"} [$__interval]))",
+              "legendFormat": "{{ "{{" }}audit_type{{ "}}" }}",
               "refId": "A"
             }
           ],
-          "title": "Failed Requests by Status Code",
+          "title": "Authentication Events",
           "type": "timeseries"
         },
         {
@@ -221,7 +221,7 @@ data:
             "type": "loki",
             "uid": "loki"
           },
-          "description": "Top resources accessed",
+          "description": "System calls and service events",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -278,7 +278,7 @@ data:
             "h": 6,
             "w": 12,
             "x": 12,
-            "y": 6
+            "y": 8
           },
           "id": 3,
           "options": {
@@ -299,12 +299,12 @@ data:
                 "type": "loki",
                 "uid": "loki"
               },
-              "expr": "sum by (resource) (count_over_time({log_type=\"audit\"} [$__interval]))",
-              "legendFormat": "{{ "{{" }}resource{{ "}}" }}",
+              "expr": "sum by (audit_type) (count_over_time({log_type=\"audit\", audit_type=~\"SYSCALL|SERVICE_START|SERVICE_STOP|BPF|NETFILTER_CFG\"} [$__interval]))",
+              "legendFormat": "{{ "{{" }}audit_type{{ "}}" }}",
               "refId": "A"
             }
           ],
-          "title": "Events by Resource Type",
+          "title": "System & Service Events",
           "type": "timeseries"
         },
         {
@@ -312,18 +312,18 @@ data:
             "type": "loki",
             "uid": "loki"
           },
-          "description": "Audit log stream",
+          "description": "Linux audit log stream",
           "gridPos": {
             "h": 15,
             "w": 24,
             "x": 0,
-            "y": 12
+            "y": 14
           },
           "id": 4,
           "options": {
             "dedupStrategy": "none",
             "enableLogDetails": true,
-            "prettifyLogMessage": true,
+            "prettifyLogMessage": false,
             "showCommonLabels": false,
             "showLabels": true,
             "showTime": true,
@@ -336,7 +336,7 @@ data:
                 "type": "loki",
                 "uid": "loki"
               },
-              "expr": "{job=\"rancher-audit\", verb=~\"${verb:regex}\", resource=~\"${resource:regex}\"}",
+              "expr": "{log_type=\"audit\", audit_type=~\"$audit_type\"}",
               "queryType": "range",
               "refId": "A"
             }
@@ -346,7 +346,7 @@ data:
         }
       ],
       "schemaVersion": 39,
-      "tags": ["loki", "audit", "security"],
+      "tags": ["loki", "audit", "security", "linux"],
       "templating": {
         "list": [
           {
@@ -356,35 +356,14 @@ data:
               "type": "loki",
               "uid": "loki"
             },
-            "definition": "label_values({log_type=\"audit\"}, verb)",
+            "definition": "label_values({log_type=\"audit\"}, audit_type)",
             "hide": 0,
             "includeAll": true,
-            "label": "Verb",
+            "label": "Audit Type",
             "multi": true,
-            "name": "verb",
+            "name": "audit_type",
             "options": [],
-            "query": "label_values({log_type=\"audit\"}, verb)",
-            "refresh": 2,
-            "regex": "",
-            "skipUrlSync": false,
-            "sort": 1,
-            "type": "query"
-          },
-          {
-            "allValue": ".*",
-            "current": {},
-            "datasource": {
-              "type": "loki",
-              "uid": "loki"
-            },
-            "definition": "label_values({log_type=\"audit\"}, resource)",
-            "hide": 0,
-            "includeAll": true,
-            "label": "Resource",
-            "multi": true,
-            "name": "resource",
-            "options": [],
-            "query": "label_values({log_type=\"audit\"}, resource)",
+            "query": "label_values({log_type=\"audit\"}, audit_type)",
             "refresh": 2,
             "regex": "",
             "skipUrlSync": false,
@@ -399,8 +378,8 @@ data:
       },
       "timepicker": {},
       "timezone": "browser",
-      "title": "Kubernetes Audit Logs",
-      "uid": "kubernetes-audit-logs",
+      "title": "Linux Audit Logs",
+      "uid": "linux-audit-logs",
       "version": 1,
       "weekStart": ""
     }
