@@ -9,7 +9,7 @@ botkube:
       disableColors: false
 
   # Plugin Manager Configuration
-  # Increased timeout for slower network connections
+  # Using init container to pre-download plugins with proper timeouts
   plugins:
     cacheDir: /tmp/plugins
     healthCheckInterval: 30s
@@ -18,10 +18,45 @@ botkube:
     restartPolicy:
       type: DeactivatePlugin
       threshold: 10
-    # Plugin repositories - increase timeout for downloads
+    # Plugin repositories
     repositories:
       botkube:
         url: https://github.com/kubeshop/botkube/releases/download/v1.14.0/plugins-index.yaml
+
+  # Init containers to pre-download plugins before botkube starts
+  # This bypasses botkube's internal HTTP client timeout issues
+  extraInitContainers:
+    - name: download-plugins
+      image: curlimages/curl:latest
+      command:
+        - sh
+        - -c
+        - |
+          echo "Downloading botkube plugins index..."
+          mkdir -p /tmp/plugins/botkube
+          curl -sL --connect-timeout 120 --max-time 300 --retry 5 --retry-delay 10 \
+            "https://github.com/kubeshop/botkube/releases/download/v1.14.0/plugins-index.yaml" \
+            -o /tmp/plugins/botkube/plugins-index.yaml
+          if [ -f /tmp/plugins/botkube/plugins-index.yaml ]; then
+            echo "Plugins index downloaded successfully"
+            cat /tmp/plugins/botkube/plugins-index.yaml | head -20
+          else
+            echo "Failed to download plugins index"
+            exit 1
+          fi
+      volumeMounts:
+        - name: plugins-cache
+          mountPath: /tmp/plugins
+
+  # Extra volumes for plugin cache
+  extraVolumes:
+    - name: plugins-cache
+      emptyDir: {}
+
+  # Mount plugin cache in main container
+  extraVolumeMounts:
+    - name: plugins-cache
+      mountPath: /tmp/plugins
 
   # Disable analytics
   analytics:
