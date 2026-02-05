@@ -861,6 +861,24 @@ loki:
   test:
     enabled: false
 
+  # Memcached chunk cache - memory reduced to fit within LimitRange (max 8Gi)
+  chunksCache:
+    enabled: true
+    replicas: 1
+    allocatedMemory: 7680  # 7.5Gi in MB to allow headroom
+    resources:
+      requests:
+        cpu: 500m
+        memory: 7680Mi
+      limits:
+        cpu: "2"
+        memory: 8Gi
+
+  # Results cache - using default values (fits within limit)
+  resultsCache:
+    enabled: true
+    replicas: 1
+
   sidecar:
     image:
       repository: ghcr.io/kiwigrid/k8s-sidecar
