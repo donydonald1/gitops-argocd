@@ -151,28 +151,29 @@ botkube:
       value: "120"
 
   # Startup probe - give more time for plugin download
+  # Plugin download from GitHub can take several minutes
   startupProbe:
     enabled: true
-    initialDelaySeconds: 60
-    periodSeconds: 15
-    timeoutSeconds: 10
-    failureThreshold: 20  # 60 + (15*20) = 360 seconds max startup time
-
-  # Liveness probe - after startup
-  livenessProbe:
-    enabled: true
-    initialDelaySeconds: 30
+    initialDelaySeconds: 120  # Wait 2 minutes before first check
     periodSeconds: 30
     timeoutSeconds: 10
-    failureThreshold: 3
+    failureThreshold: 30  # 120 + (30*30) = 1020 seconds max startup time (~17 min)
+
+  # Liveness probe - only after startup succeeds
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 60
+    periodSeconds: 60
+    timeoutSeconds: 10
+    failureThreshold: 5
 
   # Readiness probe
   readinessProbe:
     enabled: true
-    initialDelaySeconds: 30
-    periodSeconds: 10
-    timeoutSeconds: 5
-    failureThreshold: 3
+    initialDelaySeconds: 60
+    periodSeconds: 15
+    timeoutSeconds: 10
+    failureThreshold: 10
 
   # Executors configuration
   executors:
