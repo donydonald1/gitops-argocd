@@ -10,7 +10,7 @@ metadata:
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
-  project: monitoring
+  project: observability
   source:
     repoURL: https://github.com/donydonald1/gitops-argocd.git
     targetRevision: HEAD
