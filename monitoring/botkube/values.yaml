@@ -8,6 +8,21 @@ botkube:
       level: debug
       disableColors: false
 
+  # Plugin Manager Configuration
+  # Increased timeout for slower network connections
+  plugins:
+    cacheDir: /tmp/plugins
+    healthCheckInterval: 30s
+    incomingWebhook:
+      enabled: false
+    restartPolicy:
+      type: DeactivatePlugin
+      threshold: 10
+    # Plugin repositories - increase timeout for downloads
+    repositories:
+      botkube:
+        url: https://github.com/kubeshop/botkube/releases/download/v1.14.0/plugins-index.yaml
+
   # Disable analytics
   analytics:
     disable: true
@@ -73,6 +88,13 @@ botkube:
     runAsNonRoot: true
     runAsUser: 1000
     runAsGroup: 1000
+
+  # Extra environment variables for extended timeouts
+  extraEnv:
+    - name: BOTKUBE_PLUGINS_STARTUP_TIMEOUT
+      value: "5m"
+    - name: HTTP_TIMEOUT
+      value: "120"
 
   # Executors configuration
   executors:
