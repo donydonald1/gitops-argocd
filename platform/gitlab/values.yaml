@@ -428,16 +428,16 @@ gitlab:
         enabled: true
         proxy_download: true
       omniauth:
-        aautoSignInWithProvider: saml
+        autoSignInWithProvider: openid_connect
         allowBypassTwoFactor: []
-        autoLinkSamlUser: true
+        autoLinkUser: ["openid_connect"]
         enabled: true
         providers:
-        - secret: idp-provider
+        - secret: gitlab-oidc-provider
         syncProfileAttributes:
         - email
-        - username
-        - profile
+        - name
+        - groups
       packages:
         bucket: gitlab-packages
         connection: {}
