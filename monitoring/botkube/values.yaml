@@ -91,7 +91,6 @@ botkube:
             bindings:
               executors:
                 - kubectl-full-access
-                - helm-executor
               sources:
                 - k8s-errors
                 - k8s-critical
@@ -249,21 +248,21 @@ botkube:
                 values:
                   - botkube-plugins-default
 
-    # Helm executor for managing releases from Slack
-    helm-executor:
-      botkube/helm:
-        enabled: true
-        config:
-          helmDriver: secret
-          helmCacheDir: /tmp/helm/.cache
-          helmConfigDir: /tmp/helm/
-        context:
-          rbac:
-            group:
-              type: Static
-              static:
-                values:
-                  - botkube-plugins-default
+    # Helm executor - DISABLED (not available in botkube v1.14.0)
+    # helm-executor:
+    #   botkube/helm:
+    #     enabled: true
+    #     config:
+    #       helmDriver: secret
+    #       helmCacheDir: /tmp/helm/.cache
+    #       helmConfigDir: /tmp/helm/
+    #     context:
+    #       rbac:
+    #         group:
+    #           type: Static
+    #           static:
+    #             values:
+    #               - botkube-plugins-default
 
   # Actions configuration
   actions:
