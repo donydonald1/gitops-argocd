@@ -91,6 +91,12 @@ sonarqube:
     value: "https://keycloak.ops.techsecom.io/realms/master"
   - name: SONAR_AUTH_OIDC_CLIENTID_SECURED
     value: "sonar"
+  # Client secret from Vault via ExternalSecret
+  - name: SONAR_AUTH_OIDC_CLIENTSECRET_SECURED
+    valueFrom:
+      secretKeyRef:
+        name: sonar-oidc-secret
+        key: clientSecret
   - name: SONAR_AUTH_OIDC_LOGINBUTTONTEXT
     value: "Login with Keycloak"
   - name: SONAR_AUTH_OIDC_SCOPES
