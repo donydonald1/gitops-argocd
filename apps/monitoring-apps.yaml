@@ -18,7 +18,7 @@ spec:
       # =============================================
       - name: kube-prometheus-stack
         namespace: monitoring
-        serverSideApply: false  # Disabled due to --force conflict with server-side apply
+        serverSideApply: true  # Required for large CRDs (>262KB annotation limit)
         SkipCRDs: false
         wave: "0"  # Deploy first - provides CRDs for ServiceMonitors
         helm:
