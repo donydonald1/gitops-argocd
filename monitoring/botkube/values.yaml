@@ -9,7 +9,6 @@ botkube:
       disableColors: false
 
   # Plugin Manager Configuration
-  # Using cluster-local plugins server to avoid GitHub timeout
   plugins:
     cacheDir: /tmp/plugins
     healthCheckInterval: 30s
@@ -17,11 +16,11 @@ botkube:
       enabled: false
     restartPolicy:
       type: DeactivatePlugin
-      threshold: 10
-    # Plugin repositories - use local service to avoid GitHub timeout
+      threshold: 5
+    # Plugin repositories - using GitHub directly
     repositories:
       botkube:
-        url: http://botkube-plugins-server.botkube.svc.cluster.local/plugins-index.yaml
+        url: https://github.com/kubeshop/botkube/releases/download/v1.14.0/plugins-index.yaml
 
   # Extra volumes for plugin cache
   extraVolumes:
@@ -33,73 +32,9 @@ botkube:
     - name: plugins-cache
       mountPath: /tmp/plugins
 
-  # Extra objects to create - plugins server using ConfigMap
-  # The ConfigMap 'botkube-plugins-index' contains the pre-downloaded plugins-index.yaml
-  # This bypasses botkube's 30s HTTP timeout by serving from local nginx
-  extraObjects:
-    # Plugins server deployment - serves ConfigMap via nginx
-    - apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: botkube-plugins-server
-        namespace: '{{ .Release.Namespace }}'
-        labels:
-          app: botkube-plugins-server
-      spec:
-        replicas: 1
-        selector:
-          matchLabels:
-            app: botkube-plugins-server
-        template:
-          metadata:
-            labels:
-              app: botkube-plugins-server
-          spec:
-            containers:
-              - name: nginx
-                image: nginx:1.25-alpine
-                ports:
-                  - containerPort: 80
-                volumeMounts:
-                  - name: plugins-index
-                    mountPath: /usr/share/nginx/html/plugins-index.yaml
-                    subPath: plugins-index.yaml
-                    readOnly: true
-                resources:
-                  requests:
-                    cpu: 10m
-                    memory: 32Mi
-                  limits:
-                    cpu: 100m
-                    memory: 64Mi
-                livenessProbe:
-                  httpGet:
-                    path: /plugins-index.yaml
-                    port: 80
-                  initialDelaySeconds: 5
-                  periodSeconds: 30
-                readinessProbe:
-                  httpGet:
-                    path: /plugins-index.yaml
-                    port: 80
-                  initialDelaySeconds: 2
-                  periodSeconds: 5
-            volumes:
-              - name: plugins-index
-                configMap:
-                  name: botkube-plugins-index
-    # Plugins server service
-    - apiVersion: v1
-      kind: Service
-      metadata:
-        name: botkube-plugins-server
-        namespace: '{{ .Release.Namespace }}'
-      spec:
-        selector:
-          app: botkube-plugins-server
-        ports:
-          - port: 80
-            targetPort: 80
+  # Note: Using GitHub directly for plugins repository
+  # The Cilium network policy allows egress to GitHub
+  extraObjects: []
 
   # Disable analytics
   analytics:
