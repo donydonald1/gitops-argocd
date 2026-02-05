@@ -448,10 +448,10 @@ botkube:
               - delete
               - error
           resources:
-            - name: monitoring.coreos.com/v1/podmonitors
-            - name: monitoring.coreos.com/v1/servicemonitors
-            - name: cert-manager.io/v1/certificates
-            - name: argoproj.io/v1alpha1/applications
+            - type: monitoring.coreos.com/v1/podmonitors
+            - type: monitoring.coreos.com/v1/servicemonitors
+            - type: cert-manager.io/v1/certificates
+            - type: argoproj.io/v1alpha1/applications
         context:
           rbac:
             group:
