@@ -100,13 +100,13 @@ sonarqube:
   - name: SONAR_AUTH_OIDC_LOGINBUTTONTEXT
     value: "Login with Keycloak"
   - name: SONAR_AUTH_OIDC_SCOPES
-    value: "openid profile email"
+    value: "openid profile email groups"
   - name: SONAR_AUTH_OIDC_ALLOWUSERSTOSIGNUP
     value: "true"
   - name: SONAR_AUTH_OIDC_GROUPSSYNC
     value: "true"
   - name: SONAR_AUTH_OIDC_GROUPSSYNC_CLAIMNAME
-    value: "roles"
+    value: "groups"
   # Allow anonymous access to browse projects (can be changed later)
   - name: SONAR_FORCEAUTHENTICATION
     value: "false"
