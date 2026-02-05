@@ -66,7 +66,7 @@ spec:
               mountPath: /shared
       containers:
         - name: vault-sync
-          image: bitnami/kubectl:1.31
+          image: bitnami/kubectl:1.31.0
           env:
             - name: VAULT_ADDR
               value: "https://vault.vault.svc.cluster.local:8200"
