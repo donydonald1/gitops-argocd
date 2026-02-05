@@ -33,10 +33,11 @@ botkube:
     - name: plugins-cache
       mountPath: /tmp/plugins
 
-  # Extra objects to create - plugins server deployment and service
-  # This bypasses botkube's 30s HTTP timeout by serving plugins-index locally
+  # Extra objects to create - plugins server using ConfigMap
+  # The ConfigMap 'botkube-plugins-index' contains the pre-downloaded plugins-index.yaml
+  # This bypasses botkube's 30s HTTP timeout by serving from local nginx
   extraObjects:
-    # Plugins server deployment
+    # Plugins server deployment - serves ConfigMap via nginx
     - apiVersion: apps/v1
       kind: Deployment
       metadata:
@@ -54,28 +55,6 @@ botkube:
             labels:
               app: botkube-plugins-server
           spec:
-            initContainers:
-              - name: download-plugins-index
-                image: curlimages/curl:8.5.0
-                command:
-                  - sh
-                  - -c
-                  - |
-                    echo "Downloading botkube plugins index..."
-                    mkdir -p /plugins-index
-                    curl -sL --connect-timeout 120 --max-time 600 --retry 10 --retry-delay 15 \
-                      "https://github.com/kubeshop/botkube/releases/download/v1.14.0/plugins-index.yaml" \
-                      -o /plugins-index/plugins-index.yaml
-                    if [ -f /plugins-index/plugins-index.yaml ]; then
-                      echo "Plugins index downloaded successfully"
-                      wc -l /plugins-index/plugins-index.yaml
-                    else
-                      echo "Failed to download plugins index"
-                      exit 1
-                    fi
-                volumeMounts:
-                  - name: plugins-index
-                    mountPath: /plugins-index
             containers:
               - name: nginx
                 image: nginx:1.25-alpine
@@ -83,7 +62,8 @@ botkube:
                   - containerPort: 80
                 volumeMounts:
                   - name: plugins-index
-                    mountPath: /usr/share/nginx/html
+                    mountPath: /usr/share/nginx/html/plugins-index.yaml
+                    subPath: plugins-index.yaml
                     readOnly: true
                 resources:
                   requests:
@@ -96,17 +76,18 @@ botkube:
                   httpGet:
                     path: /plugins-index.yaml
                     port: 80
-                  initialDelaySeconds: 10
+                  initialDelaySeconds: 5
                   periodSeconds: 30
                 readinessProbe:
                   httpGet:
                     path: /plugins-index.yaml
                     port: 80
-                  initialDelaySeconds: 5
-                  periodSeconds: 10
+                  initialDelaySeconds: 2
+                  periodSeconds: 5
             volumes:
               - name: plugins-index
-                emptyDir: {}
+                configMap:
+                  name: botkube-plugins-index
     # Plugins server service
     - apiVersion: v1
       kind: Service
