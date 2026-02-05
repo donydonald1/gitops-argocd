@@ -96,6 +96,30 @@ botkube:
     - name: HTTP_TIMEOUT
       value: "120"
 
+  # Startup probe - give more time for plugin download
+  startupProbe:
+    enabled: true
+    initialDelaySeconds: 60
+    periodSeconds: 15
+    timeoutSeconds: 10
+    failureThreshold: 20  # 60 + (15*20) = 360 seconds max startup time
+
+  # Liveness probe - after startup
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 30
+    timeoutSeconds: 10
+    failureThreshold: 3
+
+  # Readiness probe
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
   # Executors configuration
   executors:
     # Read-only kubectl access
