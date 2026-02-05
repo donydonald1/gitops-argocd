@@ -83,33 +83,6 @@ spec:
         resourceName: virt-handler
         patch: '[{"op": "add", "path": "/spec/template/metadata/labels/descheduler.alpha.kubernetes.io~1evict", "value": "false"}]'
         type: json
-      # virt-handler - Add /dev volume mount for init container QEMU probing (needs /dev/kvm)
-      - resourceType: DaemonSet
-        resourceName: virt-handler
-        patch: '[{"op": "add", "path": "/spec/template/spec/volumes/-", "value": {"name": "host-dev", "hostPath": {"path": "/dev", "type": "Directory"}}}]'
-        type: json
-      - resourceType: DaemonSet
-        resourceName: virt-handler
-        patch: '[{"op": "add", "path": "/spec/template/spec/initContainers/0/volumeMounts/-", "value": {"name": "host-dev", "mountPath": "/dev"}}]'
-        type: json
-      # virt-handler - Add cgroup volume mount for init container (libvirt needs cgroups for QEMU process management)
-      - resourceType: DaemonSet
-        resourceName: virt-handler
-        patch: '[{"op": "add", "path": "/spec/template/spec/volumes/-", "value": {"name": "host-cgroup", "hostPath": {"path": "/sys/fs/cgroup", "type": "Directory"}}}]'
-        type: json
-      - resourceType: DaemonSet
-        resourceName: virt-handler
-        patch: '[{"op": "add", "path": "/spec/template/spec/initContainers/0/volumeMounts/-", "value": {"name": "host-cgroup", "mountPath": "/sys/fs/cgroup"}}]'
-        type: json
-      # virt-handler - Add custom libvirt qemu.conf to run QEMU as root (fixes permission issues in containers)
-      - resourceType: DaemonSet
-        resourceName: virt-handler
-        patch: '[{"op": "add", "path": "/spec/template/spec/volumes/-", "value": {"name": "libvirt-config", "configMap": {"name": "kubevirt-libvirt-config"}}}]'
-        type: json
-      - resourceType: DaemonSet
-        resourceName: virt-handler
-        patch: '[{"op": "add", "path": "/spec/template/spec/initContainers/0/volumeMounts/-", "value": {"name": "libvirt-config", "mountPath": "/etc/libvirt/qemu.conf", "subPath": "qemu.conf"}}]'
-        type: json
       # virt-exportproxy - CPU requests and descheduler eviction prevention (label + annotation)
       - resourceType: Deployment
         resourceName: virt-exportproxy
