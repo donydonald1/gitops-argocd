@@ -61,4 +61,60 @@ spec:
           port: 6443
         - protocol: TCP
           port: 443
+---
+# =============================================================================
+# Network Policy for Vault AppRole Sync Job
+# =============================================================================
+# Allows the vault-approle-sync job to access external resources for kubectl
+# download and communicate with Vault and Kubernetes API.
+# =============================================================================
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: vault-approle-sync
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: vault-approle-sync
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  podSelector:
+    matchLabels:
+      job-name: vault-approle-sync
+  policyTypes:
+    - Egress
+  egress:
+    # Allow DNS resolution
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # Allow HTTPS to download kubectl and access external services
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 80
+    # Allow access to Vault in vault namespace
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: vault
+      ports:
+        - protocol: TCP
+          port: 8200
+    # Allow access to Kubernetes API
+    - to:
+        - ipBlock:
+            cidr: 10.0.0.0/8
+      ports:
+        - protocol: TCP
+          port: 6443
+        - protocol: TCP
+          port: 443
 {{- end }}
