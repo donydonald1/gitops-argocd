@@ -5,7 +5,7 @@
 rancher-monitoring:
   fullnameOverride: "rancher-monitoring"
   nameOverride: "rancher-monitoring"
-  namespaceOverride: "cattle-monitoring-system"
+  namespaceOverride: "monitoring"
 
   # Global settings for Rancher integration
   global:
@@ -197,7 +197,7 @@ rancher-monitoring:
         uid: thanos
         type: prometheus
         access: proxy
-        url: http://monitoring-stack-thanos-query.cattle-monitoring-system.svc.cluster.local:9090
+        url: http://kube-prometheus-stack-thanos-query.monitoring.svc.cluster.local:9090
         isDefault: false
         jsonData:
           httpMethod: POST
@@ -210,7 +210,7 @@ rancher-monitoring:
         uid: loki
         type: loki
         access: proxy
-        url: http://monitoring-stack-loki-gateway.cattle-monitoring-system.svc.cluster.local
+        url: http://kube-prometheus-stack-loki-gateway.monitoring.svc.cluster.local
         isDefault: false
         jsonData:
           httpHeaderName1: "X-scope-OrgID"
@@ -229,7 +229,7 @@ rancher-monitoring:
         uid: tempo
         type: tempo
         access: proxy
-        url: http://tempo.cattle-monitoring-system.svc.cluster.local:3200
+        url: http://tempo.monitoring.svc.cluster.local:3200
         isDefault: false
         jsonData:
           httpMethod: GET
@@ -865,8 +865,8 @@ thanos:
     replicaLabels:
       - replica
     dnsDiscovery:
-      sidecarsService: rancher-monitoring-thanos-discovery
-      sidecarsNamespace: cattle-monitoring-system
+      sidecarsService: kps-thanos-discovery
+      sidecarsNamespace: monitoring
     ingress:
       enabled: true
       hostname: thanos.ops.techsecom.io
@@ -1003,7 +1003,7 @@ loki:
     rulerConfig:
       enable_api: true
       enable_alertmanager_v2: true
-      alertmanager_url: http://rancher-monitoring-alertmanager.cattle-monitoring-system.svc.cluster.local:9093
+      alertmanager_url: http://kps-alertmanager.monitoring.svc.cluster.local:9093
       storage:
         type: local
         local:
@@ -1167,7 +1167,7 @@ tempo:
   tempo:
     metricsGenerator:
       enabled: true
-      remoteWriteUrl: "http://rancher-monitoring-prometheus.cattle-monitoring-system.svc.cluster.local:9090/api/v1/write"
+      remoteWriteUrl: "http://kps-prometheus.monitoring.svc.cluster.local:9090/api/v1/write"
 
   persistence:
     enabled: true
@@ -1202,7 +1202,7 @@ promtail:
     logLevel: info
     serverPort: 3101
     clients:
-      - url: http://monitoring-stack-loki-gateway.cattle-monitoring-system.svc.cluster.local/loki/api/v1/push
+      - url: http://kube-prometheus-stack-loki-gateway.monitoring.svc.cluster.local/loki/api/v1/push
         backoff_config:
           min_period: 500ms
           max_period: 5m
@@ -1396,14 +1396,14 @@ alloy:
 
         prometheus.remote_write "default" {
           endpoint {
-            url = "http://rancher-monitoring-prometheus.cattle-monitoring-system.svc.cluster.local/api/v1/write"
+            url = "http://kps-prometheus.monitoring.svc.cluster.local:9090/api/v1/write"
           }
         }
 
         // Traces to Tempo
         otelcol.exporter.otlp "tempo" {
           client {
-            endpoint = "http://tempo.cattle-monitoring-system.svc.cluster.local:4317"
+            endpoint = "http://tempo.monitoring.svc.cluster.local:4317"
             tls {
               insecure = true
             }
@@ -1417,7 +1417,7 @@ alloy:
 
         loki.write "endpoint" {
           endpoint {
-            url = "http://monitoring-stack-loki-gateway.cattle-monitoring-system.svc.cluster.local/loki/api/v1/push"
+            url = "http://kube-prometheus-stack-loki-gateway.monitoring.svc.cluster.local/loki/api/v1/push"
             batch_size = "1MB"
             batch_wait = "1s"
           }
