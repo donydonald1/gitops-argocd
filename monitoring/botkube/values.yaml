@@ -146,9 +146,17 @@ botkube:
   # Extra environment variables for extended timeouts
   extraEnv:
     - name: BOTKUBE_PLUGINS_STARTUP_TIMEOUT
+      value: "10m"
+    # HTTP client timeouts for plugin downloads
+    - name: BOTKUBE_PLUGINS_REPOSITORIES__BOTKUBE__HTTP_CLIENT__TIMEOUT
       value: "5m"
+    - name: BOTKUBE_PLUGINS_HTTP_TIMEOUT
+      value: "300"
     - name: HTTP_TIMEOUT
-      value: "120"
+      value: "300"
+    # Go HTTP client timeout
+    - name: GODEBUG
+      value: "http2client=0"
 
   # Startup probe - give more time for plugin download
   # Plugin download from GitHub can take several minutes

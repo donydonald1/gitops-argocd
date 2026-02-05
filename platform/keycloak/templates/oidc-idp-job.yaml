@@ -100,12 +100,12 @@ spec:
           echo "Checking if IDP exists..."
           # Use -s (silent) without -f (fail) to capture HTTP status code even on 404
           IDP_EXISTS=$(curl -s -o /dev/null -w "%{http_code}" \
-            "${KEYCLOAK_URL}/admin/realms/master/identity-provider/instances/techsecoms-oidc" \
+            "${KEYCLOAK_URL}/admin/realms/master/identity-provider/instances/unifi-identity" \
             -H "Authorization: Bearer ${TOKEN}")
 
           IDP_CONFIG='{
-            "alias": "techsecoms-oidc",
-            "displayName": "Techsecoms SSO",
+            "alias": "unifi-identity",
+            "displayName": "Techsecom SSO",
             "providerId": "oidc",
             "enabled": true,
             "trustEmail": true,
@@ -133,7 +133,7 @@ spec:
 
           if [ "$IDP_EXISTS" = "200" ]; then
             echo "IDP already exists, updating..."
-            curl -sf -X PUT "${KEYCLOAK_URL}/admin/realms/master/identity-provider/instances/techsecoms-oidc" \
+            curl -sf -X PUT "${KEYCLOAK_URL}/admin/realms/master/identity-provider/instances/unifi-identity" \
               -H "Authorization: Bearer ${TOKEN}" \
               -H "Content-Type: application/json" \
               -d "${IDP_CONFIG}"
@@ -155,7 +155,7 @@ spec:
           MAPPER_CONFIG='{
             "name": "admin-role-mapper",
             "identityProviderMapper": "oidc-hardcoded-role-idp-mapper",
-            "identityProviderAlias": "techsecoms-oidc",
+            "identityProviderAlias": "unifi-identity",
             "config": {
               "syncMode": "INHERIT",
               "role": "admin"
@@ -164,7 +164,7 @@ spec:
 
           # Check if admin-role-mapper exists
           echo "Checking existing mappers..."
-          MAPPERS=$(curl -s "${KEYCLOAK_URL}/admin/realms/master/identity-provider/instances/techsecoms-oidc/mappers" \
+          MAPPERS=$(curl -s "${KEYCLOAK_URL}/admin/realms/master/identity-provider/instances/unifi-identity/mappers" \
             -H "Authorization: Bearer ${TOKEN}")
 
           MAPPER_EXISTS=$(echo "$MAPPERS" | grep -c '"name":"admin-role-mapper"' || true)
@@ -173,7 +173,7 @@ spec:
             echo "Role mapper already exists, skipping creation."
           else
             echo "Creating role mapper..."
-            RESULT=$(curl -s -w "\n%{http_code}" -X POST "${KEYCLOAK_URL}/admin/realms/master/identity-provider/instances/techsecoms-oidc/mappers" \
+            RESULT=$(curl -s -w "\n%{http_code}" -X POST "${KEYCLOAK_URL}/admin/realms/master/identity-provider/instances/unifi-identity/mappers" \
               -H "Authorization: Bearer ${TOKEN}" \
               -H "Content-Type: application/json" \
               -d "${MAPPER_CONFIG}")
@@ -186,7 +186,7 @@ spec:
             fi
           fi
 
-          # Assign admin role to all existing users from techsecoms-oidc IDP
+          # Assign admin role to all existing users from unifi-identity IDP
           echo ""
           echo "Assigning admin role to existing Techsecoms SSO users..."
 
@@ -198,18 +198,18 @@ spec:
           if [ -z "$ADMIN_ROLE_ID" ]; then
             echo "Warning: Could not get admin role ID"
           else
-            # Get all users linked to techsecoms-oidc IDP
+            # Get all users linked to unifi-identity IDP
             USERS=$(curl -s "${KEYCLOAK_URL}/admin/realms/master/users?max=1000" \
               -H "Authorization: Bearer ${TOKEN}")
 
             # Extract user IDs (simple parsing)
             echo "$USERS" | tr ',' '\n' | grep '"id"' | sed 's/.*"id":"\([^"]*\)".*/\1/' | while read USER_ID; do
               if [ -n "$USER_ID" ]; then
-                # Check if user is linked to techsecoms-oidc
+                # Check if user is linked to unifi-identity
                 FEDERATED=$(curl -s "${KEYCLOAK_URL}/admin/realms/master/users/${USER_ID}/federated-identity" \
                   -H "Authorization: Bearer ${TOKEN}")
 
-                if echo "$FEDERATED" | grep -q "techsecoms-oidc"; then
+                if echo "$FEDERATED" | grep -q "unifi-identity"; then
                   # Check if user already has admin role
                   USER_ROLES=$(curl -s "${KEYCLOAK_URL}/admin/realms/master/users/${USER_ID}/role-mappings/realm" \
                     -H "Authorization: Bearer ${TOKEN}")

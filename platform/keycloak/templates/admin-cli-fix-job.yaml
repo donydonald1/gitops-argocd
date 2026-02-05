@@ -1,0 +1,148 @@
+{{- if .Values.adminCliFix.enabled }}
+# =============================================================================
+# Admin CLI Fix Job
+# =============================================================================
+# This job fixes the admin-cli client to include realm roles in access tokens.
+# By default, Keycloak 17+ uses lightweight access tokens that don't include
+# realm roles, which breaks Terraform Keycloak provider authentication.
+#
+# This job runs as a PostSync hook with weight -10 (before OIDC IDP setup)
+# to ensure admin-cli is properly configured before other jobs run.
+# =============================================================================
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: keycloak-admin-cli-fix
+  labels:
+    app.kubernetes.io/name: keycloakx
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  annotations:
+    # Run before oidc-idp-job (which has no hook-weight, defaults to 0)
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+    argocd.argoproj.io/sync-wave: "-10"
+spec:
+  ttlSecondsAfterFinished: 300
+  backoffLimit: 3
+  template:
+    spec:
+      restartPolicy: OnFailure
+      serviceAccountName: {{ .Values.adminCliFix.serviceAccountName | default "default" }}
+      containers:
+      - name: admin-cli-fix
+        image: bitnami/kubectl:latest
+        env:
+        - name: KEYCLOAK_NAMESPACE
+          value: "{{ .Release.Namespace }}"
+        - name: ADMIN_USER
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-admin-creds
+              key: username
+        - name: ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-admin-creds
+              key: password
+        command:
+        - /bin/bash
+        - -c
+        - |
+          set -e
+          echo "=============================================="
+          echo "Keycloak Admin CLI Fix Job"
+          echo "=============================================="
+          echo "Waiting for Keycloak pods to be ready..."
+
+          # Wait for at least one Keycloak pod to be ready
+          for i in {1..60}; do
+            READY=$(kubectl get pods -n ${KEYCLOAK_NAMESPACE} -l app.kubernetes.io/name=keycloakx \
+              -o jsonpath='{.items[0].status.conditions[?(@.type=="Ready")].status}' 2>/dev/null || echo "False")
+            if [ "$READY" = "True" ]; then
+              echo "Keycloak pod is ready"
+              break
+            fi
+            echo "Waiting for Keycloak pod... ($i/60)"
+            sleep 5
+          done
+
+          # Get the first ready Keycloak pod
+          POD_NAME=$(kubectl get pods -n ${KEYCLOAK_NAMESPACE} -l app.kubernetes.io/name=keycloakx \
+            -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)
+
+          if [ -z "$POD_NAME" ]; then
+            echo "ERROR: Could not find Keycloak pod"
+            exit 1
+          fi
+
+          echo "Using Keycloak pod: $POD_NAME"
+
+          # Wait for Keycloak to be fully healthy
+          echo "Waiting for Keycloak health check..."
+          for i in {1..30}; do
+            HEALTH=$(kubectl exec -n ${KEYCLOAK_NAMESPACE} ${POD_NAME} -c keycloak -- \
+              curl -sf http://localhost:9000/health/ready 2>/dev/null || echo "unhealthy")
+            if echo "$HEALTH" | grep -q "UP"; then
+              echo "Keycloak health check passed"
+              break
+            fi
+            echo "Waiting for Keycloak health... ($i/30)"
+            sleep 5
+          done
+
+          echo ""
+          echo "Configuring kcadm.sh credentials..."
+          kubectl exec -n ${KEYCLOAK_NAMESPACE} ${POD_NAME} -c keycloak -- \
+            /opt/keycloak/bin/kcadm.sh config credentials \
+              --server http://localhost:8080 \
+              --realm master \
+              --user "${ADMIN_USER}" \
+              --password "${ADMIN_PASSWORD}"
+
+          echo ""
+          echo "Getting admin-cli client UUID..."
+          ADMIN_CLI_ID=$(kubectl exec -n ${KEYCLOAK_NAMESPACE} ${POD_NAME} -c keycloak -- \
+            /opt/keycloak/bin/kcadm.sh get clients -r master -q clientId=admin-cli \
+              --fields id | grep '"id"' | sed 's/.*"id" : "\([^"]*\)".*/\1/')
+
+          if [ -z "$ADMIN_CLI_ID" ]; then
+            echo "ERROR: Could not find admin-cli client"
+            exit 1
+          fi
+
+          echo "admin-cli UUID: $ADMIN_CLI_ID"
+
+          echo ""
+          echo "Checking current admin-cli attributes..."
+          CURRENT_ATTRS=$(kubectl exec -n ${KEYCLOAK_NAMESPACE} ${POD_NAME} -c keycloak -- \
+            /opt/keycloak/bin/kcadm.sh get clients/${ADMIN_CLI_ID} -r master \
+              --fields attributes 2>/dev/null || echo "")
+
+          if echo "$CURRENT_ATTRS" | grep -q '"client.use.lightweight.access.token.enabled" : "false"'; then
+            echo "admin-cli already configured correctly (lightweight access token disabled)"
+          else
+            echo "Disabling lightweight access token for admin-cli..."
+            kubectl exec -n ${KEYCLOAK_NAMESPACE} ${POD_NAME} -c keycloak -- \
+              /opt/keycloak/bin/kcadm.sh update clients/${ADMIN_CLI_ID} -r master \
+                -s 'attributes={"realm_client":"false","client.use.lightweight.access.token.enabled":"false"}'
+
+            echo ""
+            echo "Verifying fix..."
+            UPDATED_ATTRS=$(kubectl exec -n ${KEYCLOAK_NAMESPACE} ${POD_NAME} -c keycloak -- \
+              /opt/keycloak/bin/kcadm.sh get clients/${ADMIN_CLI_ID} -r master \
+                --fields attributes 2>/dev/null || echo "")
+
+            if echo "$UPDATED_ATTRS" | grep -q '"client.use.lightweight.access.token.enabled" : "false"'; then
+              echo "SUCCESS: admin-cli configured correctly"
+            else
+              echo "WARNING: Fix may not have been applied correctly"
+              echo "$UPDATED_ATTRS"
+            fi
+          fi
+
+          echo ""
+          echo "=============================================="
+          echo "Admin CLI fix complete!"
+          echo "Terraform Keycloak provider should now work."
+          echo "=============================================="
+{{- end }}

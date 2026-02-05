@@ -173,6 +173,13 @@ eso:
   secretStoreName: "vault"
   secretName: "keycloak"
 
+# Admin CLI Fix Configuration
+# Fixes admin-cli client to include realm roles in access tokens
+# Required for Terraform Keycloak provider to work
+adminCliFix:
+  enabled: true
+  serviceAccountName: keycloak-admin-cli-fix
+
 # OIDC Identity Provider Configuration (runs as PostSync job)
 oidcIdp:
   enabled: true
