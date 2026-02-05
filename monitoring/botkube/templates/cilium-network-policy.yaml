@@ -15,6 +15,21 @@ metadata:
 spec:
   endpointSelector: {}
   egress:
+    # Allow all traffic within same namespace (botkube-to-plugins-server)
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: botkube
+      toPorts:
+        - ports:
+            - port: "80"
+              protocol: TCP
+            - port: "2112"
+              protocol: TCP
+            - port: "2114"
+              protocol: TCP
+            - port: "2115"
+              protocol: TCP
+
     # Allow DNS
     - toEndpoints:
         - matchLabels:
@@ -35,7 +50,7 @@ spec:
             - port: "443"
               protocol: TCP
 
-    # Allow HTTP (for local plugins server)
+    # Allow HTTP to external services
     - toEntities:
         - world
       toPorts:
