@@ -2,7 +2,7 @@
 # Harbor OIDC ExternalSecret
 # =============================================================================
 # Syncs OIDC client credentials from Vault (seeded by Terraform Keycloak module).
-# The Terraform seed uses underscore-separated property names.
+# The Terraform seed uses dash-separated property names (oidc-client-id, etc.)
 # =============================================================================
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
@@ -17,18 +17,18 @@ spec:
     name: oidc-harbor
     creationPolicy: Owner
   data:
-    # Client credentials (seeded by Terraform)
+    # Client credentials (seeded by Terraform with dash-separated keys)
     - secretKey: oidc-client-id
       remoteRef:
         key: harbor
-        property: oidc_client_id
+        property: oidc-client-id
     - secretKey: oidc-client-secret
       remoteRef:
         key: harbor
-        property: oidc_client_secret
+        property: oidc-client-secret
     # Harbor values.yaml references this key as "oidc_issuer-url" (mixed format)
     - secretKey: oidc_issuer-url
       remoteRef:
         key: harbor
-        property: oidc_issuer_url
+        property: oidc_issuer-url
 
