@@ -131,7 +131,7 @@ spec:
 
       - name: awx-operator
         namespace: awx-operator
-        serverSideApply: true
+        serverSideApply: false  # Disabled due to --force conflict with server-side apply
         wave: "1"  # After base infrastructure and operators
         imageList: "awx=quay.io/ansible/awx, awx-operator=quay.io/ansible/awx-operator"
 
