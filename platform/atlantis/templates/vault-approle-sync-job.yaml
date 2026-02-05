@@ -56,14 +56,25 @@ spec:
     spec:
       restartPolicy: OnFailure
       serviceAccountName: vault-approle-sync
+      initContainers:
+        # Init container to install vault CLI into shared volume
+        - name: vault-cli
+          image: hashicorp/vault:1.18
+          command: ["sh", "-c", "cp /bin/vault /shared/vault && chmod +x /shared/vault"]
+          volumeMounts:
+            - name: shared-bin
+              mountPath: /shared
       containers:
         - name: vault-sync
-          image: hashicorp/vault:1.18
+          image: bitnami/kubectl:1.31
           env:
             - name: VAULT_ADDR
               value: "https://vault.vault.svc.cluster.local:8200"
             - name: VAULT_SKIP_VERIFY
               value: "true"
+          volumeMounts:
+            - name: shared-bin
+              mountPath: /shared
           command:
             - sh
             - -c
@@ -71,14 +82,8 @@ spec:
               set -e
               echo "=== Vault AppRole Sync for Atlantis ==="
 
-              # Install kubectl using wget (available in Alpine)
-              echo "Installing kubectl..."
-              cd /tmp
-              apk add --no-cache curl >/dev/null 2>&1 || true
-              wget -q "https://dl.k8s.io/release/v1.31.0/bin/linux/amd64/kubectl" -O kubectl || \
-                curl -sLO "https://dl.k8s.io/release/v1.31.0/bin/linux/amd64/kubectl"
-              chmod +x kubectl
-              export PATH="/tmp:$PATH"
+              # Use vault binary from init container
+              export PATH="/shared:$PATH"
 
               # Get Vault root token from vault namespace
               echo "Getting Vault token..."
@@ -92,7 +97,7 @@ spec:
 
               # Get the AppRole role_id
               echo "Fetching AppRole role_id..."
-              ROLE_ID=$(vault read -field=role_id auth/approle/role/atlantis/role-id)
+              ROLE_ID=$(/shared/vault read -field=role_id auth/approle/role/atlantis/role-id)
               if [ -z "$ROLE_ID" ]; then
                 echo "ERROR: Could not get role_id. AppRole 'atlantis' may not exist."
                 echo "Please ensure the infrastructure Terraform has been applied."
@@ -102,7 +107,7 @@ spec:
 
               # Generate a new secret_id
               echo "Generating new AppRole secret_id..."
-              SECRET_ID=$(vault write -field=secret_id -f auth/approle/role/atlantis/secret-id)
+              SECRET_ID=$(/shared/vault write -field=secret_id -f auth/approle/role/atlantis/secret-id)
               if [ -z "$SECRET_ID" ]; then
                 echo "ERROR: Could not generate secret_id"
                 exit 1
@@ -111,7 +116,7 @@ spec:
 
               # Update the Vault KV secret
               echo "Updating Vault KV secret at secret/atlantis..."
-              vault kv patch secret/atlantis \
+              /shared/vault kv patch secret/atlantis \
                 vault_role_id="$ROLE_ID" \
                 vault_secret_id="$SECRET_ID"
 
@@ -119,7 +124,7 @@ spec:
 
               # Verify the update
               echo "Verifying update..."
-              STORED_ROLE_ID=$(vault kv get -field=vault_role_id secret/atlantis)
+              STORED_ROLE_ID=$(/shared/vault kv get -field=vault_role_id secret/atlantis)
               if [ "$STORED_ROLE_ID" = "$ROLE_ID" ]; then
                 echo "Verification PASSED: role_id matches"
               else
@@ -128,4 +133,7 @@ spec:
               fi
 
               echo "Done! External Secrets will pick up the new credentials on next refresh."
+      volumes:
+        - name: shared-bin
+          emptyDir: {}
 {{- end }}
