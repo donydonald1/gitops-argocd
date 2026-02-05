@@ -93,15 +93,34 @@ botkube:
         botToken: "<path:secret/data/botkube#slackBotToken>"
         appToken: "<path:secret/data/botkube#slackAppToken>"
         channels:
+          # Main alerts channel - read-only access for all users
           default:
             name: kubebot-alerts
             bindings:
               executors:
                 - kubectl-read-only
               sources:
-                - k8s-errors      # Errors and warnings
-                - k8s-critical    # Deletions of important resources
-                - k8s-nodes       # Node status changes
+                - k8s-errors           # Errors and warnings
+                - k8s-critical         # Deletions of important resources
+                - k8s-nodes            # Node status changes
+                - prometheus-alerts    # Prometheus firing alerts
+                - k8s-recommendations  # Best practice recommendations
+                - argocd-notifications # ArgoCD sync and health status
+
+          # Admin channel - full access for operations team
+          admin:
+            name: kubebot-admin
+            bindings:
+              executors:
+                - kubectl-full-access
+                - helm-executor
+              sources:
+                - k8s-errors
+                - k8s-critical
+                - k8s-nodes
+                - prometheus-alerts
+                - crds
+                - argocd-notifications
 
   # Service monitor for Prometheus
   serviceMonitor:
@@ -243,14 +262,21 @@ botkube:
                 values:
                   - botkube-plugins-default
 
-    # Helm executor (disabled - plugin not available in v1.14.0)
-    # helm-readonly:
-    #   botkube/helm:
-    #     enabled: true
-    #     config:
-    #       helmDriver: secret
-    #       helmCacheDir: /tmp/helm/.cache
-    #       helmConfigDir: /tmp/helm/
+    # Helm executor for managing releases from Slack
+    helm-executor:
+      botkube/helm:
+        enabled: true
+        config:
+          helmDriver: secret
+          helmCacheDir: /tmp/helm/.cache
+          helmConfigDir: /tmp/helm/
+        context:
+          rbac:
+            group:
+              type: Static
+              static:
+                values:
+                  - botkube-plugins-default
 
   # Actions configuration
   actions:
@@ -272,6 +298,28 @@ botkube:
       bindings:
         sources:
           - k8s-errors
+        executors:
+          - kubectl-read-only
+
+    # Describe ArgoCD application on status change
+    describe-argocd-app:
+      enabled: true
+      displayName: "Describe ArgoCD Application"
+      command: "kubectl describe application {{ .Event.Name }} -n {{ .Event.Namespace }}"
+      bindings:
+        sources:
+          - argocd-notifications
+        executors:
+          - kubectl-read-only
+
+    # Get ArgoCD app sync status
+    get-argocd-status:
+      enabled: true
+      displayName: "Get ArgoCD Sync Status"
+      command: "kubectl get application {{ .Event.Name }} -n {{ .Event.Namespace }} -o jsonpath='{.status.sync.status} - {.status.health.status}'"
+      bindings:
+        sources:
+          - argocd-notifications
         executors:
           - kubectl-read-only
 
@@ -418,6 +466,53 @@ botkube:
             - name: monitoring.coreos.com/v1/servicemonitors
             - name: cert-manager.io/v1/certificates
             - name: argoproj.io/v1alpha1/applications
+        context:
+          rbac:
+            group:
+              type: Static
+              static:
+                values:
+                  - botkube-plugins-default
+
+    # ArgoCD notifications - sync status, health changes
+    argocd-notifications:
+      displayName: "ArgoCD Notifications"
+      botkube/kubernetes:
+        enabled: true
+        config:
+          namespaces:
+            include:
+              - argocd
+          event:
+            types:
+              - create
+              - update
+              - delete
+              - error
+          resources:
+            # ArgoCD Application resources
+            - type: argoproj.io/v1alpha1/applications
+              event:
+                types:
+                  - create
+                  - update
+                  - delete
+                  - error
+            # ArgoCD ApplicationSet resources
+            - type: argoproj.io/v1alpha1/applicationsets
+              event:
+                types:
+                  - create
+                  - update
+                  - delete
+                  - error
+            # ArgoCD AppProject resources
+            - type: argoproj.io/v1alpha1/appprojects
+              event:
+                types:
+                  - create
+                  - update
+                  - delete
         context:
           rbac:
             group:
