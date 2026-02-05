@@ -794,12 +794,26 @@ loki:
     extraEnvFrom:
       - secretRef:
           name: loki-s3-secret
+    resources:
+      limits:
+        cpu: "2"
+        memory: 2Gi
+      requests:
+        cpu: 100m
+        memory: 256Mi
 
   read:
     replicas: 2
     extraEnvFrom:
       - secretRef:
           name: loki-s3-secret
+    resources:
+      limits:
+        cpu: "2"
+        memory: 1Gi
+      requests:
+        cpu: 100m
+        memory: 128Mi
 
   backend:
     replicas: 2
@@ -808,6 +822,13 @@ loki:
     extraEnvFrom:
       - secretRef:
           name: loki-s3-secret
+    resources:
+      limits:
+        cpu: "2"
+        memory: 1Gi
+      requests:
+        cpu: 100m
+        memory: 256Mi
 
   ingress:
     enabled: true
