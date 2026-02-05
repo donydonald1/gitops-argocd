@@ -71,33 +71,28 @@ botkube:
         botToken: "<path:secret/data/botkube#slackBotToken>"
         appToken: "<path:secret/data/botkube#slackAppToken>"
         channels:
-          # Main alerts channel - read-only access for all users
+          # Main alerts channel - CRITICAL events only (reduced noise)
           default:
             name: kubebot-alerts
             bindings:
               executors:
                 - kubectl-read-only
               sources:
-                - k8s-errors           # Errors and warnings
                 - k8s-critical         # Deletions of important resources
-                - k8s-nodes            # Node status changes
-                - k8s-recommendations  # Best practice recommendations
-                - argocd-notifications # ArgoCD sync and health status
-                # Note: prometheus-alerts disabled (plugin not in v1.14.0)
+                - k8s-nodes            # Node status changes (critical)
+                - argocd-health        # ArgoCD health degradation only
 
-          # Admin channel - full access for operations team
+          # Admin channel - full access + more detailed alerts
           admin:
             name: kubebot-admin
             bindings:
               executors:
                 - kubectl-full-access
               sources:
-                - k8s-errors
-                - k8s-critical
-                - k8s-nodes
-                - crds
-                - argocd-notifications
-                # Note: prometheus-alerts disabled (plugin not in v1.14.0)
+                - k8s-errors           # Pod/deployment errors
+                - k8s-critical         # Resource deletions
+                - k8s-nodes            # Node events
+                - argocd-health        # ArgoCD health issues
 
   # Service monitor for Prometheus
   serviceMonitor:
@@ -287,25 +282,25 @@ botkube:
         executors:
           - kubectl-read-only
 
-    # Describe ArgoCD application on status change
+    # Describe ArgoCD application on error/delete
     describe-argocd-app:
       enabled: true
       displayName: "Describe ArgoCD Application"
       command: "kubectl describe application {{ .Event.Name }} -n {{ .Event.Namespace }}"
       bindings:
         sources:
-          - argocd-notifications
+          - argocd-health
         executors:
           - kubectl-read-only
 
-    # Get ArgoCD app sync status
+    # Get ArgoCD app sync status on error
     get-argocd-status:
       enabled: true
       displayName: "Get ArgoCD Sync Status"
       command: "kubectl get application {{ .Event.Name }} -n {{ .Event.Namespace }} -o jsonpath='{.status.sync.status} - {.status.health.status}'"
       bindings:
         sources:
-          - argocd-notifications
+          - argocd-health
         executors:
           - kubectl-read-only
 
@@ -362,7 +357,7 @@ botkube:
                 values:
                   - botkube-plugins-default
 
-    # Error events
+    # Error events - only actual errors, no warnings
     k8s-errors:
       displayName: "Kubernetes Errors"
       botkube/kubernetes:
@@ -371,13 +366,16 @@ botkube:
           namespaces:
             include:
               - ".*"
+            exclude:
+              - kube-system
+              - cattle-system
+              - cattle-fleet-system
+              - cattle-impersonation-system
           event:
             types:
-              - error
-              - warning
+              - error  # Only errors, removed warnings to reduce noise
           resources:
             - type: v1/pods
-            - type: v1/nodes
             - type: apps/v1/deployments
             - type: apps/v1/statefulsets
             - type: apps/v1/daemonsets
@@ -390,29 +388,29 @@ botkube:
                 values:
                   - botkube-plugins-default
 
-    # Recommendation events
-    k8s-recommendations:
-      displayName: "Kubernetes Recommendations"
-      botkube/kubernetes:
-        enabled: true
-        config:
-          namespaces:
-            include:
-              - ".*"
-          recommendations:
-            pod:
-              noLatestImageTag: true
-              labelsSet: true
-            ingress:
-              backendServiceValid: true
-              tlsSecretValid: true
-        context:
-          rbac:
-            group:
-              type: Static
-              static:
-                values:
-                  - botkube-plugins-default
+    # Recommendation events - DISABLED (too noisy)
+    # k8s-recommendations:
+    #   displayName: "Kubernetes Recommendations"
+    #   botkube/kubernetes:
+    #     enabled: true
+    #     config:
+    #       namespaces:
+    #         include:
+    #           - ".*"
+    #       recommendations:
+    #         pod:
+    #           noLatestImageTag: true
+    #           labelsSet: true
+    #         ingress:
+    #           backendServiceValid: true
+    #           tlsSecretValid: true
+    #     context:
+    #       rbac:
+    #         group:
+    #           type: Static
+    #           static:
+    #             values:
+    #               - botkube-plugins-default
 
     # Prometheus alerts source - DISABLED (plugin not in v1.14.0)
     # prometheus-alerts:
@@ -433,36 +431,36 @@ botkube:
     #             values:
     #               - botkube-plugins-default
 
-    # CRD monitoring
-    crds:
-      displayName: "Custom Resources"
-      botkube/kubernetes:
-        enabled: true
-        config:
-          namespaces:
-            include:
-              - ".*"
-          event:
-            types:
-              - create
-              - delete
-              - error
-          resources:
-            - type: monitoring.coreos.com/v1/podmonitors
-            - type: monitoring.coreos.com/v1/servicemonitors
-            - type: cert-manager.io/v1/certificates
-            - type: argoproj.io/v1alpha1/applications
-        context:
-          rbac:
-            group:
-              type: Static
-              static:
-                values:
-                  - botkube-plugins-default
+    # CRD monitoring - DISABLED (too noisy, creates events on every sync)
+    # crds:
+    #   displayName: "Custom Resources"
+    #   botkube/kubernetes:
+    #     enabled: true
+    #     config:
+    #       namespaces:
+    #         include:
+    #           - ".*"
+    #       event:
+    #         types:
+    #           - create
+    #           - delete
+    #           - error
+    #       resources:
+    #         - type: monitoring.coreos.com/v1/podmonitors
+    #         - type: monitoring.coreos.com/v1/servicemonitors
+    #         - type: cert-manager.io/v1/certificates
+    #         - type: argoproj.io/v1alpha1/applications
+    #     context:
+    #       rbac:
+    #         group:
+    #           type: Static
+    #           static:
+    #             values:
+    #               - botkube-plugins-default
 
-    # ArgoCD notifications - sync status, health changes
-    argocd-notifications:
-      displayName: "ArgoCD Notifications"
+    # ArgoCD health alerts - only errors and deletions (reduced noise)
+    argocd-health:
+      displayName: "ArgoCD Health Alerts"
       botkube/kubernetes:
         enabled: true
         config:
@@ -471,34 +469,15 @@ botkube:
               - argocd
           event:
             types:
-              - create
-              - update
-              - delete
-              - error
+              - delete  # Application deleted
+              - error   # Sync/health errors
           resources:
-            # ArgoCD Application resources
+            # ArgoCD Application resources - only critical events
             - type: argoproj.io/v1alpha1/applications
               event:
                 types:
-                  - create
-                  - update
                   - delete
                   - error
-            # ArgoCD ApplicationSet resources
-            - type: argoproj.io/v1alpha1/applicationsets
-              event:
-                types:
-                  - create
-                  - update
-                  - delete
-                  - error
-            # ArgoCD AppProject resources
-            - type: argoproj.io/v1alpha1/appprojects
-              event:
-                types:
-                  - create
-                  - update
-                  - delete
         context:
           rbac:
             group:
