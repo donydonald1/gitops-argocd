@@ -9,7 +9,7 @@ botkube:
       disableColors: false
 
   # Plugin Manager Configuration
-  # Using init container to pre-download plugins with proper timeouts
+  # Using localhost nginx sidecar to serve plugins index with no timeout issues
   plugins:
     cacheDir: /tmp/plugins
     healthCheckInterval: 30s
@@ -18,38 +18,91 @@ botkube:
     restartPolicy:
       type: DeactivatePlugin
       threshold: 10
-    # Plugin repositories
+    # Plugin repositories - use local nginx sidecar to avoid GitHub timeout
     repositories:
       botkube:
-        url: https://github.com/kubeshop/botkube/releases/download/v1.14.0/plugins-index.yaml
+        url: http://localhost:8080/plugins-index.yaml
 
   # Init containers to pre-download plugins before botkube starts
-  # This bypasses botkube's internal HTTP client timeout issues
+  # Downloads plugins-index.yaml to shared volume for nginx sidecar to serve
   extraInitContainers:
-    - name: download-plugins
-      image: curlimages/curl:latest
+    - name: download-plugins-index
+      image: curlimages/curl:8.5.0
       command:
         - sh
         - -c
         - |
           echo "Downloading botkube plugins index..."
-          mkdir -p /tmp/plugins/botkube
-          curl -sL --connect-timeout 120 --max-time 300 --retry 5 --retry-delay 10 \
+          mkdir -p /plugins-index
+          curl -sL --connect-timeout 120 --max-time 600 --retry 10 --retry-delay 15 \
             "https://github.com/kubeshop/botkube/releases/download/v1.14.0/plugins-index.yaml" \
-            -o /tmp/plugins/botkube/plugins-index.yaml
-          if [ -f /tmp/plugins/botkube/plugins-index.yaml ]; then
-            echo "Plugins index downloaded successfully"
-            cat /tmp/plugins/botkube/plugins-index.yaml | head -20
+            -o /plugins-index/plugins-index.yaml
+          if [ -f /plugins-index/plugins-index.yaml ]; then
+            echo "Plugins index downloaded successfully ($(wc -l < /plugins-index/plugins-index.yaml) lines)"
           else
             echo "Failed to download plugins index"
             exit 1
           fi
       volumeMounts:
-        - name: plugins-cache
-          mountPath: /tmp/plugins
+        - name: plugins-index
+          mountPath: /plugins-index
 
-  # Extra volumes for plugin cache
+  # Nginx sidecar to serve the plugins index locally
+  # This avoids botkube's 30s HTTP timeout by serving from localhost
+  extraContainers:
+    - name: plugins-server
+      image: nginx:1.25-alpine
+      ports:
+        - containerPort: 8080
+      command:
+        - sh
+        - -c
+        - |
+          cat > /etc/nginx/nginx.conf << 'EOF'
+          worker_processes 1;
+          events { worker_connections 128; }
+          http {
+            server {
+              listen 8080;
+              location /plugins-index.yaml {
+                alias /plugins-index/plugins-index.yaml;
+                add_header Content-Type application/octet-stream;
+              }
+              location /health {
+                return 200 'ok';
+              }
+            }
+          }
+          EOF
+          nginx -g 'daemon off;'
+      volumeMounts:
+        - name: plugins-index
+          mountPath: /plugins-index
+          readOnly: true
+      resources:
+        requests:
+          cpu: 10m
+          memory: 16Mi
+        limits:
+          cpu: 50m
+          memory: 32Mi
+      livenessProbe:
+        httpGet:
+          path: /health
+          port: 8080
+        initialDelaySeconds: 5
+        periodSeconds: 10
+      readinessProbe:
+        httpGet:
+          path: /plugins-index.yaml
+          port: 8080
+        initialDelaySeconds: 5
+        periodSeconds: 5
+
+  # Extra volumes for plugin index and cache
   extraVolumes:
+    - name: plugins-index
+      emptyDir: {}
     - name: plugins-cache
       emptyDir: {}
 
