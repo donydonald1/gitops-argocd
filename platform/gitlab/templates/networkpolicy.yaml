@@ -1,0 +1,48 @@
+# CiliumNetworkPolicy for GitLab egress
+# GitLab needs outbound HTTPS to reach GitLab.com for:
+# - License activation (customers.gitlab.com, license.gitlab.com)
+# - Version checks (version.gitlab.com)
+# - Container registries for image pulls
+# - SMTP for email notifications
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: gitlab-allow-egress
+  namespace: {{ .Release.Namespace }}
+spec:
+  endpointSelector: {}
+  ingress:
+    - fromEntities:
+        - cluster
+  egress:
+    # Allow DNS resolution via kube-dns
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: kube-system
+            k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+    # Allow HTTPS/HTTP to external URLs (GitLab licensing, registries, SMTP)
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+            - port: "80"
+              protocol: TCP
+            - port: "22"
+              protocol: TCP
+            - port: "587"
+              protocol: TCP
+            - port: "465"
+              protocol: TCP
+            - port: "25"
+              protocol: TCP
+    # Allow communication within cluster (Redis, Postgres, MinIO, etc.)
+    - toEntities:
+        - cluster

@@ -1,0 +1,39 @@
+# CiliumNetworkPolicy for Harbor egress
+# Harbor needs outbound HTTPS to reach external registries for:
+# - Registry replication
+# - Vulnerability scanning (Trivy database updates)
+# - Image pulls from external sources
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: harbor-allow-egress
+  namespace: {{ .Release.Namespace }}
+spec:
+  endpointSelector: {}
+  ingress:
+    - fromEntities:
+        - cluster
+  egress:
+    # Allow DNS resolution via kube-dns
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: kube-system
+            k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+    # Allow HTTPS to external registries and vulnerability databases
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+            - port: "80"
+              protocol: TCP
+    # Allow communication within cluster (Redis, Postgres, MinIO)
+    - toEntities:
+        - cluster

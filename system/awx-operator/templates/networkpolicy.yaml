@@ -1,0 +1,46 @@
+# CiliumNetworkPolicy for AWX egress
+# AWX needs outbound access for:
+# - Ansible Galaxy collections
+# - Git repositories (playbook sources)
+# - SSH to managed hosts
+# - WinRM to Windows hosts
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: awx-allow-egress
+  namespace: {{ .Release.Namespace }}
+spec:
+  endpointSelector: {}
+  ingress:
+    - fromEntities:
+        - cluster
+  egress:
+    # Allow DNS resolution via kube-dns
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: kube-system
+            k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+    # Allow HTTPS/SSH/WinRM to external hosts
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+            - port: "80"
+              protocol: TCP
+            - port: "22"
+              protocol: TCP
+            - port: "5985"
+              protocol: TCP
+            - port: "5986"
+              protocol: TCP
+    # Allow communication within cluster (Redis, Postgres)
+    - toEntities:
+        - cluster
