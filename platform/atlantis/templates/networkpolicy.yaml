@@ -10,7 +10,7 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      app.kubernetes.io/name: atlantis
+      app: atlantis
   policyTypes:
     - Ingress
     - Egress
