@@ -396,6 +396,8 @@ harbor:
         existingSecret: harbor-s3
         # External URL - CoreDNS rewrites this to internal HTTPS service for cluster traffic
         regionendpoint: "https://s3.ops.techsecom.io"
+        # Skip TLS verification for MinIO self-signed certificate
+        skipverify: true
         # Reduced chunk size to 32MB to avoid upload timeout issues with S3
         # Smaller chunks = more reliable uploads at the cost of some overhead
         chunksize: "33554432"
