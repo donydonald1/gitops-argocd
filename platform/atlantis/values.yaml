@@ -48,7 +48,7 @@ atlantis:
   orgAllowlist: gitlab.ops.techsecom.io/*
 
   # Default Terraform version
-  defaultTFVersion: "1.10.0"
+  defaultTFVersion: "1.14.3"
 
   # Production safety settings
   disableApplyAll: true
