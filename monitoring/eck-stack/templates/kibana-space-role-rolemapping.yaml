@@ -8,10 +8,13 @@ metadata:
     app.kubernetes.io/name: elasticsearch-ilm-setup
     app.kubernetes.io/instance: {{ .Release.Name }}
   annotations:
-    # ArgoCD sync wave - run after Elasticsearch and Kibana are deployed
-    argocd.argoproj.io/sync-wave: "10"
-    # ArgoCD hook - run as a post-sync hook
-    argocd.argoproj.io/hook: PostSync
+    # ArgoCD sync wave - run after Elasticsearch CRDs are created but before Logstash tries to bootstrap
+    # Changed from wave 10 to wave 5 to ensure ILM policies exist when Logstash starts
+    argocd.argoproj.io/sync-wave: "5"
+    # Changed from PostSync to Sync - job runs DURING sync, not after
+    # This ensures ILM policies are created before ArgoCD considers sync complete
+    # The job has a wait loop for Elasticsearch, so it will wait until ES is ready
+    argocd.argoproj.io/hook: Sync
     argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
 spec:
   ttlSecondsAfterFinished: 600

@@ -725,6 +725,55 @@ eck-stack:
             limits:
               cpu: 2
               memory: 2Gi
+        # Wait for ILM policies to exist before Logstash starts
+        # This prevents bootstrap failures when ILM setup job hasn't completed yet
+        - name: wait-for-ilm-policies
+          image: curlimages/curl:latest
+          command: ["sh", "-c"]
+          args:
+          - |
+            echo "Waiting for Elasticsearch to be ready and ILM policies to exist..."
+            ES_URL="https://elasticsearch-es-http.elastic-system.svc:9200"
+
+            # Wait for Elasticsearch to be ready
+            until curl --silent --insecure --user "$ES_USER:$ES_PASSWORD" --fail "$ES_URL/_cluster/health" > /dev/null 2>&1; do
+              echo "Waiting for Elasticsearch cluster..."
+              sleep 5
+            done
+            echo "Elasticsearch is ready!"
+
+            # Wait for audit-logs ILM policy
+            echo "Checking for ILM policy: hot_warm_delete-audit-logs"
+            until curl --silent --insecure --user "$ES_USER:$ES_PASSWORD" --fail "$ES_URL/_ilm/policy/hot_warm_delete-audit-logs" > /dev/null 2>&1; do
+              echo "ILM policy hot_warm_delete-audit-logs not found, waiting..."
+              sleep 5
+            done
+            echo "ILM policy hot_warm_delete-audit-logs exists!"
+
+            # Wait for container-logs ILM policy
+            echo "Checking for ILM policy: hot_warm_delete-container-logs"
+            until curl --silent --insecure --user "$ES_USER:$ES_PASSWORD" --fail "$ES_URL/_ilm/policy/hot_warm_delete-container-logs" > /dev/null 2>&1; do
+              echo "ILM policy hot_warm_delete-container-logs not found, waiting..."
+              sleep 5
+            done
+            echo "ILM policy hot_warm_delete-container-logs exists!"
+
+            echo "All ILM policies are ready. Logstash can start."
+          env:
+          - name: ES_USER
+            value: "elastic"
+          - name: ES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: elasticsearch-es-elastic-user
+                key: elastic
+          resources:
+            requests:
+              cpu: 2
+              memory: 64Mi
+            limits:
+              cpu: 2
+              memory: 128Mi
         containers:
         - name: logstash
           resources:
