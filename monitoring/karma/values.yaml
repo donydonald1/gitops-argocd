@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/common-3.0.1/charts/library/common/values.schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/common-4.0.0/charts/library/common/values.schema.json
 app-template:
   controllers:
     main:
@@ -6,7 +6,7 @@ app-template:
         main:
           image:
             repository: ghcr.io/prymitive/karma
-            tag: v0.120@sha256:733bff15f2529065f1c1b50b13e4a56a541d3c0615dbc6b4b6a07befbfcc27ff
+            tag: v0.122
           env:
             TZ: America/Chicago
             ALERTMANAGER_URI: http://alertmanager-operated.monitoring.svc.cluster.local:9093
@@ -59,12 +59,12 @@ app-template:
         # cert-manager.io/renew-before: "720h"
         cert-manager.io/cluster-issuer: letsencrypt-prod
       hosts:
-      - host: karma.dev.techsecoms.com
+      - host: karma.ops.techsecom.io
         paths:
         - path: /
           service:
             identifier: main
             port: http
       tls:
-      - hosts: [ karma.dev.techsecoms.com ]
+      - hosts: [ karma.ops.techsecom.io ]
         secretName: karma-cert-tls

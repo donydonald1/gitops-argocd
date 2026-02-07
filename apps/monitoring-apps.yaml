@@ -89,10 +89,10 @@ spec:
       #     valueFiles:
       #     - "values.yaml"
 
-      # - name: karma
-      #   namespace: monitoring
-      #   wave: "1"
-      #   serverSideApply: true
+      - name: karma
+        namespace: monitoring
+        wave: "2"
+        serverSideApply: true
 
       # OLD Rancher monitoring-stack - DISABLED
       # - name: monitoring-stack
