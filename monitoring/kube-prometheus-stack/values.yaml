@@ -647,6 +647,30 @@ thanos:
     retentionResolutionRaw: 7d
     retentionResolution5m: 14d
     retentionResolution1h: 30d
+    # Increased resources to prevent OOMKills during block compaction
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+      limits:
+        cpu: 500m
+        memory: 1Gi
+    # Extended probe timeouts to prevent restarts during heavy block operations
+    # Block sync can take 1+ minute during compaction
+    livenessProbe:
+      enabled: true
+      initialDelaySeconds: 60
+      periodSeconds: 30
+      timeoutSeconds: 60
+      failureThreshold: 10
+      successThreshold: 1
+    readinessProbe:
+      enabled: true
+      initialDelaySeconds: 30
+      periodSeconds: 30
+      timeoutSeconds: 60
+      failureThreshold: 10
+      successThreshold: 1
     ingress:
       enabled: true
       hostname: thanos-compactor.ops.techsecom.io
