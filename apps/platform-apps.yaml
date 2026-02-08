@@ -16,15 +16,15 @@ spec:
       # =============================================
       # WAVE -1: Storage Infrastructure (MinIO must be ready before other apps)
       # =============================================
-      # - name: minio
-      #   namespace: minio
-      #   serverSideApply: true
-      #   wave: "-1"  # Deploy MinIO first - storage backend for all apps
-      #   imageList: "minio=minio/minio"
-      #   skipHooks: "false"  # Enable Helm hooks for bucket/user creation jobs
-      #   helm:
-      #     values:
-      #     - values.yaml
+      - name: minio
+        namespace: minio
+        serverSideApply: true
+        wave: "-1"  # Deploy MinIO first - storage backend for all apps
+        imageList: "minio=minio/minio"
+        skipHooks: "false"  # Enable Helm hooks for bucket/user creation jobs
+        helm:
+          values:
+          - values.yaml
 
       # # =============================================
       # # WAVE 0: Database Cluster (requires CNPG operator from system wave -2)
