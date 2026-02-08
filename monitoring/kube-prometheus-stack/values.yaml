@@ -647,6 +647,8 @@ thanos:
     retentionResolutionRaw: 7d
     retentionResolution5m: 14d
     retentionResolution1h: 30d
+    # Disable resourcesPreset to use custom resources (required for bitnami chart)
+    resourcesPreset: "none"
     # Increased resources to prevent OOMKills during block compaction
     resources:
       requests:
