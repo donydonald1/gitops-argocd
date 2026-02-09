@@ -124,7 +124,7 @@ spec:
         helm:
           valueFiles:
           - values.yaml
-          skipCrds: {{ dig "SkipCRDs" false . }}
+          # skipCrds handled via crds.enabled in values.yaml
       destination:
         name: in-cluster
         namespace: '{{ default .name (dig "namespace" "" .) }}'
