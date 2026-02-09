@@ -1,6 +1,12 @@
 minio:
   mode: distributed
 
+  # Use latest MinIO to support xl meta version 3 format
+  image:
+    repository: quay.io/minio/minio
+    tag: RELEASE.2025-02-07T23-21-09Z
+    pullPolicy: IfNotPresent
+
   # Current: 3 drives (1 per node) - no erasure coding
   # For erasure coding, consider adding more nodes or drives per node
   # WARNING: Changing drivesPerNode requires data migration
