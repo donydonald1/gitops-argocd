@@ -352,12 +352,13 @@ eck-stack:
           - name: elasticsearch
             resources:
               # ECK requires memory request = limit for ResourcesAwareManagement
-              # Increased from 3Gi to 6Gi to prevent OOMKilled under heavy indexing
+              # Hot tier needs extra memory for active indexing and off-heap usage
+              # JVM heap is ~50% of container memory (4GB heap with 8GB container)
               limits:
-                memory: 6Gi
+                memory: 8Gi
                 cpu: 2
               requests:
-                memory: 6Gi
+                memory: 8Gi
                 cpu: 2
             volumeMounts:
             - name: certs
