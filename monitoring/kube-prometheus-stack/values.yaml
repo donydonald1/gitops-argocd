@@ -188,6 +188,147 @@ kube-prometheus-stack:
     defaultDashboardsEnabled: true
     defaultDashboardsTimezone: utc
 
+    # ─────────────────────────────────────────────────────────────────────────────
+    # Application Dashboards - imported from Grafana.com
+    # ─────────────────────────────────────────────────────────────────────────────
+    dashboardProviders:
+      dashboardproviders.yaml:
+        apiVersion: 1
+        providers:
+          - name: 'grafana-dashboards-apps'
+            orgId: 1
+            folder: 'Applications'
+            folderUid: 'apps'
+            type: file
+            disableDeletion: false
+            editable: true
+            options:
+              path: /var/lib/grafana/dashboards/grafana-dashboards-apps
+          - name: 'grafana-dashboards-infra'
+            orgId: 1
+            folder: 'Infrastructure'
+            folderUid: 'infra'
+            type: file
+            disableDeletion: false
+            editable: true
+            options:
+              path: /var/lib/grafana/dashboards/grafana-dashboards-infra
+
+    dashboards:
+      # ─────────────────────────────────────────────────────────────────────────
+      # Application Dashboards
+      # ─────────────────────────────────────────────────────────────────────────
+      grafana-dashboards-apps:
+        # ArgoCD - Application Delivery
+        argocd-overview:
+          gnetId: 19993
+          revision: 2
+          datasource: Prometheus
+        argocd-operational:
+          gnetId: 19974
+          revision: 2
+          datasource: Prometheus
+
+        # GitLab - Source Control & CI/CD
+        gitlab-overview:
+          gnetId: 14180
+          revision: 3
+          datasource: Prometheus
+        gitlab-runner:
+          gnetId: 13674
+          revision: 7
+          datasource: Prometheus
+
+        # Vault - Secrets Management
+        vault:
+          gnetId: 12904
+          revision: 2
+          datasource: Prometheus
+
+        # Keycloak - Identity & Access Management
+        keycloak:
+          gnetId: 10441
+          revision: 1
+          datasource: Prometheus
+
+        # AWX - Automation Platform
+        awx:
+          gnetId: 10992
+          revision: 1
+          datasource: Prometheus
+
+        # SonarQube - Code Quality
+        sonarqube:
+          gnetId: 13067
+          revision: 1
+          datasource: Prometheus
+
+      # ─────────────────────────────────────────────────────────────────────────
+      # Infrastructure Dashboards
+      # ─────────────────────────────────────────────────────────────────────────
+      grafana-dashboards-infra:
+        # MinIO - Object Storage
+        minio-overview:
+          gnetId: 13502
+          revision: 26
+          datasource: Prometheus
+        minio-bucket:
+          gnetId: 19237
+          revision: 2
+          datasource: Prometheus
+
+        # Harbor - Container Registry
+        harbor:
+          gnetId: 14075
+          revision: 1
+          datasource: Prometheus
+
+        # Cert-Manager - Certificate Management
+        cert-manager:
+          gnetId: 11001
+          revision: 1
+          datasource: Prometheus
+
+        # NGINX Ingress Controller
+        nginx-ingress:
+          gnetId: 14314
+          revision: 2
+          datasource: Prometheus
+        nginx-ingress-requests:
+          gnetId: 9614
+          revision: 1
+          datasource: Prometheus
+
+        # External DNS
+        external-dns:
+          gnetId: 15038
+          revision: 3
+          datasource: Prometheus
+
+        # Longhorn - Storage
+        longhorn:
+          gnetId: 16888
+          revision: 9
+          datasource: Prometheus
+
+        # Velero - Backup
+        velero:
+          gnetId: 16829
+          revision: 3
+          datasource: Prometheus
+
+        # Elasticsearch/ECK
+        elasticsearch:
+          gnetId: 14191
+          revision: 1
+          datasource: Prometheus
+
+        # PostgreSQL / CloudNativePG
+        cnpg:
+          gnetId: 20417
+          revision: 3
+          datasource: Prometheus
+
     resources:
       limits:
         cpu: 500m
