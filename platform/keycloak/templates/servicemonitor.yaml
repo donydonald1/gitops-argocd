@@ -1,0 +1,42 @@
+---
+# Service for Keycloak metrics (port 9000)
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloakx-metrics
+  namespace: keycloak
+  labels:
+    app.kubernetes.io/name: keycloakx
+    app.kubernetes.io/instance: keycloak
+spec:
+  type: ClusterIP
+  ports:
+  - name: http-metrics
+    port: 9000
+    targetPort: 9000
+    protocol: TCP
+  selector:
+    app.kubernetes.io/instance: keycloak
+    app.kubernetes.io/name: keycloakx
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: keycloak
+  namespace: keycloak
+  labels:
+    app.kubernetes.io/name: keycloakx
+    app.kubernetes.io/instance: keycloak
+    release: kps
+spec:
+  endpoints:
+  - port: http-metrics
+    path: /metrics
+    interval: 30s
+  namespaceSelector:
+    matchNames:
+    - keycloak
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: keycloakx
+      app.kubernetes.io/instance: keycloak
