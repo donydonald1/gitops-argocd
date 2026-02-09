@@ -1,0 +1,557 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: k8s-audit-logs-dashboard
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+  annotations:
+    grafana_folder: "Logging & Observability"
+data:
+  k8s-audit-logs.json: |
+    {
+      "annotations": {
+        "list": []
+      },
+      "description": "Kubernetes API Server Audit Logs - Security and Compliance Monitoring",
+      "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 1,
+      "links": [],
+      "panels": [
+        {
+          "collapsed": false,
+          "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0},
+          "id": 100,
+          "panels": [],
+          "title": "Overview",
+          "type": "row"
+        },
+        {
+          "datasource": {"type": "loki", "uid": "loki"},
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "palette-classic"},
+              "mappings": [],
+              "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
+            },
+            "overrides": []
+          },
+          "gridPos": {"h": 4, "w": 6, "x": 0, "y": 1},
+          "id": 1,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {"calcs": ["sum"], "fields": "", "values": false},
+            "textMode": "auto"
+          },
+          "pluginVersion": "10.0.0",
+          "targets": [{
+            "datasource": {"type": "loki", "uid": "loki"},
+            "expr": "sum(count_over_time({job=\"kubernetes-audit\"} [$__range]))",
+            "legendFormat": "Total Events",
+            "refId": "A"
+          }],
+          "title": "Total Audit Events",
+          "type": "stat"
+        },
+        {
+          "datasource": {"type": "loki", "uid": "loki"},
+          "fieldConfig": {
+            "defaults": {
+              "color": {"fixedColor": "red", "mode": "fixed"},
+              "mappings": [],
+              "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "red", "value": 1}]}
+            },
+            "overrides": []
+          },
+          "gridPos": {"h": 4, "w": 6, "x": 6, "y": 1},
+          "id": 2,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {"calcs": ["sum"], "fields": "", "values": false},
+            "textMode": "auto"
+          },
+          "pluginVersion": "10.0.0",
+          "targets": [{
+            "datasource": {"type": "loki", "uid": "loki"},
+            "expr": "sum(count_over_time({job=\"kubernetes-audit\"} | json | responseStatus_code >= 400 [$__range]))",
+            "legendFormat": "Failed Requests",
+            "refId": "A"
+          }],
+          "title": "Failed Requests (4xx/5xx)",
+          "type": "stat"
+        },
+        {
+          "datasource": {"type": "loki", "uid": "loki"},
+          "fieldConfig": {
+            "defaults": {
+              "color": {"fixedColor": "orange", "mode": "fixed"},
+              "mappings": [],
+              "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
+            },
+            "overrides": []
+          },
+          "gridPos": {"h": 4, "w": 6, "x": 12, "y": 1},
+          "id": 3,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {"calcs": ["sum"], "fields": "", "values": false},
+            "textMode": "auto"
+          },
+          "pluginVersion": "10.0.0",
+          "targets": [{
+            "datasource": {"type": "loki", "uid": "loki"},
+            "expr": "sum(count_over_time({job=\"kubernetes-audit\"} | json | verb=~\"delete|patch|update\" [$__range]))",
+            "legendFormat": "Modifications",
+            "refId": "A"
+          }],
+          "title": "Resource Modifications",
+          "type": "stat"
+        },
+        {
+          "datasource": {"type": "loki", "uid": "loki"},
+          "fieldConfig": {
+            "defaults": {
+              "color": {"fixedColor": "purple", "mode": "fixed"},
+              "mappings": [],
+              "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
+            },
+            "overrides": []
+          },
+          "gridPos": {"h": 4, "w": 6, "x": 18, "y": 1},
+          "id": 4,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {"calcs": ["sum"], "fields": "", "values": false},
+            "textMode": "auto"
+          },
+          "pluginVersion": "10.0.0",
+          "targets": [{
+            "datasource": {"type": "loki", "uid": "loki"},
+            "expr": "count(sum by (user_username) (count_over_time({job=\"kubernetes-audit\"} | json [$__range])))",
+            "legendFormat": "Users",
+            "refId": "A"
+          }],
+          "title": "Unique Users",
+          "type": "stat"
+        },
+        {
+          "datasource": {"type": "loki", "uid": "loki"},
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "palette-classic"},
+              "custom": {"hideFrom": {"legend": false, "tooltip": false, "viz": false}},
+              "mappings": []
+            },
+            "overrides": [
+              {"matcher": {"id": "byName", "options": "delete"}, "properties": [{"id": "color", "value": {"fixedColor": "red", "mode": "fixed"}}]},
+              {"matcher": {"id": "byName", "options": "create"}, "properties": [{"id": "color", "value": {"fixedColor": "green", "mode": "fixed"}}]},
+              {"matcher": {"id": "byName", "options": "update"}, "properties": [{"id": "color", "value": {"fixedColor": "yellow", "mode": "fixed"}}]},
+              {"matcher": {"id": "byName", "options": "patch"}, "properties": [{"id": "color", "value": {"fixedColor": "orange", "mode": "fixed"}}]}
+            ]
+          },
+          "gridPos": {"h": 6, "w": 8, "x": 0, "y": 5},
+          "id": 5,
+          "options": {
+            "legend": {"displayMode": "list", "placement": "right", "showLegend": true},
+            "pieType": "pie",
+            "reduceOptions": {"calcs": ["sum"], "fields": "", "values": false},
+            "tooltip": {"mode": "single", "sort": "none"}
+          },
+          "targets": [{
+            "datasource": {"type": "loki", "uid": "loki"},
+            "expr": "sum by (verb) (count_over_time({job=\"kubernetes-audit\"} | json [$__range]))",
+            "legendFormat": "{{ "{{" }}verb{{ "}}" }}",
+            "refId": "A"
+          }],
+          "title": "Events by Verb",
+          "type": "piechart"
+        },
+        {
+          "datasource": {"type": "loki", "uid": "loki"},
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "palette-classic"},
+              "custom": {"hideFrom": {"legend": false, "tooltip": false, "viz": false}},
+              "mappings": []
+            },
+            "overrides": []
+          },
+          "gridPos": {"h": 6, "w": 8, "x": 8, "y": 5},
+          "id": 6,
+          "options": {
+            "legend": {"displayMode": "list", "placement": "right", "showLegend": true},
+            "pieType": "pie",
+            "reduceOptions": {"calcs": ["sum"], "fields": "", "values": false},
+            "tooltip": {"mode": "single", "sort": "none"}
+          },
+          "targets": [{
+            "datasource": {"type": "loki", "uid": "loki"},
+            "expr": "topk(10, sum by (objectRef_resource) (count_over_time({job=\"kubernetes-audit\"} | json | objectRef_resource != \"\" [$__range])))",
+            "legendFormat": "{{ "{{" }}objectRef_resource{{ "}}" }}",
+            "refId": "A"
+          }],
+          "title": "Top 10 Resource Types",
+          "type": "piechart"
+        },
+        {
+          "datasource": {"type": "loki", "uid": "loki"},
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "palette-classic"},
+              "custom": {"hideFrom": {"legend": false, "tooltip": false, "viz": false}},
+              "mappings": []
+            },
+            "overrides": []
+          },
+          "gridPos": {"h": 6, "w": 8, "x": 16, "y": 5},
+          "id": 7,
+          "options": {
+            "legend": {"displayMode": "list", "placement": "right", "showLegend": true},
+            "pieType": "pie",
+            "reduceOptions": {"calcs": ["sum"], "fields": "", "values": false},
+            "tooltip": {"mode": "single", "sort": "none"}
+          },
+          "targets": [{
+            "datasource": {"type": "loki", "uid": "loki"},
+            "expr": "topk(10, sum by (user_username) (count_over_time({job=\"kubernetes-audit\"} | json | user_username != \"\" [$__range])))",
+            "legendFormat": "{{ "{{" }}user_username{{ "}}" }}",
+            "refId": "A"
+          }],
+          "title": "Top 10 Users",
+          "type": "piechart"
+        },
+        {
+          "collapsed": false,
+          "gridPos": {"h": 1, "w": 24, "x": 0, "y": 11},
+          "id": 101,
+          "panels": [],
+          "title": "Timeline",
+          "type": "row"
+        },
+        {
+          "datasource": {"type": "loki", "uid": "loki"},
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "palette-classic"},
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "bars",
+                "fillOpacity": 50,
+                "gradientMode": "none",
+                "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {"type": "linear"},
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {"group": "A", "mode": "normal"},
+                "thresholdsStyle": {"mode": "off"}
+              },
+              "mappings": [],
+              "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
+            },
+            "overrides": [
+              {"matcher": {"id": "byName", "options": "delete"}, "properties": [{"id": "color", "value": {"fixedColor": "red", "mode": "fixed"}}]},
+              {"matcher": {"id": "byName", "options": "create"}, "properties": [{"id": "color", "value": {"fixedColor": "green", "mode": "fixed"}}]}
+            ]
+          },
+          "gridPos": {"h": 8, "w": 24, "x": 0, "y": 12},
+          "id": 8,
+          "options": {
+            "legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true},
+            "tooltip": {"mode": "multi", "sort": "desc"}
+          },
+          "targets": [{
+            "datasource": {"type": "loki", "uid": "loki"},
+            "expr": "sum by (verb) (count_over_time({job=\"kubernetes-audit\"} | json [$__interval]))",
+            "legendFormat": "{{ "{{" }}verb{{ "}}" }}",
+            "refId": "A"
+          }],
+          "title": "Audit Events Over Time by Verb",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {"type": "loki", "uid": "loki"},
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "palette-classic"},
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "bars",
+                "fillOpacity": 50,
+                "gradientMode": "none",
+                "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {"type": "linear"},
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {"group": "A", "mode": "normal"},
+                "thresholdsStyle": {"mode": "off"}
+              },
+              "mappings": [],
+              "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
+            },
+            "overrides": []
+          },
+          "gridPos": {"h": 8, "w": 24, "x": 0, "y": 20},
+          "id": 9,
+          "options": {
+            "legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true},
+            "tooltip": {"mode": "multi", "sort": "desc"}
+          },
+          "targets": [{
+            "datasource": {"type": "loki", "uid": "loki"},
+            "expr": "topk(10, sum by (objectRef_namespace) (count_over_time({job=\"kubernetes-audit\"} | json | objectRef_namespace != \"\" [$__interval])))",
+            "legendFormat": "{{ "{{" }}objectRef_namespace{{ "}}" }}",
+            "refId": "A"
+          }],
+          "title": "Events by Namespace Over Time",
+          "type": "timeseries"
+        },
+        {
+          "collapsed": false,
+          "gridPos": {"h": 1, "w": 24, "x": 0, "y": 28},
+          "id": 102,
+          "panels": [],
+          "title": "Security Events",
+          "type": "row"
+        },
+        {
+          "datasource": {"type": "loki", "uid": "loki"},
+          "fieldConfig": {
+            "defaults": {
+              "color": {"fixedColor": "red", "mode": "fixed"},
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "bars",
+                "fillOpacity": 50,
+                "gradientMode": "none",
+                "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {"type": "linear"},
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {"group": "A", "mode": "none"},
+                "thresholdsStyle": {"mode": "off"}
+              },
+              "mappings": [],
+              "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
+            },
+            "overrides": []
+          },
+          "gridPos": {"h": 6, "w": 12, "x": 0, "y": 29},
+          "id": 10,
+          "options": {
+            "legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true},
+            "tooltip": {"mode": "multi", "sort": "desc"}
+          },
+          "targets": [{
+            "datasource": {"type": "loki", "uid": "loki"},
+            "expr": "sum by (responseStatus_code) (count_over_time({job=\"kubernetes-audit\"} | json | responseStatus_code >= 400 [$__interval]))",
+            "legendFormat": "HTTP {{ "{{" }}responseStatus_code{{ "}}" }}",
+            "refId": "A"
+          }],
+          "title": "Failed Requests (4xx/5xx) Over Time",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {"type": "loki", "uid": "loki"},
+          "fieldConfig": {
+            "defaults": {
+              "color": {"fixedColor": "orange", "mode": "fixed"},
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "bars",
+                "fillOpacity": 50,
+                "gradientMode": "none",
+                "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {"type": "linear"},
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {"group": "A", "mode": "none"},
+                "thresholdsStyle": {"mode": "off"}
+              },
+              "mappings": [],
+              "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
+            },
+            "overrides": []
+          },
+          "gridPos": {"h": 6, "w": 12, "x": 12, "y": 29},
+          "id": 11,
+          "options": {
+            "legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true},
+            "tooltip": {"mode": "multi", "sort": "desc"}
+          },
+          "targets": [{
+            "datasource": {"type": "loki", "uid": "loki"},
+            "expr": "sum(count_over_time({job=\"kubernetes-audit\"} | json | objectRef_resource=~\"secrets|configmaps\" | verb=~\"get|list|watch\" [$__interval]))",
+            "legendFormat": "Secret/ConfigMap Access",
+            "refId": "A"
+          }],
+          "title": "Secrets & ConfigMaps Access Over Time",
+          "type": "timeseries"
+        },
+        {
+          "collapsed": false,
+          "gridPos": {"h": 1, "w": 24, "x": 0, "y": 35},
+          "id": 103,
+          "panels": [],
+          "title": "Audit Logs",
+          "type": "row"
+        },
+        {
+          "datasource": {"type": "loki", "uid": "loki"},
+          "gridPos": {"h": 12, "w": 24, "x": 0, "y": 36},
+          "id": 12,
+          "options": {
+            "dedupStrategy": "none",
+            "enableLogDetails": true,
+            "prettifyLogMessage": true,
+            "showCommonLabels": false,
+            "showLabels": false,
+            "showTime": true,
+            "sortOrder": "Descending",
+            "wrapLogMessage": false
+          },
+          "targets": [{
+            "datasource": {"type": "loki", "uid": "loki"},
+            "expr": "{job=\"kubernetes-audit\"} | json | verb=~\"$verb\" | objectRef_namespace=~\"$namespace\" | user_username=~\"$user\" | line_format \"{{ "{{" }}.verb{{ "}}" }} {{ "{{" }}.objectRef_resource{{ "}}" }}/{{ "{{" }}.objectRef_name{{ "}}" }} in {{ "{{" }}.objectRef_namespace{{ "}}" }} by {{ "{{" }}.user_username{{ "}}" }} [{{ "{{" }}.responseStatus_code{{ "}}" }}]\"",
+            "refId": "A"
+          }],
+          "title": "Audit Log Stream",
+          "type": "logs"
+        },
+        {
+          "datasource": {"type": "loki", "uid": "loki"},
+          "gridPos": {"h": 10, "w": 24, "x": 0, "y": 48},
+          "id": 13,
+          "options": {
+            "dedupStrategy": "none",
+            "enableLogDetails": true,
+            "prettifyLogMessage": true,
+            "showCommonLabels": false,
+            "showLabels": false,
+            "showTime": true,
+            "sortOrder": "Descending",
+            "wrapLogMessage": false
+          },
+          "targets": [{
+            "datasource": {"type": "loki", "uid": "loki"},
+            "expr": "{job=\"kubernetes-audit\"} | json | responseStatus_code >= 400 | line_format \"\u26a0\ufe0f [{{ "{{" }}.responseStatus_code{{ "}}" }}] {{ "{{" }}.verb{{ "}}" }} {{ "{{" }}.objectRef_resource{{ "}}" }}/{{ "{{" }}.objectRef_name{{ "}}" }} by {{ "{{" }}.user_username{{ "}}" }}: {{ "{{" }}.responseStatus_message{{ "}}" }}\"",
+            "refId": "A"
+          }],
+          "title": "Failed Audit Events (Errors)",
+          "type": "logs"
+        }
+      ],
+      "refresh": "30s",
+      "schemaVersion": 38,
+      "tags": ["kubernetes", "audit", "security", "loki"],
+      "templating": {
+        "list": [
+          {
+            "current": {"selected": true, "text": ["All"], "value": ["$__all"]},
+            "hide": 0,
+            "includeAll": true,
+            "label": "Verb",
+            "multi": true,
+            "name": "verb",
+            "options": [
+              {"selected": true, "text": "All", "value": "$__all"},
+              {"selected": false, "text": "get", "value": "get"},
+              {"selected": false, "text": "list", "value": "list"},
+              {"selected": false, "text": "watch", "value": "watch"},
+              {"selected": false, "text": "create", "value": "create"},
+              {"selected": false, "text": "update", "value": "update"},
+              {"selected": false, "text": "patch", "value": "patch"},
+              {"selected": false, "text": "delete", "value": "delete"}
+            ],
+            "query": "get, list, watch, create, update, patch, delete",
+            "type": "custom"
+          },
+          {
+            "current": {"selected": true, "text": ["All"], "value": ["$__all"]},
+            "datasource": {"type": "loki", "uid": "loki"},
+            "definition": "",
+            "hide": 0,
+            "includeAll": true,
+            "label": "Namespace",
+            "multi": true,
+            "name": "namespace",
+            "options": [],
+            "query": {"label": "objectRef_namespace", "refId": "LokiVariableQueryEditor-VariableQuery", "stream": "{job=\"kubernetes-audit\"}", "type": 1},
+            "refresh": 2,
+            "regex": "",
+            "sort": 1,
+            "type": "query"
+          },
+          {
+            "current": {"selected": true, "text": ["All"], "value": ["$__all"]},
+            "datasource": {"type": "loki", "uid": "loki"},
+            "definition": "",
+            "hide": 0,
+            "includeAll": true,
+            "label": "User",
+            "multi": true,
+            "name": "user",
+            "options": [],
+            "query": {"label": "user_username", "refId": "LokiVariableQueryEditor-VariableQuery", "stream": "{job=\"kubernetes-audit\"}", "type": 1},
+            "refresh": 2,
+            "regex": "",
+            "sort": 1,
+            "type": "query"
+          }
+        ]
+      },
+      "time": {"from": "now-1h", "to": "now"},
+      "timepicker": {},
+      "timezone": "browser",
+      "title": "Kubernetes Audit Logs",
+      "uid": "k8s-audit-logs",
+      "version": 1
+    }

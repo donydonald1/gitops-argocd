@@ -342,6 +342,22 @@ kube-prometheus-stack:
       # Logging & Observability Dashboards
       # ─────────────────────────────────────────────────────────────────────────
       grafana-dashboards-logging:
+        # Kubernetes Audit Logs
+        k8s-audit-logs:
+          gnetId: 16469
+          revision: 1
+          datasource: Loki
+        k8s-audit-events:
+          gnetId: 14127
+          revision: 1
+          datasource: Loki
+
+        # Falco - Runtime Security (if deployed)
+        falco-events:
+          gnetId: 11914
+          revision: 9
+          datasource: Prometheus
+
         # Loki - Log Aggregation
         loki-logs-overview:
           gnetId: 13639
