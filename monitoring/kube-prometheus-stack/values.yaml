@@ -213,6 +213,15 @@ kube-prometheus-stack:
             editable: true
             options:
               path: /var/lib/grafana/dashboards/grafana-dashboards-infra
+          - name: 'grafana-dashboards-logging'
+            orgId: 1
+            folder: 'Logging & Observability'
+            folderUid: 'logging'
+            type: file
+            disableDeletion: false
+            editable: true
+            options:
+              path: /var/lib/grafana/dashboards/grafana-dashboards-logging
 
     dashboards:
       # ─────────────────────────────────────────────────────────────────────────
@@ -327,6 +336,62 @@ kube-prometheus-stack:
         cnpg:
           gnetId: 20417
           revision: 3
+          datasource: Prometheus
+
+      # ─────────────────────────────────────────────────────────────────────────
+      # Logging & Observability Dashboards
+      # ─────────────────────────────────────────────────────────────────────────
+      grafana-dashboards-logging:
+        # Loki - Log Aggregation
+        loki-logs-overview:
+          gnetId: 13639
+          revision: 2
+          datasource: Loki
+        loki-kubernetes-logs:
+          gnetId: 15141
+          revision: 2
+          datasource: Loki
+        loki-container-logs:
+          gnetId: 16966
+          revision: 2
+          datasource: Loki
+
+        # Promtail - Log Collection
+        promtail:
+          gnetId: 10004
+          revision: 1
+          datasource: Prometheus
+
+        # Tempo - Distributed Tracing
+        tempo-service-graph:
+          gnetId: 16138
+          revision: 1
+          datasource: Tempo
+
+        # Alloy/Grafana Agent - Telemetry Pipeline
+        grafana-alloy:
+          gnetId: 19578
+          revision: 1
+          datasource: Prometheus
+
+        # Thanos - Long-term Storage
+        thanos-overview:
+          gnetId: 12937
+          revision: 6
+          datasource: Prometheus
+        thanos-compact:
+          gnetId: 12938
+          revision: 2
+          datasource: Prometheus
+        thanos-query:
+          gnetId: 12939
+          revision: 2
+          datasource: Prometheus
+
+        # Alertmanager
+        alertmanager:
+          gnetId: 9578
+          revision: 4
           datasource: Prometheus
 
     resources:
