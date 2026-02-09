@@ -1,6 +1,9 @@
 minio:
   mode: distributed
 
+  # Current: 3 drives (1 per node) - no erasure coding
+  # For erasure coding, consider adding more nodes or drives per node
+  # WARNING: Changing drivesPerNode requires data migration
   drivesPerNode: 1
   # Number of MinIO containers running
   replicas: 3
