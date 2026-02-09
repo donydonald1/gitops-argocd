@@ -19,7 +19,7 @@ spec:
       - name: kube-prometheus-stack
         namespace: monitoring
         serverSideApply: true  # Required for large CRDs (>262KB annotation limit)
-        SkipCRDs: false
+        SkipCRDs: true  # CRDs managed by RKE2 HelmChart prometheus-operator in kube-system
         wave: "0"  # Deploy first - provides CRDs for ServiceMonitors
         helm:
           valueFiles:
@@ -124,6 +124,7 @@ spec:
         helm:
           valueFiles:
           - values.yaml
+          skipCrds: {{ dig "SkipCRDs" false . }}
       destination:
         name: in-cluster
         namespace: '{{ default .name (dig "namespace" "" .) }}'
