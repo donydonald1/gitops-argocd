@@ -832,10 +832,10 @@ loki:
     resources:
       limits:
         cpu: "2"
-        memory: 2Gi
+        memory: 3Gi  # Increased from 2Gi - pods using 1.4-1.7Gi
       requests:
         cpu: 100m
-        memory: 256Mi
+        memory: 512Mi
 
   read:
     replicas: 2
