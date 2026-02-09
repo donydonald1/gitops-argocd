@@ -315,21 +315,24 @@ kube-prometheus-stack:
       retention: 10d
       retentionSize: 50GiB
 
-      # Probe configuration to prevent restarts during heavy load
-      # Default 3s timeout is too aggressive for 800k+ time series workloads
-      # With 805k series, chunk snapshots alone take 5+ seconds
-      startupProbe:
-        failureThreshold: 60
-        periodSeconds: 15
-        timeoutSeconds: 10
-      livenessProbe:
-        failureThreshold: 10
-        periodSeconds: 10
-        timeoutSeconds: 10
-      readinessProbe:
-        failureThreshold: 5
-        periodSeconds: 10
-        timeoutSeconds: 10
+      # Container-level overrides for prometheus container
+      # Override default probe settings to prevent restarts during heavy load
+      containers:
+      - name: prometheus
+        # Default 3s timeout is too aggressive for 800k+ time series workloads
+        # With 805k series, chunk snapshots alone take 5+ seconds
+        startupProbe:
+          failureThreshold: 60
+          periodSeconds: 15
+          timeoutSeconds: 10
+        livenessProbe:
+          failureThreshold: 10
+          periodSeconds: 10
+          timeoutSeconds: 10
+        readinessProbe:
+          failureThreshold: 5
+          periodSeconds: 10
+          timeoutSeconds: 10
 
       resources:
         limits:
@@ -1015,12 +1018,13 @@ promtail:
       type: spc_t
 
   resources:
+    # Increased memory to prevent OOMKilled during high log volume
     limits:
       cpu: 500m
-      memory: 512Mi
+      memory: 1Gi
     requests:
       cpu: 100m
-      memory: 128Mi
+      memory: 256Mi
 
   config:
     logLevel: info
