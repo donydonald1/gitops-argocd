@@ -86,7 +86,7 @@ minio:
       memory: 8Gi
     limits:
       cpu: 8
-      memory: 32Gi
+      memory: 16Gi  # Must not exceed LimitRange max (16Gi)
 
   users:
   - accessKey: velero
