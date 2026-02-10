@@ -2,8 +2,8 @@ apiVersion: v2
 name: github-actions-runner
 description: GitHub Actions Self-Hosted Runner Controller and Scale Sets
 type: application
-version: 0.1.0
-appVersion: "0.10.1"
+version: 0.2.0
+appVersion: "0.13.1"
 keywords:
   - github
   - actions
@@ -19,12 +19,12 @@ maintainers:
 dependencies:
   # ARC Controller - manages runner scale sets
   - name: gha-runner-scale-set-controller
-    version: 0.10.1
+    version: 0.13.1
     repository: oci://ghcr.io/actions/actions-runner-controller-charts
     alias: controller
 
   # Runner Scale Set for organization-level runners
   - name: gha-runner-scale-set
-    version: 0.10.1
+    version: 0.13.1
     repository: oci://ghcr.io/actions/actions-runner-controller-charts
     alias: runners
