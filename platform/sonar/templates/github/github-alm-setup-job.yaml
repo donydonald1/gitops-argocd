@@ -1,0 +1,132 @@
+{{- if .Values.github.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sonar-github-alm-setup
+  labels:
+    app.kubernetes.io/name: sonarqube
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: github-setup
+        image: curlimages/curl:latest
+        env:
+        - name: SONAR_URL
+          value: "http://sonar.{{ .Release.Namespace }}.svc.cluster.local:9000"
+        - name: SONAR_ADMIN_USER
+          value: "admin"
+        - name: SONAR_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: sonar-github-secret
+              key: adminPassword
+        - name: GITHUB_URL
+          value: {{ .Values.github.url | quote }}
+        - name: GITHUB_CONFIG_NAME
+          value: {{ .Values.github.configName | default "github" | quote }}
+        # GitHub App credentials
+        - name: GITHUB_APP_ID
+          valueFrom:
+            secretKeyRef:
+              name: sonar-github-secret
+              key: appId
+        - name: GITHUB_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: sonar-github-secret
+              key: clientId
+        - name: GITHUB_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: sonar-github-secret
+              key: clientSecret
+        - name: GITHUB_PRIVATE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: sonar-github-secret
+              key: privateKey
+        command:
+        - /bin/sh
+        - -c
+        - |
+          set -e
+          echo "Waiting for SonarQube to be ready..."
+          until curl -sf "${SONAR_URL}/api/system/status" | grep -q '"status":"UP"'; do
+            echo "SonarQube not ready, waiting..."
+            sleep 10
+          done
+          echo "SonarQube is ready"
+
+          ADMIN_PASS="${SONAR_ADMIN_PASSWORD}"
+
+          # Normalize GitHub API URL - remove trailing slash
+          GITHUB_URL_CLEAN=$(echo "${GITHUB_URL}" | sed 's:/*$::')
+          echo "Using GitHub API URL: ${GITHUB_URL_CLEAN}"
+
+          # Delete existing config to ensure clean state
+          echo "Removing any existing GitHub configuration..."
+          curl -sf -u "admin:${ADMIN_PASS}" -X POST "${SONAR_URL}/api/alm_settings/delete" \
+            -d "key=${GITHUB_CONFIG_NAME}" 2>/dev/null || true
+
+          # Create GitHub App configuration (provides PR decoration and better security)
+          echo "Creating GitHub App configuration '${GITHUB_CONFIG_NAME}'..."
+
+          # URL-encode the private key (newlines to %0A)
+          ENCODED_KEY=$(printf '%s' "${GITHUB_PRIVATE_KEY}" | sed ':a;N;$!ba;s/\n/%0A/g')
+
+          RESULT=$(curl -s -w "\n%{http_code}" -u "admin:${ADMIN_PASS}" \
+            -X POST "${SONAR_URL}/api/alm_settings/create_github" \
+            -d "key=${GITHUB_CONFIG_NAME}" \
+            -d "url=${GITHUB_URL_CLEAN}" \
+            -d "appId=${GITHUB_APP_ID}" \
+            -d "clientId=${GITHUB_CLIENT_ID}" \
+            -d "clientSecret=${GITHUB_CLIENT_SECRET}" \
+            --data-urlencode "privateKey=${GITHUB_PRIVATE_KEY}")
+          HTTP_CODE=$(echo "$RESULT" | tail -1)
+          BODY=$(echo "$RESULT" | head -n -1)
+
+          if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "204" ]; then
+            echo "GitHub App configuration created successfully"
+          else
+            echo "Warning: Failed to create GitHub App configuration (HTTP $HTTP_CODE)"
+            echo "$BODY"
+            # Fallback info
+            echo "Note: GitHub App requires appId, clientId, clientSecret, and privateKey"
+          fi
+
+          # Validate the connection
+          echo ""
+          echo "Validating GitHub connection..."
+          VALIDATE=$(curl -s -w "\n%{http_code}" -u "admin:${ADMIN_PASS}" \
+            -X POST "${SONAR_URL}/api/alm_settings/validate" \
+            -d "key=${GITHUB_CONFIG_NAME}")
+          VAL_CODE=$(echo "$VALIDATE" | tail -1)
+          VAL_BODY=$(echo "$VALIDATE" | head -n -1)
+
+          if [ "$VAL_CODE" = "200" ] || [ "$VAL_CODE" = "204" ]; then
+            echo "GitHub connection validated successfully"
+          else
+            echo "Warning: GitHub validation returned HTTP $VAL_CODE"
+            echo "$VAL_BODY"
+          fi
+
+          # List current configurations
+          echo ""
+          echo "Current ALM configurations:"
+          curl -sf -u "admin:${ADMIN_PASS}" "${SONAR_URL}/api/alm_settings/list" | head -c 1000
+
+          echo ""
+          echo ""
+          echo "GitHub App ALM setup complete!"
+          echo "Features enabled:"
+          echo "  - Import projects from GitHub organization: {{ .Values.github.organization }}"
+          echo "  - PR decoration with commit statuses"
+          echo "  - GitHub Checks API integration"
+{{- end }}

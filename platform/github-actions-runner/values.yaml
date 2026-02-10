@@ -1,0 +1,169 @@
+# =============================================================================
+# GitHub Actions Runner Controller Configuration
+# =============================================================================
+# This chart deploys:
+# 1. ARC Controller - manages runner scale sets
+# 2. Runner Scale Set - organization-level runners for Techsecom
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# ARC Controller Configuration
+# -----------------------------------------------------------------------------
+controller:
+  # Controller replicas for HA
+  replicaCount: 1
+
+  # Image configuration
+  image:
+    repository: ghcr.io/actions/gha-runner-scale-set-controller
+    pullPolicy: IfNotPresent
+
+  # Service account
+  serviceAccount:
+    create: true
+    name: "gha-rs-controller"
+
+  # Resource limits
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+  # Pod priority
+  priorityClassName: ""
+
+  # Tolerations for controller
+  tolerations: []
+
+  # Node selector
+  nodeSelector: {}
+
+  # Affinity rules
+  affinity: {}
+
+  # Metrics configuration
+  metrics:
+    controllerManagerAddr: ":8080"
+    listenerAddr: ":8080"
+    listenerEndpoint: "/metrics"
+
+  # Logging
+  logLevel: info
+  logFormat: text
+
+# -----------------------------------------------------------------------------
+# Runner Scale Set Configuration
+# -----------------------------------------------------------------------------
+runners:
+  # GitHub configuration - uses secret from ExternalSecrets
+  githubConfigUrl: "https://github.com/Techsecom"
+
+  # Secret containing GitHub PAT (created by ExternalSecret)
+  githubConfigSecret:
+    github_token: "github-runner-token"
+
+  # Runner name in GitHub UI
+  runnerScaleSetName: "techsecom-k8s-runners"
+
+  # Min/Max runners
+  minRunners: 1
+  maxRunners: 5
+
+  # Runner group (optional - for enterprise)
+  # runnerGroup: "default"
+
+  # Container mode - runs jobs in containers
+  containerMode:
+    type: "kubernetes"
+    kubernetesModeWorkVolumeClaim:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: "longhorn"
+      resources:
+        requests:
+          storage: 10Gi
+
+  # Template for runner pods
+  template:
+    spec:
+      # Init container to set up Docker-in-Docker (optional)
+      # initContainers:
+      # - name: init-dind-externals
+      #   image: ghcr.io/actions/actions-runner:latest
+      #   command: ["cp", "-r", "/home/runner/externals/.", "/home/runner/tmpDir/"]
+      #   volumeMounts:
+      #   - name: dind-externals
+      #     mountPath: /home/runner/tmpDir
+
+      containers:
+      - name: runner
+        image: ghcr.io/actions/actions-runner:latest
+        imagePullPolicy: IfNotPresent
+        command: ["/home/runner/run.sh"]
+        env:
+        - name: ACTIONS_RUNNER_CONTAINER_HOOKS
+          value: /home/runner/k8s/index.js
+        - name: ACTIONS_RUNNER_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: ACTIONS_RUNNER_REQUIRE_JOB_CONTAINER
+          value: "false"
+        resources:
+          limits:
+            cpu: "2"
+            memory: 4Gi
+          requests:
+            cpu: 500m
+            memory: 1Gi
+        volumeMounts:
+        - name: work
+          mountPath: /home/runner/_work
+
+      # Optional: Docker-in-Docker sidecar for container actions
+      # - name: dind
+      #   image: docker:dind
+      #   args:
+      #   - dockerd
+      #   - --host=unix:///run/docker/docker.sock
+      #   - --group=$(DOCKER_GROUP_GID)
+      #   env:
+      #   - name: DOCKER_GROUP_GID
+      #     value: "123"
+      #   securityContext:
+      #     privileged: true
+      #   volumeMounts:
+      #   - name: work
+      #     mountPath: /home/runner/_work
+      #   - name: dind-sock
+      #     mountPath: /run/docker
+      #   - name: dind-externals
+      #     mountPath: /home/runner/externals
+
+      volumes:
+      - name: work
+        emptyDir: {}
+      # - name: dind-sock
+      #   emptyDir: {}
+      # - name: dind-externals
+      #   emptyDir: {}
+
+  # Listener pod configuration
+  listenerTemplate:
+    spec:
+      containers:
+      - name: listener
+        resources:
+          limits:
+            cpu: 250m
+            memory: 256Mi
+          requests:
+            cpu: 50m
+            memory: 64Mi
+
+  # Controller service account reference
+  controllerServiceAccount:
+    namespace: github-actions-runner
+    name: gha-rs-controller

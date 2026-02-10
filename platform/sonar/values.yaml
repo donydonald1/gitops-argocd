@@ -209,3 +209,14 @@ gitlab:
   url: "https://gitlab.ops.techsecom.io/api/v4"
   # Configuration name (shown in SonarQube admin)
   configName: "gitlab"
+
+# GitHub ALM Integration for project import and PR decoration
+# Requires: githubToken in Vault at secret/sonar (or GitHub App credentials)
+github:
+  enabled: true
+  # GitHub API URL (for github.com use: https://api.github.com)
+  url: "https://api.github.com"
+  # Configuration name (shown in SonarQube admin)
+  configName: "github"
+  # GitHub organization
+  organization: "Techsecom"

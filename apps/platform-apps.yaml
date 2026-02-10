@@ -176,6 +176,18 @@ spec:
         helm:
           values:
           - values.yaml
+
+      # =============================================
+      # CI/CD: GitHub Actions Self-Hosted Runners
+      # =============================================
+      - name: github-actions-runner
+        namespace: github-actions-runner
+        serverSideApply: true
+        wave: "3" # Needs Vault + ExternalSecrets ready for runner token
+        imageList: "runner=ghcr.io/actions/actions-runner, controller=ghcr.io/actions/gha-runner-scale-set-controller"
+        helm:
+          values:
+          - values.yaml
       # =============================================
       # DISABLED APPLICATIONS
       # =============================================
