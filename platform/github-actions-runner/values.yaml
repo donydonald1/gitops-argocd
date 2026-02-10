@@ -70,7 +70,7 @@ runners:
 
   # Min/Max runners
   minRunners: 1
-  maxRunners: 5
+  maxRunners: 50
 
   # Runner group (optional - for enterprise)
   # runnerGroup: "default"
