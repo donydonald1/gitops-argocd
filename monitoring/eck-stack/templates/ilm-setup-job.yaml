@@ -5,8 +5,9 @@ metadata:
   name: elasticsearch-ilm-setup
   namespace: {{ .Release.Namespace }}
   annotations:
-    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook: Sync
     argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+    argocd.argoproj.io/sync-wave: "5"
   labels:
     app.kubernetes.io/name: elasticsearch-ilm-setup
     app.kubernetes.io/component: ilm
