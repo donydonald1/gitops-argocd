@@ -1,0 +1,281 @@
+{{- if .Values.ilm.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: elasticsearch-ilm-setup
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+  labels:
+    app.kubernetes.io/name: elasticsearch-ilm-setup
+    app.kubernetes.io/component: ilm
+spec:
+  backoffLimit: 10
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: elasticsearch-ilm-setup
+    spec:
+      restartPolicy: OnFailure
+      initContainers:
+      - name: wait-for-elasticsearch
+        image: {{ .Values.ilm.image }}
+        command: ["sh", "-c"]
+        args:
+        - |
+          echo "Waiting for Elasticsearch cluster to be ready..."
+          until curl --silent --insecure --user "$ES_USER:$ES_PASSWORD" --fail \
+            "https://{{ .Values.ilm.elasticsearch.serviceName }}.{{ .Release.Namespace }}.svc:{{ .Values.ilm.elasticsearch.port }}/_cluster/health" \
+            > /dev/null 2>&1; do
+            echo "Elasticsearch not ready, waiting..."
+            sleep 5
+          done
+          echo "Elasticsearch is ready!"
+        env:
+        - name: ES_USER
+          value: "elastic"
+        - name: ES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.ilm.elasticsearch.secretName }}
+              key: {{ .Values.ilm.elasticsearch.secretKey }}
+        resources:
+          requests:
+            cpu: 100m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 128Mi
+      containers:
+      - name: ilm-setup
+        image: {{ .Values.ilm.image }}
+        command: ["sh", "-c"]
+        args:
+        - |
+          set -e
+          ES_URL="https://{{ .Values.ilm.elasticsearch.serviceName }}.{{ .Release.Namespace }}.svc:{{ .Values.ilm.elasticsearch.port }}"
+          CURL="curl --silent --show-error --insecure --user $ES_USER:$ES_PASSWORD"
+
+          echo "========================================="
+          echo "Step 1: Register S3 Snapshot Repository"
+          echo "========================================="
+          {{- if .Values.snapshots.enabled }}
+          $CURL -X PUT "$ES_URL/_snapshot/s3-minio-snapshots" \
+            -H 'Content-Type: application/json' -d '{
+              "type": "s3",
+              "settings": {
+                "bucket": "{{ .Values.snapshots.s3.bucket }}",
+                "endpoint": "{{ .Values.snapshots.s3.endpoint }}",
+                "base_path": "{{ .Values.snapshots.s3.basePath }}",
+                "protocol": "http",
+                "path_style_access": true
+              }
+            }'
+          echo ""
+          echo "S3 snapshot repository registered."
+
+          echo "========================================="
+          echo "Step 2: Create SLM Policy"
+          echo "========================================="
+          $CURL -X PUT "$ES_URL/_slm/policy/{{ .Values.snapshots.slm.name }}" \
+            -H 'Content-Type: application/json' -d '{
+              "schedule": "{{ .Values.snapshots.slm.schedule }}",
+              "name": "<{{ .Values.snapshots.slm.name }}-{now/d}>",
+              "repository": "s3-minio-snapshots",
+              "config": {
+                "indices": ["*"],
+                "ignore_unavailable": true,
+                "include_global_state": false
+              },
+              "retention": {
+                "expire_after": "{{ .Values.snapshots.slm.retention.expireAfter }}",
+                "min_count": {{ .Values.snapshots.slm.retention.minCount }},
+                "max_count": {{ .Values.snapshots.slm.retention.maxCount }}
+              }
+            }'
+          echo ""
+          echo "SLM policy created."
+          {{- end }}
+
+          echo "========================================="
+          echo "Step 3: Create ILM Policies"
+          echo "========================================="
+
+          # Audit Logs ILM Policy
+          echo "Creating ILM policy: {{ .Values.ilm.policies.auditLogs.name }}"
+          $CURL -X PUT "$ES_URL/_ilm/policy/{{ .Values.ilm.policies.auditLogs.name }}" \
+            -H 'Content-Type: application/json' -d '{
+              "policy": {
+                "phases": {
+                  "hot": {
+                    "min_age": "0ms",
+                    "actions": {
+                      "rollover": {
+                        "max_age": "{{ .Values.ilm.policies.auditLogs.hot.rollover.maxAge }}",
+                        "max_primary_shard_size": "{{ .Values.ilm.policies.auditLogs.hot.rollover.maxPrimaryShardSize }}",
+                        "max_docs": {{ .Values.ilm.policies.auditLogs.hot.rollover.maxDocs }}
+                      },
+                      "set_priority": { "priority": 100 }
+                    }
+                  },
+                  "warm": {
+                    "min_age": "{{ .Values.ilm.policies.auditLogs.warm.minAge }}",
+                    "actions": {
+                      "allocate": { "number_of_replicas": {{ .Values.ilm.policies.auditLogs.warm.replicas }} },
+                      "set_priority": { "priority": 50 }
+                    }
+                  },
+                  "cold": {
+                    "min_age": "{{ .Values.ilm.policies.auditLogs.cold.minAge }}",
+                    "actions": {
+                      "allocate": { "number_of_replicas": {{ .Values.ilm.policies.auditLogs.cold.replicas }} },
+                      "set_priority": { "priority": 0 }
+                    }
+                  },
+                  "delete": {
+                    "min_age": "{{ .Values.ilm.policies.auditLogs.delete.minAge }}",
+                    "actions": {
+                      {{- if and .Values.snapshots.enabled .Values.ilm.policies.auditLogs.delete.waitForSnapshot }}
+                      "wait_for_snapshot": { "policy": "{{ .Values.ilm.policies.auditLogs.delete.waitForSnapshot }}" },
+                      {{- end }}
+                      "delete": {}
+                    }
+                  }
+                }
+              }
+            }'
+          echo ""
+
+          # Container Logs ILM Policy
+          echo "Creating ILM policy: {{ .Values.ilm.policies.containerLogs.name }}"
+          $CURL -X PUT "$ES_URL/_ilm/policy/{{ .Values.ilm.policies.containerLogs.name }}" \
+            -H 'Content-Type: application/json' -d '{
+              "policy": {
+                "phases": {
+                  "hot": {
+                    "min_age": "0ms",
+                    "actions": {
+                      "rollover": {
+                        "max_age": "{{ .Values.ilm.policies.containerLogs.hot.rollover.maxAge }}",
+                        "max_primary_shard_size": "{{ .Values.ilm.policies.containerLogs.hot.rollover.maxPrimaryShardSize }}",
+                        "max_docs": {{ .Values.ilm.policies.containerLogs.hot.rollover.maxDocs }}
+                      },
+                      "set_priority": { "priority": 100 }
+                    }
+                  },
+                  "warm": {
+                    "min_age": "{{ .Values.ilm.policies.containerLogs.warm.minAge }}",
+                    "actions": {
+                      "allocate": { "number_of_replicas": {{ .Values.ilm.policies.containerLogs.warm.replicas }} },
+                      "set_priority": { "priority": 50 }
+                    }
+                  },
+                  "cold": {
+                    "min_age": "{{ .Values.ilm.policies.containerLogs.cold.minAge }}",
+                    "actions": {
+                      "allocate": { "number_of_replicas": {{ .Values.ilm.policies.containerLogs.cold.replicas }} },
+                      "set_priority": { "priority": 0 }
+                    }
+                  },
+                  "delete": {
+                    "min_age": "{{ .Values.ilm.policies.containerLogs.delete.minAge }}",
+                    "actions": {
+                      {{- if and .Values.snapshots.enabled .Values.ilm.policies.containerLogs.delete.waitForSnapshot }}
+                      "wait_for_snapshot": { "policy": "{{ .Values.ilm.policies.containerLogs.delete.waitForSnapshot }}" },
+                      {{- end }}
+                      "delete": {}
+                    }
+                  }
+                }
+              }
+            }'
+          echo ""
+          echo "ILM policies created."
+
+          echo "========================================="
+          echo "Step 4: Create Index Templates"
+          echo "========================================="
+
+          # Audit Logs Index Template
+          echo "Creating index template: audit-logs"
+          $CURL -X PUT "$ES_URL/_index_template/audit-logs" \
+            -H 'Content-Type: application/json' -d '{
+              "index_patterns": ["audit-logs-*"],
+              "template": {
+                "settings": {
+                  "number_of_shards": {{ .Values.ilm.indexTemplates.auditLogs.shards }},
+                  "number_of_replicas": {{ .Values.ilm.indexTemplates.auditLogs.replicas }},
+                  "index.lifecycle.name": "{{ .Values.ilm.policies.auditLogs.name }}",
+                  "index.lifecycle.rollover_alias": "audit-logs",
+                  "index.refresh_interval": "{{ .Values.ilm.indexTemplates.auditLogs.refreshInterval }}",
+                  "index.routing.allocation.include._tier_preference": "data_hot"
+                }
+              },
+              "priority": 200
+            }'
+          echo ""
+
+          # Container Logs Index Template
+          echo "Creating index template: container-logs"
+          $CURL -X PUT "$ES_URL/_index_template/container-logs" \
+            -H 'Content-Type: application/json' -d '{
+              "index_patterns": ["container-logs-*"],
+              "template": {
+                "settings": {
+                  "number_of_shards": {{ .Values.ilm.indexTemplates.containerLogs.shards }},
+                  "number_of_replicas": {{ .Values.ilm.indexTemplates.containerLogs.replicas }},
+                  "index.lifecycle.name": "{{ .Values.ilm.policies.containerLogs.name }}",
+                  "index.lifecycle.rollover_alias": "container-logs",
+                  "index.refresh_interval": "{{ .Values.ilm.indexTemplates.containerLogs.refreshInterval }}",
+                  "index.routing.allocation.include._tier_preference": "data_hot"
+                }
+              },
+              "priority": 200
+            }'
+          echo ""
+
+          echo "========================================="
+          echo "Step 5: Bootstrap Initial Indices"
+          echo "========================================="
+
+          # Create initial audit-logs index with write alias (if not exists)
+          echo "Bootstrapping audit-logs-000001..."
+          $CURL -X PUT "$ES_URL/audit-logs-000001" \
+            -H 'Content-Type: application/json' -d '{
+              "aliases": {
+                "audit-logs": { "is_write_index": true }
+              }
+            }' || echo "(may already exist)"
+          echo ""
+
+          # Create initial container-logs index with write alias (if not exists)
+          echo "Bootstrapping container-logs-000001..."
+          $CURL -X PUT "$ES_URL/container-logs-000001" \
+            -H 'Content-Type: application/json' -d '{
+              "aliases": {
+                "container-logs": { "is_write_index": true }
+              }
+            }' || echo "(may already exist)"
+          echo ""
+
+          echo "========================================="
+          echo "ILM Setup Complete!"
+          echo "========================================="
+        env:
+        - name: ES_USER
+          value: "elastic"
+        - name: ES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.ilm.elasticsearch.secretName }}
+              key: {{ .Values.ilm.elasticsearch.secretKey }}
+        resources:
+          requests:
+            cpu: 100m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 128Mi
+{{- end }}
