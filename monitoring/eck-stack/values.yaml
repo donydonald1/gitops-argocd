@@ -83,25 +83,24 @@ ilm:
     port: 5601
 
   # ILM Policies Configuration
-  # TESTING VALUES: Using minutes/hours to observe data movement
-  # For production, change to days (e.g., "2d", "7d", "30d")
+  # PRODUCTION VALUES: Using days for proper data lifecycle management
   policies:
     # Audit Logs ILM Policy
     auditLogs:
       name: hot_warm_delete-audit-logs
       hot:
         rollover:
-          maxAge: "5m" # Rollover after 5 minutes (testing)
-          maxPrimaryShardSize: "1gb" # Or when shard reaches 1GB
-          maxDocs: 10000 # Or when 10K docs (testing)
+          maxAge: "1d" # Rollover after 1 day
+          maxPrimaryShardSize: "25gb" # Or when shard reaches 25GB
+          maxDocs: 500000 # Or when 500K docs
       warm:
-        minAge: "10m" # Move to warm after 10 minutes
+        minAge: "3d" # Move to warm after 3 days
         replicas: 0 # Reduce replicas in warm
       cold:
-        minAge: "30m" # Move to cold after 30 minutes
+        minAge: "7d" # Move to cold after 7 days
         replicas: 0 # No replicas in cold
       delete:
-        minAge: "1h" # Delete after 1 hour total
+        minAge: "30d" # Delete after 30 days total
         waitForSnapshot: "logs-snapshots" # Wait for SLM snapshot before delete
 
     # Container Logs ILM Policy
@@ -109,17 +108,17 @@ ilm:
       name: hot_warm_delete-container-logs
       hot:
         rollover:
-          maxAge: "5m" # Rollover after 5 minutes (testing)
-          maxPrimaryShardSize: "1gb" # Or when shard reaches 1GB
-          maxDocs: 10000 # Or when 10K docs (testing)
+          maxAge: "1d" # Rollover after 1 day
+          maxPrimaryShardSize: "25gb" # Or when shard reaches 25GB
+          maxDocs: 500000 # Or when 500K docs
       warm:
-        minAge: "10m" # Move to warm after 10 minutes
+        minAge: "2d" # Move to warm after 2 days
         replicas: 0 # Reduce replicas in warm
       cold:
-        minAge: "30m" # Move to cold after 30 minutes
+        minAge: "5d" # Move to cold after 5 days
         replicas: 0 # No replicas in cold
       delete:
-        minAge: "1h" # Delete after 1 hour total
+        minAge: "14d" # Delete after 14 days total
         waitForSnapshot: "logs-snapshots" # Wait for SLM snapshot before delete
 
   # Index Templates Configuration
@@ -342,6 +341,11 @@ eck-stack:
         # xpack.ml.enabled: false
         node.attr.data: hot
         node.attr.box_type: hot
+        # Circuit breakers to prevent OOM from unbounded memory usage
+        indices.breaker.total.use_real_memory: true
+        indices.breaker.total.limit: "85%"
+        indices.breaker.fielddata.limit: "30%"
+        indices.breaker.request.limit: "40%"
       podTemplate:
         metadata:
           annotations:
@@ -353,13 +357,16 @@ eck-stack:
             resources:
               # ECK requires memory request = limit for ResourcesAwareManagement
               # Hot tier needs extra memory for active indexing and off-heap usage
-              # JVM heap is ~50% of container memory (4GB heap with 8GB container)
+              # JVM heap pinned at 4GB, container at 12Gi leaving 8GB for off-heap (Lucene, Netty, etc.)
               limits:
-                memory: 8Gi
-                cpu: 2
+                memory: 12Gi
+                cpu: 4
               requests:
-                memory: 8Gi
-                cpu: 2
+                memory: 12Gi
+                cpu: 4
+            env:
+            - name: ES_JAVA_OPTS
+              value: "-Xms4g -Xmx4g"
             volumeMounts:
             - name: certs
               mountPath: /usr/share/elasticsearch/config/certs
@@ -406,12 +413,12 @@ eck-stack:
           - name: elasticsearch
             resources:
               # ECK requires memory request = limit for ResourcesAwareManagement
-              # Increased from 3Gi to 6Gi to handle shard recovery during ILM migration
+              # Increased to 8Gi to handle shard recovery and ILM migration memory spikes
               limits:
-                memory: 6Gi
+                memory: 8Gi
                 cpu: 2
               requests:
-                memory: 6Gi
+                memory: 8Gi
                 cpu: 2
             volumeMounts:
             - name: certs
