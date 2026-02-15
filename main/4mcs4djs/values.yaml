@@ -1,0 +1,5 @@
+repoURL: https://github.com/Techsecom/4mcs4djs.git
+targetRevision: main
+chartPath: charts/4mcs4djs
+namespace: 4mcs4djs-platform
+imageRepository: techsecoms/4mcs4djs-web

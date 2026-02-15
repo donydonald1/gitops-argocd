@@ -16,6 +16,9 @@ spec:
       - name: gethomepage
         namespace: homepage
         imageList: "homepage=ghcr.io/gethomepage/homepage"
+      - name: 4mcs4djs
+        namespace: 4mcs4djs-platform
+        imageList: "web=techsecoms/4mcs4djs-web"
       # - name: focalboard
       #   namespace: focalboard
       # - name: actual
