@@ -250,10 +250,10 @@ gitlab:
             poll_timeout = 1800
             service_account = "default"
             # Increased resources for faster CI jobs
-            cpu_request = "2"
-            cpu_limit = "8"
-            memory_request = "4Gi"
-            memory_limit = "16Gi"
+            cpu_request = "1"
+            cpu_limit = "2"
+            memory_request = "2Gi"
+            memory_limit = "4Gi"
             # Helper container resources (increased)
             helper_cpu_request = "500m"
             helper_cpu_limit = "2"
@@ -304,7 +304,7 @@ gitlab:
         cpu: 500m
         memory: 512Mi
       limits:
-        cpu: 2
+        cpu: 1
         memory: 2Gi
 
   certmanager-issuer:
@@ -430,10 +430,10 @@ gitlab:
       omniauth:
         # Removed autoSignInWithProvider to allow username/password login option
         # autoSignInWithProvider: openid_connect
-        allowSingleSignOn: ["openid_connect"]  # Allow SSO but don't force it
+        allowSingleSignOn: [ "openid_connect" ] # Allow SSO but don't force it
         allowBypassTwoFactor: []
-        autoLinkUser: ["openid_connect"]
-        blockAutoCreatedUsers: false  # Allow auto-created users to login immediately
+        autoLinkUser: [ "openid_connect" ]
+        blockAutoCreatedUsers: false # Allow auto-created users to login immediately
         enabled: true
         providers:
         - secret: gitlab-oidc-provider

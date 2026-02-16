@@ -1,6 +1,0 @@
-dependencies:
-- name: gitlab-agent
-  repository: https://charts.gitlab.io/
-  version: 2.22.0
-digest: sha256:514d31effb76406512ec18da66476ba3ce0bbb49c99869b3206996131f155e1e
-generated: "2026-01-07T20:43:36.072998-06:00"

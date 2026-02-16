@@ -86,11 +86,21 @@ runners:
           storage: 10Gi
 
   # Template for runner pods
-  # Note: Job pods are configured separately via hook-extension ConfigMap.
-  # The hook extension adds ServiceAccount (gha-runner-deploy) and kubectl
-  # to job pods for CI/CD deploy steps.
+  # ServiceAccount grants deploy permissions (rollout restart) to designbuy namespaces.
+  # kubectl is installed via init container for CI/CD deploy steps.
+  # Job pods also get the same ServiceAccount + kubectl via hook-extension ConfigMap.
   template:
     spec:
+      serviceAccountName: gha-runner-deploy
+
+      initContainers:
+      - name: install-kubectl
+        image: bitnamilegacy/kubectl:1.31
+        command: ["sh", "-c", "cp /opt/bitnami/kubectl/bin/kubectl /tools/kubectl && chmod +x /tools/kubectl"]
+        volumeMounts:
+        - name: tools
+          mountPath: /tools
+
       containers:
       - name: runner
         image: ghcr.io/actions/actions-runner:latest
@@ -107,6 +117,8 @@ runners:
               fieldPath: metadata.name
         - name: ACTIONS_RUNNER_REQUIRE_JOB_CONTAINER
           value: "false"
+        - name: PATH
+          value: /tools:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/runner/bin
         resources:
           limits:
             cpu: "2"
@@ -120,9 +132,13 @@ runners:
         - name: pod-template
           mountPath: /home/runner/pod-templates
           readOnly: true
+        - name: tools
+          mountPath: /tools
 
       volumes:
       - name: work
+        emptyDir: {}
+      - name: tools
         emptyDir: {}
       - name: pod-template
         configMap:
