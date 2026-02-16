@@ -83,29 +83,12 @@ ilm:
     port: 5601
 
   # ILM Policies Configuration
-  # PRODUCTION VALUES: Using days for proper data lifecycle management
+  # Retention tuned for NFS storage with high ingestion rates (~30 container rollovers/day)
+  # NOTE: Do NOT use waitForSnapshot in delete phase - it blocks deletion if SLM hasn't run
   policies:
     # Audit Logs ILM Policy
     auditLogs:
       name: hot_warm_delete-audit-logs
-      hot:
-        rollover:
-          maxAge: "1d" # Rollover after 1 day
-          maxPrimaryShardSize: "25gb" # Or when shard reaches 25GB
-          maxDocs: 500000 # Or when 500K docs
-      warm:
-        minAge: "3d" # Move to warm after 3 days
-        replicas: 0 # Reduce replicas in warm
-      cold:
-        minAge: "7d" # Move to cold after 7 days
-        replicas: 0 # No replicas in cold
-      delete:
-        minAge: "30d" # Delete after 30 days total
-        waitForSnapshot: "logs-snapshots" # Wait for SLM snapshot before delete
-
-    # Container Logs ILM Policy
-    containerLogs:
-      name: hot_warm_delete-container-logs
       hot:
         rollover:
           maxAge: "1d" # Rollover after 1 day
@@ -118,8 +101,24 @@ ilm:
         minAge: "5d" # Move to cold after 5 days
         replicas: 0 # No replicas in cold
       delete:
-        minAge: "14d" # Delete after 14 days total
-        waitForSnapshot: "logs-snapshots" # Wait for SLM snapshot before delete
+        minAge: "7d" # Delete after 7 days total
+
+    # Container Logs ILM Policy
+    containerLogs:
+      name: hot_warm_delete-container-logs
+      hot:
+        rollover:
+          maxAge: "1d" # Rollover after 1 day
+          maxPrimaryShardSize: "25gb" # Or when shard reaches 25GB
+          maxDocs: 500000 # Or when 500K docs
+      warm:
+        minAge: "1d" # Move to warm after 1 day
+        replicas: 0 # Reduce replicas in warm
+      cold:
+        minAge: "2d" # Move to cold after 2 days
+        replicas: 0 # No replicas in cold
+      delete:
+        minAge: "3d" # Delete after 3 days total
 
   # Index Templates Configuration
   indexTemplates:
