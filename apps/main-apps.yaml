@@ -19,6 +19,8 @@ spec:
       - name: 4mcs4djs
         namespace: 4mcs4djs-platform
         imageList: "web=techsecoms/4mcs4djs-web"
+      - name: postfix-relay
+        namespace: 4mcs4djs-platform
       # - name: focalboard
       #   namespace: focalboard
       # - name: actual

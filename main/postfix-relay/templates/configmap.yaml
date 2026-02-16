@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "postfix-relay.fullname" . }}-config
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "postfix-relay.labels" . | nindent 4 }}
+data:
+  extra-main.cf: |
+    # TLS configuration for inbound SMTP (submission)
+    smtpd_use_tls = yes
+    smtpd_tls_security_level = may
+    smtpd_tls_loglevel = 1
+
+    # TLS configuration for outbound SMTP
+    smtp_tls_security_level = may
+    smtp_tls_loglevel = 1
+
+    # Restrict to submission port clients within the cluster
+    smtpd_recipient_restrictions = permit_mynetworks, reject_unauth_destination
+
+    # Performance and safety
+    smtpd_banner = $myhostname ESMTP
+    biff = no
+    append_dot_mydomain = no
+    readme_directory = no
