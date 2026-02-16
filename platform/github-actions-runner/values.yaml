@@ -93,6 +93,15 @@ runners:
     spec:
       serviceAccountName: gha-runner-deploy
 
+      # Spread runner pods across nodes to prevent overloading a single kubelet
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            app.kubernetes.io/instance: techsecom-k8s-runners
+
       initContainers:
       - name: install-kubectl
         image: bitnamilegacy/kubectl:1.31
