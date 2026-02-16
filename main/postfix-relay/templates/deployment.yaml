@@ -32,7 +32,13 @@ spec:
             - name: HOSTNAME
               value: {{ .Values.config.hostname | quote }}
             - name: RELAYHOST
-              value: ""
+              value: {{ .Values.config.relayHost | quote }}
+            {{- if .Values.config.relayUser }}
+            - name: RELAYHOST_USERNAME
+              value: {{ .Values.config.relayUser | quote }}
+            - name: RELAYHOST_PASSWORD
+              value: {{ .Values.config.relayPassword | quote }}
+            {{- end }}
             - name: MESSAGE_SIZE_LIMIT
               value: {{ .Values.config.messageSize | quote }}
             {{- if .Values.dkim.enabled }}
