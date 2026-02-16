@@ -14,7 +14,7 @@ service:
 config:
   hostname: mail.4mcs4djs.techsecom.io
   allowedSenderDomains: "4mcs4djs.techsecom.io"
-  messageSize: 10485760
+  messageSize: "10485760"
 
 dkim:
   enabled: true

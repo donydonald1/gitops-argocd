@@ -17,6 +17,7 @@ spec:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
     spec:
+      enableServiceLinks: false
       containers:
         - name: postfix
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
