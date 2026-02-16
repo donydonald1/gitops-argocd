@@ -34,6 +34,46 @@ rules:
     verbs: ["get"]
 
 ---
+# Role for Docker Buildx builder (Kubernetes driver) in the runner namespace
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: buildx-builder
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: github-actions-runner
+    app.kubernetes.io/instance: {{ .Release.Name }}
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "create", "update", "patch", "delete", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["pods", "pods/log", "pods/exec", "services", "configmaps", "secrets"]
+    verbs: ["get", "create", "update", "patch", "delete", "list", "watch"]
+
+---
+# Bind buildx-builder role to both runner service accounts
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: buildx-builder
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: github-actions-runner
+    app.kubernetes.io/instance: {{ .Release.Name }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: buildx-builder
+subjects:
+  - kind: ServiceAccount
+    name: gha-runner-deploy
+    namespace: {{ .Release.Namespace }}
+  - kind: ServiceAccount
+    name: techsecom-k8s-runners-gha-rs-controller-kube-mode
+    namespace: {{ .Release.Namespace }}
+
+---
 # Bind to designbuy namespaces
 {{- $namespaces := list "designbuy-gateway" "designbuy-node" "designbuy-java" "designbuy-python" "designbuy-apps" "designbuy-data" }}
 {{- range $ns := $namespaces }}
