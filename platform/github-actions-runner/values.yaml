@@ -70,7 +70,7 @@ runners:
 
   # Min/Max runners
   minRunners: 1
-  maxRunners: 50
+  maxRunners: 100
 
   # Runner group (optional - for enterprise)
   # runnerGroup: "default"
@@ -79,7 +79,7 @@ runners:
   containerMode:
     type: "kubernetes"
     kubernetesModeWorkVolumeClaim:
-      accessModes: ["ReadWriteOnce"]
+      accessModes: [ "ReadWriteOnce" ]
       storageClassName: "longhorn"
       resources:
         requests:
@@ -95,7 +95,7 @@ runners:
       - name: runner
         image: ghcr.io/actions/actions-runner:latest
         imagePullPolicy: IfNotPresent
-        command: ["/home/runner/run.sh"]
+        command: [ "/home/runner/run.sh" ]
         env:
         - name: ACTIONS_RUNNER_CONTAINER_HOOKS
           value: /home/runner/k8s/index.js
