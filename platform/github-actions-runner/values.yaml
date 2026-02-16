@@ -86,17 +86,11 @@ runners:
           storage: 10Gi
 
   # Template for runner pods
+  # Note: Job pods are configured separately via hook-extension ConfigMap.
+  # The hook extension adds ServiceAccount (gha-runner-deploy) and kubectl
+  # to job pods for CI/CD deploy steps.
   template:
     spec:
-      # Init container to set up Docker-in-Docker (optional)
-      # initContainers:
-      # - name: init-dind-externals
-      #   image: ghcr.io/actions/actions-runner:latest
-      #   command: ["cp", "-r", "/home/runner/externals/.", "/home/runner/tmpDir/"]
-      #   volumeMounts:
-      #   - name: dind-externals
-      #     mountPath: /home/runner/tmpDir
-
       containers:
       - name: runner
         image: ghcr.io/actions/actions-runner:latest
@@ -105,6 +99,8 @@ runners:
         env:
         - name: ACTIONS_RUNNER_CONTAINER_HOOKS
           value: /home/runner/k8s/index.js
+        - name: ACTIONS_RUNNER_CONTAINER_HOOK_TEMPLATE
+          value: /home/runner/pod-templates/content
         - name: ACTIONS_RUNNER_POD_NAME
           valueFrom:
             fieldRef:
@@ -121,34 +117,16 @@ runners:
         volumeMounts:
         - name: work
           mountPath: /home/runner/_work
-
-      # Optional: Docker-in-Docker sidecar for container actions
-      # - name: dind
-      #   image: docker:dind
-      #   args:
-      #   - dockerd
-      #   - --host=unix:///run/docker/docker.sock
-      #   - --group=$(DOCKER_GROUP_GID)
-      #   env:
-      #   - name: DOCKER_GROUP_GID
-      #     value: "123"
-      #   securityContext:
-      #     privileged: true
-      #   volumeMounts:
-      #   - name: work
-      #     mountPath: /home/runner/_work
-      #   - name: dind-sock
-      #     mountPath: /run/docker
-      #   - name: dind-externals
-      #     mountPath: /home/runner/externals
+        - name: pod-template
+          mountPath: /home/runner/pod-templates
+          readOnly: true
 
       volumes:
       - name: work
         emptyDir: {}
-      # - name: dind-sock
-      #   emptyDir: {}
-      # - name: dind-externals
-      #   emptyDir: {}
+      - name: pod-template
+        configMap:
+          name: hook-extension
 
   # Listener pod configuration
   listenerTemplate:

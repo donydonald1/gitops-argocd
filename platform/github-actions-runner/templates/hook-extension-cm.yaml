@@ -1,0 +1,36 @@
+---
+# =============================================================================
+# Hook Extension ConfigMap for ARC Job Pods
+# =============================================================================
+# Customizes the ephemeral job pods created by runner-container-hooks.
+# Adds ServiceAccount for K8s access and kubectl binary for deploy steps.
+# Ref: https://github.com/actions/runner-container-hooks/blob/main/docs/adrs/0134-hook-extensions.md
+# =============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hook-extension
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: github-actions-runner
+    app.kubernetes.io/instance: {{ .Release.Name }}
+data:
+  content: |
+    spec:
+      serviceAccountName: gha-runner-deploy
+      initContainers:
+        - name: install-kubectl
+          image: bitnamilegacy/kubectl:1.31
+          command: ["sh", "-c", "cp /opt/bitnami/kubectl/bin/kubectl /tools/kubectl && chmod +x /tools/kubectl"]
+          volumeMounts:
+            - name: kubectl-bin
+              mountPath: /tools
+      containers:
+        - name: "$job"
+          volumeMounts:
+            - name: kubectl-bin
+              mountPath: /usr/local/bin/kubectl
+              subPath: kubectl
+      volumes:
+        - name: kubectl-bin
+          emptyDir: {}

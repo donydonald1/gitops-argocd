@@ -1,0 +1,56 @@
+---
+# =============================================================================
+# RBAC for GitHub Actions Runners
+# =============================================================================
+# Grants runners permission to restart deployments in designbuy namespaces
+# for CI/CD deploy steps (kubectl rollout restart)
+# =============================================================================
+
+# ServiceAccount used by runner pods
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: gha-runner-deploy
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: github-actions-runner
+    app.kubernetes.io/instance: {{ .Release.Name }}
+
+---
+# ClusterRole with minimal permissions to restart deployments
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: gha-runner-deploy
+  labels:
+    app.kubernetes.io/name: github-actions-runner
+    app.kubernetes.io/instance: {{ .Release.Name }}
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "patch"]
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["get"]
+
+---
+# Bind to designbuy namespaces
+{{- $namespaces := list "designbuy-gateway" "designbuy-node" "designbuy-java" "designbuy-python" "designbuy-apps" "designbuy-data" }}
+{{- range $ns := $namespaces }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: gha-runner-deploy
+  namespace: {{ $ns }}
+  labels:
+    app.kubernetes.io/name: github-actions-runner
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: gha-runner-deploy
+subjects:
+  - kind: ServiceAccount
+    name: gha-runner-deploy
+    namespace: {{ $.Release.Namespace }}
+---
+{{- end }}
