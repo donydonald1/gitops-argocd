@@ -7,12 +7,11 @@ minio:
     tag: RELEASE.2025-02-07T23-21-09Z
     pullPolicy: IfNotPresent
 
-  # Current: 3 drives (1 per node) - no erasure coding
-  # For erasure coding, consider adding more nodes or drives per node
+  # Current: 4 drives (1 per node) - erasure coding enabled (4 drives minimum)
   # WARNING: Changing drivesPerNode requires data migration
   drivesPerNode: 1
   # Number of MinIO containers running
-  replicas: 3
+  replicas: 4
   pools: 1
 
   existingSecret: minio-users
@@ -29,11 +28,12 @@ minio:
     # subPath: ""
   securityContext:
     enabled: true
-    runAsUser: 0
-    runAsGroup: 0
-    fsGroup: 0
-    # Prevent recursive chown on large volumes - only change ownership if root differs
-    fsGroupChangePolicy: OnRootMismatch
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    # Always apply fsGroup on mount — prevents NFS permission race where
+    # MinIO starts before kubelet finishes chown on /export
+    fsGroupChangePolicy: Always
   ingress:
     enabled: true
     ingressClassName: nginx
