@@ -47,7 +47,7 @@ storageSize: 100Gi
 maxConnections: 2000
 objectStore:
   endpoint: http://minio.minio.svc.cluster.local:9000
-  bucketName: postgres
+  bucketName: cnpg-backups
   s3CredentialsSecretName: aws-credentials
   s3AccessKeyIdSecretKey: accessKeyId
   s3SecretAccessKeySecretKey: secretAccessKey
@@ -186,6 +186,14 @@ managedRoles:
   bypassrls: true
   passwordSecret:
     name: awx-user-secret
+
+- name: vault
+  ensure: present
+  login: true
+  createrole: true
+  bypassrls: true
+  passwordSecret:
+    name: vault-user-secret
 
 pooler:
   maxDbConnections: 2000

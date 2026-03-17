@@ -26,17 +26,17 @@ spec:
           values:
           - values.yaml
 
-      # # =============================================
-      # # WAVE 0: Database Cluster (requires CNPG operator from system wave -2)
-      # # =============================================
-      # - name: cnpg-cluster
-      #   namespace: cnpg-system
-      #   wave: "0"  # Deploy after CNPG operator is ready
-      #   imageList: "postgresql=ghcr.io/cloudnative-pg/postgresql"
-      #   helm:
-      #     values:
-      #     - values.yaml
-      #   serverSideApply: true
+      # =============================================
+      # WAVE 0: Database Cluster (requires CNPG operator from system wave -2)
+      # =============================================
+      - name: cnpg-cluster
+        namespace: cnpg-system
+        wave: "0"  # Deploy after CNPG operator is ready
+        imageList: "postgresql=ghcr.io/cloudnative-pg/postgresql"
+        helm:
+          values:
+          - values.yaml
+        serverSideApply: true
 
       # =============================================
       # WAVE 1: Services depending on storage/database foundation
@@ -105,17 +105,17 @@ spec:
       # =============================================
       # WAVE 2: Core Platform Applications (require databases + storage + Redis)
       # =============================================
-      # NOTE: Keycloak is now managed by Terraform (modules/keycloak)
-      # OIDC clients are created via the keycloak provider, not GitOps
-      # - name: keycloak
-      #   namespace: keycloak
-      #   serverSideApply: true
-      #   wave: "2" # Identity provider - needs CNPG database
-      #   imageList: "keycloak=quay.io/keycloak/keycloak"
-      #   skipHooks: "false" # Enable PostSync hook for OIDC IDP setup
-      #   helm:
-      #     values:
-      #     - values.yaml
+      # Keycloak — deployed by ArgoCD (moved from Terraform for reliability)
+      # OIDC clients still configured via Terraform keycloak provider (Phase 2)
+      - name: keycloak
+        namespace: keycloak
+        serverSideApply: true
+        wave: "2" # Identity provider - needs CNPG database
+        imageList: "keycloak=quay.io/keycloak/keycloak"
+        skipHooks: "false" # Enable PostSync hook for OIDC IDP setup
+        helm:
+          values:
+          - values.yaml
 
       - name: harbor-ha
         namespace: harbor
