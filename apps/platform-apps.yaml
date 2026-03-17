@@ -268,6 +268,6 @@ spec:
         - PrunePropagationPolicy=foreground
         - SkipDryRunOnMissingResource=true
         # - RespectIgnoreDifferences=false
-        - '{{ printf "%s=%s" "ServerSideApply" (dig "serverSideApply" "true" . | toString) }}'
+        - '{{ printf "%s=%s" "ServerSideApply" (dig "serverSideApply" "false" . | toString) }}'
         # Enable Helm hooks for apps that need post-install jobs (e.g., MinIO bucket creation)
         - '{{ printf "%s=%s" "SkipHooks" (dig "skipHooks" "true" . | toString) }}'

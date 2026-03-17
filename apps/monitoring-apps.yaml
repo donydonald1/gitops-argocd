@@ -204,6 +204,6 @@ spec:
         - PruneLast=true
         - PrunePropagationPolicy=foreground
         - SkipDryRunOnMissingResource=true
-        - '{{ printf "%s=%s" "ServerSideApply" (dig "serverSideApply" "true" . | toString) }}'
+        - '{{ printf "%s=%s" "ServerSideApply" (dig "serverSideApply" "false" . | toString) }}'
         # ServerSideDiff helps with operator-managed resources like ECK
         - ServerSideDiff=true

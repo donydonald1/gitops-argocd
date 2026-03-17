@@ -93,4 +93,4 @@ spec:
         - PruneLast=true
         - PrunePropagationPolicy=foreground
         - SkipDryRunOnMissingResource=true
-        - '{{ printf "%s=%s" "ServerSideApply" (dig "serverSideApply" "true" . | toString) }}'
+        - '{{ printf "%s=%s" "ServerSideApply" (dig "serverSideApply" "false" . | toString) }}'
