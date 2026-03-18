@@ -1,0 +1,53 @@
+{{- if .Values.f5Alerts }}
+{{- if .Values.f5Alerts.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: f5-bigip-alerts
+  labels:
+    release: {{ .Release.Name }}
+    app: kube-prometheus-stack
+spec:
+  groups:
+  - name: f5-bigip
+    rules:
+    - alert: F5PoolMemberDown
+      expr: f5_pool_member_status != 1
+      for: 2m
+      labels:
+        severity: warning
+      annotations:
+        summary: >-
+          F5 pool member {{`{{ $labels.pool }}`}}/{{`{{ $labels.member }}`}} is down
+    - alert: F5AllPoolMembersDown
+      expr: count by (pool) (f5_pool_member_status == 1) == 0
+      for: 30s
+      labels:
+        severity: critical
+      annotations:
+        summary: >-
+          All members in F5 pool {{`{{ $labels.pool }}`}} are down
+    - alert: F5HighConnectionTable
+      expr: f5_connection_table_size / f5_connection_table_max > 0.8
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "F5 connection table usage above 80%"
+    - alert: F5TMHighCPU
+      expr: f5_system_cpu > 85
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "F5 TMM CPU usage above 85%"
+    - alert: F5SSHConnectionHigh
+      expr: f5_vs_connections_current{name=~".*SSH.*"} > 80
+      for: 2m
+      labels:
+        severity: warning
+      annotations:
+        summary: >-
+          F5 SSH VS {{`{{ $labels.name }}`}} connections near limit (80/100)
+{{- end }}
+{{- end }}

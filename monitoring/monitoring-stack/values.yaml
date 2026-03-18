@@ -1422,3 +1422,15 @@ alloy:
             batch_wait = "1s"
           }
         }
+
+# F5 BIG-IP Alert Rules
+f5Alerts:
+  enabled: true
+
+# UniFi SNMP Exporter (deploy after SNMPv3 is configured on gateway)
+snmpExporter:
+  enabled: false  # Enable after configuring SNMPv3 on UniFi gateway
+  targets:
+  - name: unifi-gateway
+    host: 192.168.1.62
+    module: if_mib
