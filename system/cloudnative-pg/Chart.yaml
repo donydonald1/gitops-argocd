@@ -1,7 +1,10 @@
 name: cloudnative-pg
 apiVersion: v2
-version: 0.26.0
+version: 0.26.1
 dependencies:
 - name: cloudnative-pg
   version: 0.26.0
+  repository: https://cloudnative-pg.github.io/charts
+- name: plugin-barman-cloud
+  version: 0.5.0
   repository: https://cloudnative-pg.github.io/charts

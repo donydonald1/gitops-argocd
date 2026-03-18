@@ -1,6 +1,14 @@
 cloudnative-pg:
-
   replicaCount: 1
+
+plugin-barman-cloud:
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
 
 # replicas: 3
 
